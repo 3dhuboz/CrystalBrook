@@ -23,7 +23,6 @@ Open http://localhost:8766 in your browser. The site is plain HTML/CSS/JS — no
 .
 ├── index.html               # Storefront — hero, category showcase, craft, custom wizard, contact
 ├── about.html               # Maker's story page — Max + the workshop in Gordonvale
-├── logos.html               # Internal logo-options catalogue for the brand work
 ├── admin/
 │   └── index.html           # Owner admin dashboard (stocktake, orders, custom, revenue, homepage editor)
 ├── assets/
