@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <defs>
+    <linearGradient id="iconPine" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#d4a872"/>
+      <stop offset="50%" stop-color="#c89554"/>
+      <stop offset="100%" stop-color="#a87a3e"/>
+    </linearGradient>
+    <linearGradient id="iconBrook" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#0f4d72"/>
+      <stop offset="50%" stop-color="#33a5c7"/>
+      <stop offset="100%" stop-color="#8cd9d9"/>
+    </linearGradient>
+  </defs>
+  <!-- Maskable safe-zone padding (40px on each side for 192) -->
+  <rect x="0" y="0" width="192" height="192" rx="28" fill="#1c130a"/>
+  <!-- Pine plank inside (centered, large) -->
+  <rect x="28" y="44" width="136" height="104" rx="6" fill="url(#iconPine)"/>
+  <!-- Brook ripples — three thick water lines -->
+  <g fill="none" stroke="url(#iconBrook)" stroke-width="9" stroke-linecap="round">
+    <path d="M 42 76 Q 64 64 96 76 Q 128 88 150 76"/>
+    <path d="M 42 96 Q 64 84 96 96 Q 128 108 150 96"/>
+    <path d="M 42 116 Q 64 104 96 116 Q 128 128 150 116"/>
+  </g>
+</svg>

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="iconPine512" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#d4a872"/>
+      <stop offset="50%" stop-color="#c89554"/>
+      <stop offset="100%" stop-color="#a87a3e"/>
+    </linearGradient>
+    <linearGradient id="iconBrook512" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#0f4d72"/>
+      <stop offset="50%" stop-color="#33a5c7"/>
+      <stop offset="100%" stop-color="#8cd9d9"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="512" height="512" rx="76" fill="#1c130a"/>
+  <rect x="74" y="118" width="364" height="276" rx="14" fill="url(#iconPine512)"/>
+  <g fill="none" stroke="url(#iconBrook512)" stroke-width="22" stroke-linecap="round">
+    <path d="M 112 200 Q 170 170 256 200 Q 342 230 400 200"/>
+    <path d="M 112 256 Q 170 226 256 256 Q 342 286 400 256"/>
+    <path d="M 112 312 Q 170 282 256 312 Q 342 342 400 312"/>
+  </g>
+</svg>
