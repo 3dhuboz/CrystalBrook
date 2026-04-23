@@ -153,7 +153,11 @@ function bindCardInteractions(){
     });
   });
   grid.querySelectorAll('.product-card').forEach(card=>{
-    card.addEventListener('click', ()=>openQuickView(card.dataset.id));
+    // Card-level click → full product page (Quick View button stays as lightbox)
+    card.addEventListener('click', (e)=>{
+      if (e.target.closest('[data-add]') || e.target.closest('[data-view]')) return;
+      location.href = `product.html?id=${card.dataset.id}`;
+    });
     bindTilt(card);
   });
 }
@@ -407,7 +411,7 @@ document.getElementById('lightboxClose').addEventListener('click', closeLightbox
       return;
     }
     results.innerHTML = matches.map(p => `
-      <a class="search-result" href="shop.html?cat=${p.cat}&p=${p.id}">
+      <a class="search-result" href="product.html?id=${p.id}">
         <div class="search-result-thumb stage-${p.cat}">
           ${p.image
             ? `<img src="${p.image}" alt="" loading="lazy"/>`
@@ -1195,6 +1199,114 @@ document.addEventListener('keydown', e=>{
 
   // Initial calc
   recalc();
+})();
+
+/* ---------- PRODUCT DETAIL PAGE (product.html) ---------- */
+(() => {
+  const titleEl = document.getElementById('pdpTitle');
+  if (!titleEl) return;
+
+  const params = new URLSearchParams(location.search);
+  const id = params.get('id');
+  const product = id ? PRODUCTS.find(p => p.id === id) : null;
+
+  if (!product){
+    const hero = document.querySelector('.pdp-hero');
+    if (hero){
+      hero.innerHTML = `
+        <div class="pdp-404">
+          <p class="eyebrow">Lost piece</p>
+          <h1>Couldn't find that one.</h1>
+          <p class="pdp-404-lede">Maybe it's been sold, maybe the link's gone stale. Either way — there's plenty more on the wall.</p>
+          <div class="pdp-404-ctas">
+            <a class="btn btn-primary" href="shop.html">Browse the collection →</a>
+            <a class="btn btn-ghost" href="index.html#custom">Get one made →</a>
+          </div>
+        </div>`;
+    }
+    document.querySelector('.pdp-craft')?.remove();
+    document.querySelector('.pdp-related')?.remove();
+    document.querySelector('.pdp-custom-cta')?.remove();
+    return;
+  }
+
+  // Document title + meta description
+  document.title = `${product.name} · Crystal Brook Wall Mounts`;
+  const metaDesc = document.querySelector('meta[name="description"]');
+  if (metaDesc) metaDesc.setAttribute('content',
+    `${product.name} — ${product.size}. ${product.desc}`);
+
+  // Crumb
+  const crumbCat = document.getElementById('pdpCrumbCat');
+  if (crumbCat){
+    crumbCat.textContent = CAT_LABELS[product.cat];
+    crumbCat.href = `shop.html#${product.cat}`;
+  }
+  document.getElementById('pdpCrumbName').textContent = product.name;
+
+  // Hero stage
+  const stage = document.getElementById('pdpStage');
+  stage.innerHTML = product.image
+    ? `<div class="product-stage stage-${product.cat} pdp-product-stage">
+         <img src="${product.image}" alt="${product.name}"/>
+       </div>`
+    : `<div class="product-stage stage-${product.cat} pdp-product-stage">
+         <div class="product-placeholder">
+           <span class="ph-mark">${shortName(product.name)}</span>
+           <span class="ph-sub">Photo coming soon</span>
+         </div>
+       </div>`;
+
+  // Info
+  document.getElementById('pdpEyebrow').textContent = CAT_LABELS[product.cat];
+  if (product.badge){
+    const badge = document.getElementById('pdpBadge');
+    badge.textContent = product.badge;
+    badge.hidden = false;
+  }
+  titleEl.textContent = product.name;
+  document.getElementById('pdpDesc').textContent = product.desc;
+  document.getElementById('pdpSize').textContent = product.size;
+  // Mount = the bit after "·" in meta (e.g. "Reef · Silky Oak mount")
+  const mountText = product.meta.includes('·')
+    ? product.meta.split('·').slice(1).join('·').trim()
+    : product.meta;
+  document.getElementById('pdpMount').textContent = mountText;
+  document.getElementById('pdpPrice').textContent = '$' + product.price.toLocaleString();
+
+  // Add to cart
+  document.getElementById('pdpAdd').addEventListener('click', () => addToCart(product));
+
+  // Related products from the same category
+  const relatedGrid = document.getElementById('pdpRelatedGrid');
+  if (relatedGrid){
+    const related = PRODUCTS.filter(p => p.cat === product.cat && p.id !== product.id).slice(0, 4);
+    if (!related.length){
+      document.getElementById('pdpRelated').remove();
+    } else {
+      const heading = document.getElementById('pdpRelatedTitle');
+      heading.textContent = `More ${CAT_LABELS[product.cat].toLowerCase()}`;
+      relatedGrid.innerHTML = related.map(cardHTML).join('');
+      relatedGrid.querySelectorAll('.product-card').forEach(card => {
+        card.addEventListener('click', e => {
+          if (e.target.closest('[data-add]') || e.target.closest('[data-view]')) return;
+          location.href = `product.html?id=${card.dataset.id}`;
+        });
+        const addBtn = card.querySelector('[data-add]');
+        addBtn?.addEventListener('click', e => {
+          e.stopPropagation();
+          const p = PRODUCTS.find(x => x.id === addBtn.dataset.add);
+          if (p) addToCart(p);
+        });
+        const viewBtn = card.querySelector('[data-view]');
+        viewBtn?.addEventListener('click', e => {
+          e.stopPropagation();
+          openQuickView(viewBtn.dataset.view);
+        });
+        bindTilt(card);
+      });
+    }
+  }
 })();
 
 /* ---------- PWA: SERVICE WORKER + INSTALL PROMPT ---------- */
