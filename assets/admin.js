@@ -536,6 +536,249 @@ function openAdminModal(label, view){
   modal.classList.add('is-open');
 }
 
+/* ======================================================
+   IMAGE BUILDER — Cloudflare Workers AI front end for Max
+   ======================================================
+ * UX goal: 3 steps, big buttons, plain English. No prompt
+ * engineering for Max — the templates expand into FLUX-tuned
+ * style strings under the hood.
+ *
+ * Backend contract (when wired):
+ *   POST /api/studio/generate
+ *   Body: { prompt, count, transparent, resolution, refStyle }
+ *   Response: {
+ *     generations: [
+ *       { id, url, transparentUrl, prompt, model, costNeurons, createdAt }
+ *     ]
+ *   }
+ *
+ *   POST /api/studio/save-as-product
+ *   Body: { generationId, productData }
+ *   Response: { product: {...PRODUCTS-shape} }
+ *
+ * The mockup below simulates this with shuffled existing
+ * catalogue images so Max can experience the full flow today.
+ */
+(() => {
+  const ibTpls       = document.querySelectorAll('.ib-tpl');
+  const ibSubject    = document.getElementById('ibSubject');
+  const ibGen        = document.getElementById('ibGenerate');
+  const ibProgress   = document.getElementById('ibProgress');
+  const ibProgressTx = document.getElementById('ibProgressText');
+  const ibProgressFl = document.getElementById('ibProgressFill');
+  const ibResults    = document.getElementById('ibResults');
+  const ibResultsGrid= document.getElementById('ibResultsGrid');
+  const ibTryAgain   = document.getElementById('ibTryAgain');
+  const ibStartOver  = document.getElementById('ibStartOver');
+  const ibHistory    = document.getElementById('ibHistory');
+  const ibHistoryGrid= document.getElementById('ibHistoryGrid');
+  const ibHistoryClr = document.getElementById('ibHistoryClear');
+  const ibSuggestions= document.getElementById('ibSuggestions');
+  const ibSuggestionChips = document.getElementById('ibSuggestionChips');
+  if (!ibGen || !ibSubject) return;
+
+  const state = { template: null, busy: false };
+
+  // Per-template style suffix that gets appended to Max's plain-English
+  // subject. These are tuned to the existing catalogue look.
+  const STYLE_PRESETS = {
+    saltwater:  'isolated on pure white background, side profile, vivid archival pigment colours, hyperrealistic, studio lighting, no shadow, sharp scale detail, 8k product photography',
+    freshwater: 'isolated on pure white background, side profile, natural river-fish colours, hyperrealistic, studio lighting, no shadow, sharp detail, 8k product photography',
+    cars:       'isolated on pure white background, classic-car side profile, glossy paintwork, period-correct details, no background reflections, hyperrealistic, sharp detail, 8k product photography',
+    animals:    'isolated on pure white background, three-quarter pose, soft studio lighting, hyperrealistic fur detail, no shadow, 8k product photography',
+    birds:      'isolated on pure white background, side profile or perched, vibrant plumage, hyperrealistic, no shadow, 8k product photography',
+  };
+
+  // Suggestion chips per template — Max can click instead of typing
+  const SUGGESTIONS = {
+    saltwater:  ['coral trout', 'wahoo mid-strike', 'GT silver flank', 'red emperor snapper'],
+    freshwater: ['barramundi leaping', 'murray cod, mottled green', 'sooty grunter', 'jungle perch'],
+    cars:       ['1973 XB Falcon', 'HQ Holden Statesman', 'EH Holden in white', '1970 Mustang Boss 302'],
+    animals:    ['Maremma sheepdog', 'spotted-tail quoll', 'wombat side-on', 'border collie pup'],
+    birds:      ['eclectus parrot', 'gouldian finch', 'powerful owl', 'crimson rosella'],
+  };
+
+  /* Pool of existing catalogue images we shuffle for the mockup output.
+   * When the backend lands, replace this with the real /api/studio/generate
+   * call — same render path consumes the response. */
+  const MOCK_POOL = {
+    saltwater:  ['coral.png','coral-alt.png','mahi.png','snapper.png','bonus-mackerel.png'],
+    freshwater: ['barra.png','cod.png'],
+    cars:       ['monaro.png','torana.png','xygt.png'],
+    animals:    ['frenchie.png','bonus-sea-turtle.png','bonus-ulysses-butterfly.png'],
+    birds:      ['lorikeet.png'],
+  };
+  const PROD_IMG = '../assets/images/products/';
+
+  function pickTemplate(tpl){
+    state.template = tpl;
+    ibTpls.forEach(b => b.classList.toggle('is-active', b.dataset.tpl === tpl));
+    ibGen.disabled = false;
+    // Show suggestions
+    ibSuggestionChips.innerHTML = (SUGGESTIONS[tpl] || []).map(s =>
+      `<button class="ib-chip" type="button" data-q="${s}">${s}</button>`
+    ).join('');
+    ibSuggestions.hidden = false;
+    ibSuggestions.querySelectorAll('.ib-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        ibSubject.value = chip.dataset.q;
+        ibSubject.focus();
+      });
+    });
+  }
+
+  ibTpls.forEach(b => b.addEventListener('click', () => pickTemplate(b.dataset.tpl)));
+
+  // Build a real FLUX prompt from Max's plain-English input
+  function buildPrompt(){
+    const subject = (ibSubject.value || '').trim();
+    if (!subject || !state.template) return null;
+    return `${subject}, ${STYLE_PRESETS[state.template]}`;
+  }
+
+  async function generate(){
+    const fullPrompt = buildPrompt();
+    if (!fullPrompt){
+      toast('Pick a category and type what you want first.');
+      return;
+    }
+    if (state.busy) return;
+    state.busy = true;
+    ibGen.disabled = true;
+
+    // Show progress
+    ibResults.hidden = true;
+    ibProgress.hidden = false;
+    const stages = [
+      ['Reading your description…',   18],
+      ['Drawing your 4 photos…',      55],
+      ['Removing the white backgrounds…', 82],
+      ['Putting them on the wall…',   100],
+    ];
+    for (const [label, pct] of stages){
+      ibProgressTx.textContent = label;
+      ibProgressFl.style.width = pct + '%';
+      await new Promise(r => setTimeout(r, 700 + Math.random() * 600));
+    }
+
+    // === REAL BACKEND CALL would go here ===
+    // const res = await fetch('/api/studio/generate', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify({
+    //     prompt: fullPrompt,
+    //     count: 4,
+    //     transparent: true,
+    //     resolution: 2048,
+    //     refStyle: 'crystalbrook-catalogue',
+    //   })
+    // });
+    // const { generations } = await res.json();
+    // === MOCKUP ===
+    const pool = MOCK_POOL[state.template] || MOCK_POOL.animals;
+    const shuffled = pool.slice().sort(() => Math.random() - 0.5);
+    const generations = Array.from({ length: 4 }, (_, i) => ({
+      id: 'gen-' + Date.now() + '-' + i,
+      url: PROD_IMG + shuffled[i % shuffled.length],
+      prompt: fullPrompt,
+      model: 'flux-1.1-schnell (mockup)',
+      createdAt: Date.now(),
+    }));
+
+    ibProgress.hidden = true;
+    renderResults(generations);
+    saveToHistory(generations[0]); // log first as the "session"
+    state.busy = false;
+    ibGen.disabled = false;
+  }
+
+  function renderResults(gens){
+    ibResultsGrid.innerHTML = gens.map(g => `
+      <div class="ib-result" data-id="${g.id}">
+        <div class="ib-result-img">
+          <img src="${g.url}" alt="${escapeHtml(g.prompt.slice(0, 60))}"/>
+        </div>
+        <div class="ib-result-actions">
+          <button class="btn btn-gold ib-use" data-use="${g.id}" type="button">Use this one →</button>
+          <a class="btn btn-ghost" href="${g.url}" download="crystalbrook-${g.id}.png">↓ Download</a>
+          <button class="btn btn-ghost ib-variants" data-variants="${g.id}" type="button">↻ Variations</button>
+        </div>
+      </div>
+    `).join('');
+
+    ibResultsGrid.querySelectorAll('[data-use]').forEach(b => {
+      b.addEventListener('click', () => useAsProduct(gens.find(g => g.id === b.dataset.use)));
+    });
+    ibResultsGrid.querySelectorAll('[data-variants]').forEach(b => {
+      b.addEventListener('click', () => generate()); // re-roll
+    });
+
+    ibResults.hidden = false;
+    ibResults.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function useAsProduct(gen){
+    if (!gen) return;
+    // === REAL BACKEND ===
+    // POST /api/studio/save-as-product { generationId: gen.id }
+    // The Worker copies the R2 PNG to the products bucket, inserts a
+    // PRODUCTS row, returns the product. The admin then jumps to
+    // Stocktake with the new product highlighted for editing.
+    toast(`✓ "${gen.prompt.slice(0, 30)}…" added to your shop. Edit details on the Stocktake page.`);
+    // Save to history
+    saveToHistory(gen);
+  }
+
+  function saveToHistory(gen){
+    let hist = [];
+    try { hist = JSON.parse(localStorage.getItem('cbwm_ib_history') || '[]'); } catch(_){}
+    hist.unshift(gen);
+    hist = hist.slice(0, 12);
+    localStorage.setItem('cbwm_ib_history', JSON.stringify(hist));
+    renderHistory();
+  }
+
+  function renderHistory(){
+    let hist = [];
+    try { hist = JSON.parse(localStorage.getItem('cbwm_ib_history') || '[]'); } catch(_){}
+    if (!hist.length){ ibHistory.hidden = true; return; }
+    ibHistory.hidden = false;
+    ibHistoryGrid.innerHTML = hist.map(g => `
+      <div class="ib-history-thumb" title="${escapeHtml(g.prompt)}">
+        <img src="${g.url}" alt=""/>
+        <span class="ib-history-prompt">${escapeHtml(g.prompt.slice(0, 40))}…</span>
+      </div>
+    `).join('');
+  }
+
+  function escapeHtml(s){
+    return (s || '').replace(/[<>&"']/g, c =>
+      ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c])
+    );
+  }
+
+  ibGen.addEventListener('click', generate);
+  ibSubject.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !ibGen.disabled) generate();
+  });
+  ibTryAgain?.addEventListener('click', generate);
+  ibStartOver?.addEventListener('click', () => {
+    state.template = null;
+    ibTpls.forEach(b => b.classList.remove('is-active'));
+    ibSubject.value = '';
+    ibSuggestions.hidden = true;
+    ibResults.hidden = true;
+    ibGen.disabled = true;
+    document.querySelector('.ib-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  ibHistoryClr?.addEventListener('click', () => {
+    localStorage.removeItem('cbwm_ib_history');
+    renderHistory();
+  });
+
+  renderHistory();
+})();
+
 /* ---------- TOAST ---------- */
 const toastEl = document.getElementById('toast');
 let toastTimer;
@@ -674,6 +917,23 @@ const HELP_GUIDES = {
         'Changes appear on the storefront within a few seconds.',
         'If you make a mistake, click "Revert" to roll back to the last published version.',
       ]},
+    ],
+  },
+  studio: {
+    title: 'Image Builder — make new product photos',
+    sections: [
+      { heading: 'When to use it',
+        text: 'Whenever you need a new product photo and don\'t have one yet. Type what you want, hit Generate, pick the version you like best.' },
+      { heading: 'Three steps. That\'s it.',
+        text: '1) Click the kind of piece (fish, car, animal, bird). 2) Type what you want in plain English — "barramundi jumping out of the water". 3) Hit the gold "Generate 4 photos" button. Wait about 10 seconds.' },
+      { heading: 'You don\'t need to be technical',
+        text: 'No need to write fancy "AI prompts" — just describe it like you would to me on the phone. The categories on Step 1 already tell the AI what style to use.' },
+      { heading: 'Pick the one you like',
+        text: 'Four versions appear. Hover any of them to see options. "Use this one →" adds it to your shop straight away. "↓ Download" saves the file to your computer (good for the print version). "↻ Variations" runs another 4 in the same style.' },
+      { heading: 'If none look right',
+        text: 'Either click "↻ Try 4 more" to keep the same description and roll again, or "← Start over" to change the description completely. The AI gets better the more specific you are — "a Murray cod, side profile, mottled green and gold" beats just "a fish".' },
+      { heading: 'Recent generations',
+        text: 'Anything you generate stays in the "Recent" section at the bottom for the next two weeks, so you can come back to images you liked but didn\'t use yet.' },
     ],
   },
   settings: {
