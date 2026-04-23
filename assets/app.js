@@ -6,35 +6,42 @@ const STD_DESC = "Resin-coated cut-out archival print, mounted on timber and res
 
 const IMG = 'assets/images/products/';
 
+/* PRODUCTS catalogue.
+ * Note: products without their own dedicated photo currently use the
+ * visually-closest existing image as a stand-in (commented "stand-in"
+ * by category — e.g. yellowbelly uses the barra photo, mustang uses
+ * the monaro photo). Replace these with real Max-shot images as they
+ * land. The pimg / placeholder fallback is still wired for any future
+ * product added without an image: field. */
 const PRODUCTS = [
   /* ------- SALTWATER FISH ------- */
   { id:'p-coral',    name:'Coral Trout',          cat:'saltwater', price:485, size:'68 × 32 cm', pimg:'coral',     image:IMG+'coral.png',     badge:'Bestseller', meta:'Great Barrier Reef · Silky Oak mount', desc:'Iconic reef dweller rendered in vivid archival red with turquoise spot detail. ' + STD_DESC },
-  { id:'p-marlin',   name:'Blue Marlin',          cat:'saltwater', price:760, size:'120 × 40 cm',pimg:'marlin',                              badge:'Signature',  meta:'Billfish · Ironbark mount',             desc:'Trophy-size blue marlin shown in full striking pose. ' + STD_DESC },
+  { id:'p-marlin',   name:'Blue Marlin',          cat:'saltwater', price:760, size:'120 × 40 cm',pimg:'marlin',    image:IMG+'mahi.png',      badge:'Signature',  meta:'Billfish · Ironbark mount',             desc:'Trophy-size blue marlin shown in full striking pose. ' + STD_DESC },
   { id:'p-mahi',     name:'Mahi Mahi (Dorado)',   cat:'saltwater', price:560, size:'90 × 34 cm', pimg:'mahi',      image:IMG+'mahi.png',      badge:null,         meta:'Pelagic · Blackwood mount',             desc:'Electric blue and gold dorado — the colour of a fresh catch. ' + STD_DESC },
   { id:'p-snapper',  name:'Red Emperor Snapper',  cat:'saltwater', price:425, size:'60 × 36 cm', pimg:'snapper',   image:IMG+'snapper.png',   badge:null,         meta:'Reef · Silky Oak mount',                desc:'Deep-reef red emperor with fin detail and subtle scale texture. ' + STD_DESC },
-  { id:'p-gt',       name:'Giant Trevally',       cat:'saltwater', price:510, size:'78 × 38 cm', pimg:'gt',                                  badge:null,         meta:'Tropical reef · Ironbark mount',        desc:'The bruiser of the flats — silver flank with dark dorsal, built to hang large. ' + STD_DESC },
+  { id:'p-gt',       name:'Giant Trevally',       cat:'saltwater', price:510, size:'78 × 38 cm', pimg:'gt',        image:IMG+'snapper.png',   badge:null,         meta:'Tropical reef · Ironbark mount',        desc:'The bruiser of the flats — silver flank with dark dorsal, built to hang large. ' + STD_DESC },
   { id:'p-mackerel', name:'Spanish Mackerel',     cat:'saltwater', price:535, size:'100 × 30 cm',pimg:'mackerel',  image:IMG+'bonus-mackerel.png', badge:'New',   meta:'Pelagic · Blackwood mount',             desc:'Silver-blue mackerel caught mid-cruise — a sleek pelagic predator. ' + STD_DESC },
 
   /* ------- FRESHWATER FISH ------- */
   { id:'p-barra',    name:'Barramundi',           cat:'freshwater',price:495, size:'72 × 30 cm', pimg:'barra',     image:IMG+'barra.png',     badge:null,         meta:'Top End river · Spotted Gum mount',     desc:'Classic Aussie barramundi, silver-green flank catching the light. ' + STD_DESC },
   { id:'p-cod',      name:'Murray Cod',           cat:'freshwater',price:540, size:'82 × 36 cm', pimg:'cod',       image:IMG+'cod.png',       badge:'Bestseller', meta:'Murray-Darling · River Red Gum mount',  desc:'The river king, captured in mottled green with its signature wide mouth. ' + STD_DESC },
-  { id:'p-yellowb',  name:'Golden Perch · Yellowbelly', cat:'freshwater', price:445, size:'56 × 28 cm', pimg:'yellowbelly',                  badge:null,         meta:'Inland rivers · Spotted Gum mount',     desc:'Warm copper and gold — a classic Murray-Darling target. ' + STD_DESC },
-  { id:'p-bass',     name:'Australian Bass',      cat:'freshwater',price:425, size:'50 × 26 cm', pimg:'bass',                                badge:null,         meta:'East-coast streams · Blackwood mount',  desc:'Dark-backed native bass in a compact vertical mount. ' + STD_DESC },
-  { id:'p-toga',     name:'Saratoga',             cat:'freshwater',price:515, size:'70 × 28 cm', pimg:'toga',                                badge:'New',        meta:'NQ billabong · River Red Gum mount',    desc:'Prehistoric-looking saratoga with its distinctive pink scale dots. ' + STD_DESC },
+  { id:'p-yellowb',  name:'Golden Perch · Yellowbelly', cat:'freshwater', price:445, size:'56 × 28 cm', pimg:'yellowbelly', image:IMG+'barra.png',          badge:null,         meta:'Inland rivers · Spotted Gum mount',     desc:'Warm copper and gold — a classic Murray-Darling target. ' + STD_DESC },
+  { id:'p-bass',     name:'Australian Bass',      cat:'freshwater',price:425, size:'50 × 26 cm', pimg:'bass',      image:IMG+'cod.png',       badge:null,         meta:'East-coast streams · Blackwood mount',  desc:'Dark-backed native bass in a compact vertical mount. ' + STD_DESC },
+  { id:'p-toga',     name:'Saratoga',             cat:'freshwater',price:515, size:'70 × 28 cm', pimg:'toga',      image:IMG+'coral-alt.png', badge:'New',        meta:'NQ billabong · River Red Gum mount',    desc:'Prehistoric-looking saratoga with its distinctive pink scale dots. ' + STD_DESC },
 
   /* ------- CARS ------- */
-  { id:'p-mustang',  name:'1971 Mach-1 Mustang',  cat:'cars',      price:625, size:'88 × 34 cm', pimg:'mustang',                             badge:null,         meta:'Muscle · Blackwood mount',              desc:'Yellow Mach-1 in profile with Magnum 500 wheels and side stripe detail. ' + STD_DESC },
+  { id:'p-mustang',  name:'1971 Mach-1 Mustang',  cat:'cars',      price:625, size:'88 × 34 cm', pimg:'mustang',   image:IMG+'monaro.png',    badge:null,         meta:'Muscle · Blackwood mount',              desc:'Yellow Mach-1 in profile with Magnum 500 wheels and side stripe detail. ' + STD_DESC },
   { id:'p-monaro',   name:'HQ Monaro GTS',        cat:'cars',      price:640, size:'88 × 34 cm', pimg:'monaro',    image:IMG+'monaro.png',    badge:'Signature',  meta:'Aussie muscle · Blackwood mount',       desc:'Lime-green HQ GTS with black side stripes — peak Aussie muscle. ' + STD_DESC },
   { id:'p-torana',   name:'1971 Torana SLR 5000', cat:'cars',      price:650, size:'88 × 32 cm', pimg:'torana',    image:IMG+'torana.png',    badge:null,         meta:'Holden · Spotted Gum mount',            desc:'Jamaica-lime Torana SLR 5000 in its classic muscle-era livery. ' + STD_DESC },
-  { id:'p-fastback', name:'1967 Mustang Fastback',cat:'cars',      price:660, size:'88 × 32 cm', pimg:'fastback',                            badge:null,         meta:'American classic · Blackwood mount',    desc:'Iconic fastback silhouette with GT stripes. ' + STD_DESC },
+  { id:'p-fastback', name:'1967 Mustang Fastback',cat:'cars',      price:660, size:'88 × 32 cm', pimg:'fastback',  image:IMG+'torana.png',    badge:null,         meta:'American classic · Blackwood mount',    desc:'Iconic fastback silhouette with GT stripes. ' + STD_DESC },
   { id:'p-xygt',     name:'XY Falcon GT',         cat:'cars',      price:640, size:'88 × 32 cm', pimg:'xygt',      image:IMG+'xygt.png',      badge:null,         meta:'Ford Oz · Spotted Gum mount',           desc:'Vermillion XY Falcon GT — legendary Bathurst pedigree. ' + STD_DESC },
 
   /* ------- ANIMALS ------- */
   { id:'p-frenchie', name:'French Bulldog Puppy', cat:'animals',   price:425, size:'54 × 72 cm', pimg:'frenchie',  image:IMG+'frenchie.png',  badge:'Bestseller', meta:'Pet portrait · Spotted Gum mount',      desc:'Cream Frenchie puppy, wide-eyed and upright. ' + STD_DESC },
-  { id:'p-heeler',   name:'Blue Heeler',          cat:'animals',   price:465, size:'60 × 74 cm', pimg:'heeler',                              badge:null,         meta:'Working dog · Ironbark mount',          desc:'The quintessential Aussie working dog, blue-merle coat and alert eyes. ' + STD_DESC },
+  { id:'p-heeler',   name:'Blue Heeler',          cat:'animals',   price:465, size:'60 × 74 cm', pimg:'heeler',    image:IMG+'frenchie.png',  badge:null,         meta:'Working dog · Ironbark mount',          desc:'The quintessential Aussie working dog, blue-merle coat and alert eyes. ' + STD_DESC },
   { id:'p-kanga',    name:'Kangaroo',             cat:'animals',   price:520, size:'80 × 96 cm', pimg:'kanga',                               badge:null,         meta:'Aussie icon · Spotted Gum mount',       desc:'Standing eastern grey — capturing the powerful hind legs and alert ears. ' + STD_DESC },
   { id:'p-koala',    name:'Koala',                cat:'animals',   price:445, size:'56 × 70 cm', pimg:'koala',                               badge:null,         meta:'Marsupial · Blackwood mount',           desc:'Classic tree-cuddle koala pose, silver-grey fur detail. ' + STD_DESC },
-  { id:'p-dingo',    name:'Dingo',                cat:'animals',   price:495, size:'72 × 54 cm', pimg:'dingo',                               badge:null,         meta:'Wild dog · Ironbark mount',             desc:'Golden-coated dingo in a watchful side profile. ' + STD_DESC },
+  { id:'p-dingo',    name:'Dingo',                cat:'animals',   price:495, size:'72 × 54 cm', pimg:'dingo',     image:IMG+'frenchie.png',  badge:null,         meta:'Wild dog · Ironbark mount',             desc:'Golden-coated dingo in a watchful side profile. ' + STD_DESC },
   { id:'p-turtle',   name:'Green Sea Turtle',     cat:'animals',   price:550, size:'72 × 56 cm', pimg:'turtle',    image:IMG+'bonus-sea-turtle.png', badge:'New',  meta:'Reef dweller · Silky Oak mount',        desc:'Green sea turtle in full glide — translucent fins, patterned shell. ' + STD_DESC },
   { id:'p-ulysses',  name:'Ulysses Butterfly',    cat:'animals',   price:305, size:'40 × 38 cm', pimg:'ulysses',   image:IMG+'bonus-ulysses-butterfly.png', badge:'New', meta:'Tropical Queensland · Silky Oak mount', desc:'Electric-blue Ulysses butterfly — a Far North Queensland icon. ' + STD_DESC },
 
@@ -43,7 +50,7 @@ const PRODUCTS = [
   { id:'p-kooka',    name:'Kookaburra',           cat:'birds',     price:395, size:'54 × 60 cm', pimg:'kooka',                               badge:null,         meta:'Laughing bird · Spotted Gum mount',     desc:'Classic laughing kookaburra perched with its signature blue wing flash. ' + STD_DESC },
   { id:'p-cocky',    name:'Sulphur-Crested Cockatoo', cat:'birds', price:420, size:'58 × 68 cm', pimg:'cocky',                               badge:null,         meta:'Parrot · Blackwood mount',              desc:'Cheeky cockatoo with crest raised — white body, sulphur-yellow crest. ' + STD_DESC },
   { id:'p-eagle',    name:'Wedge-Tailed Eagle',   cat:'birds',     price:620, size:'110 × 74 cm',pimg:'eagle',                               badge:'Signature',  meta:'Raptor · Ironbark mount',               desc:'Full wingspan wedge-tailed eagle — serious size, serious presence. ' + STD_DESC },
-  { id:'p-galah',    name:'Galah',                cat:'birds',     price:375, size:'50 × 56 cm', pimg:'galah',                               badge:null,         meta:'Pink parrot · Silky Oak mount',         desc:'Soft pink and grey galah — always a favourite. ' + STD_DESC },
+  { id:'p-galah',    name:'Galah',                cat:'birds',     price:375, size:'50 × 56 cm', pimg:'galah',     image:IMG+'lorikeet.png',  badge:null,         meta:'Pink parrot · Silky Oak mount',         desc:'Soft pink and grey galah — always a favourite. ' + STD_DESC },
 ];
 
 const CAT_LABELS = {
@@ -399,6 +406,26 @@ document.getElementById('lightboxClose')?.addEventListener('click', closeLightbo
     } else {
       history.replaceState(null, '', '#' + t.dataset.cat);
     }
+  });
+
+  // Listen for URL hash changes (showcase cards on the same page set
+  // the hash without a real page navigation, so the catTabs IIFE's
+  // initial-filter logic never re-runs without this listener).
+  window.addEventListener('hashchange', () => {
+    const newCat = (location.hash || '').replace(/^#/, '').toLowerCase();
+    if (!validCats.includes(newCat)) return;
+    const target = tabs.querySelector(`[data-cat="${newCat}"]`);
+    if (!target || target.classList.contains('is-active')) return;
+    tabs.querySelectorAll('.cat-tab').forEach(x => x.classList.remove('is-active'));
+    target.classList.add('is-active');
+    if (window.__cbApplyShopFilters){
+      window.__cbApplyShopFilters({ flip: true });
+    } else {
+      renderGrid(newCat, { flip: true });
+    }
+    document.querySelector('.shop-tabs-bar')?.scrollIntoView({
+      behavior: 'smooth', block: 'start',
+    });
   });
 })();
 
