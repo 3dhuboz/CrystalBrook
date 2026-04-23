@@ -6,7 +6,7 @@
  *   - Offline fallback to cached index.html for navigation
  */
 
-const VERSION = 'cbwm-2026-04-23-14';
+const VERSION = 'cbwm-2026-04-23-15';
 const SHELL_CACHE = `${VERSION}-shell`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
 

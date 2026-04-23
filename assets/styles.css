@@ -76,7 +76,11 @@ body{
   font-size: 16px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
+  /* `overflow-x: hidden` would force overflow-y to auto per CSS spec,
+     making <body> a separate scroll container — that breaks every
+     hash-anchor link on the site. `clip` clips horizontal overflow
+     without creating a scroll container. (Chrome 90+, FF 81+, Safari 16+) */
+  overflow-x: clip;
 }
 img{ max-width:100%; display:block; }
 a{ color: inherit; text-decoration: none; }
