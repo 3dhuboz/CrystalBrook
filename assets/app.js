@@ -311,7 +311,7 @@ function closeLightbox(){
   if(!cart.classList.contains('is-open')) scrim.classList.remove('is-open');
   lightbox.setAttribute('aria-hidden','true');
 }
-document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
+document.getElementById('lightboxClose')?.addEventListener('click', closeLightbox);
 
 /* ---------- CATEGORY TABS (only on category pages) ---------- */
 (() => {
@@ -603,11 +603,11 @@ let items = [];
 try { items = JSON.parse(localStorage.getItem('cbwm_cart') || '[]'); } catch(_) {}
 
 function saveCart(){ localStorage.setItem('cbwm_cart', JSON.stringify(items)); renderCart(); }
-function openCart(){ cart.classList.add('is-open'); scrim.classList.add('is-open'); cart.setAttribute('aria-hidden','false'); }
-function closeCart(){ cart.classList.remove('is-open'); scrim.classList.remove('is-open'); cart.setAttribute('aria-hidden','true'); }
-cartBtn.addEventListener('click', openCart);
-cartClose.addEventListener('click', closeCart);
-scrim.addEventListener('click', closeCart);
+function openCart(){ if (!cart) return; cart.classList.add('is-open'); scrim?.classList.add('is-open'); cart.setAttribute('aria-hidden','false'); }
+function closeCart(){ if (!cart) return; cart.classList.remove('is-open'); scrim?.classList.remove('is-open'); cart.setAttribute('aria-hidden','true'); }
+cartBtn?.addEventListener('click', openCart);
+cartClose?.addEventListener('click', closeCart);
+scrim?.addEventListener('click', closeCart);
 
 function addToCart(p){
   const found = items.find(i=>i.id===p.id);
@@ -619,6 +619,7 @@ function addToCart(p){
 }
 function removeFromCart(id){ items = items.filter(i=>i.id!==id); saveCart(); }
 function renderCart(){
+  if (!cartCount || !cartBody || !cartFoot) return; // page has no cart UI (e.g. about.html)
   cartCount.textContent = items.reduce((s,i)=>s+i.qty, 0);
   if(!items.length){
     cartBody.innerHTML = `<p class="cart-empty">Your cart's empty.<br/>Have a browse of <a href="shop.html">the collection →</a></p>`;
@@ -1333,6 +1334,41 @@ document.addEventListener('keydown', e=>{
 
   // Initial calc
   recalc();
+})();
+
+/* ---------- MOBILE NAV DRAWER ---------- */
+(() => {
+  const drawer   = document.getElementById('navDrawer');
+  const backdrop = document.getElementById('navDrawerBackdrop');
+  const openBtn  = document.getElementById('navMobileBtn');
+  const closeBtn = document.getElementById('navDrawerClose');
+  if (!drawer || !backdrop || !openBtn) return;
+
+  function open(){
+    drawer.classList.add('is-open');
+    drawer.setAttribute('aria-hidden', 'false');
+    backdrop.hidden = false;
+    requestAnimationFrame(() => backdrop.classList.add('is-open'));
+    document.documentElement.style.overflow = 'hidden';
+  }
+  function close(){
+    drawer.classList.remove('is-open');
+    drawer.setAttribute('aria-hidden', 'true');
+    backdrop.classList.remove('is-open');
+    setTimeout(() => { backdrop.hidden = true; }, 300);
+    document.documentElement.style.overflow = '';
+  }
+
+  openBtn.addEventListener('click', open);
+  closeBtn?.addEventListener('click', close);
+  backdrop.addEventListener('click', close);
+
+  // Close drawer when a nav link is clicked (so anchor jumps work)
+  drawer.querySelectorAll('a').forEach(a => a.addEventListener('click', close));
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && drawer.classList.contains('is-open')) close();
+  });
 })();
 
 /* ---------- CHECKOUT MODAL ---------- */

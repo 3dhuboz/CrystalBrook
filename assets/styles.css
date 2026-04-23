@@ -993,8 +993,10 @@ section{ padding: 100px 28px; }
 @media (max-width: 760px){
   section{ padding: 70px 20px; }
   .hero{ padding: 60px 20px 80px; min-height: auto; }
-  .nav-inner{ padding: 12px 16px; grid-template-columns: auto auto; gap: 12px; }
+  .nav-inner{ padding: 12px 16px; grid-template-columns: auto 1fr auto; gap: 12px; }
   .nav-links{ display:none; }
+  .admin-link{ display:none; }
+  .nav-mobile-btn{ display: grid; }
   .product-grid{ grid-template-columns: repeat(2, 1fr); gap: 16px; }
   .product-img::before{ inset: 6px; border-width: 4px; }
   .pimg{ inset: 12px; font-size: 1.1rem; }
@@ -4672,6 +4674,111 @@ body.reel-open{ overflow: hidden; }
 }
 .pdp-404-ctas{
   display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;
+}
+
+/* =========================================================
+   MOBILE NAV DRAWER
+   ========================================================= */
+.nav-mobile-btn{ display: none; }
+.nav-drawer-backdrop{
+  position: fixed; inset: 0; z-index: 89;
+  background: rgba(10, 7, 4, .55);
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
+          backdrop-filter: blur(8px) saturate(140%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .3s var(--ease);
+}
+.nav-drawer-backdrop.is-open{ opacity: 1; pointer-events: auto; }
+.nav-drawer{
+  position: fixed; top: 0; right: 0; bottom: 0;
+  width: 320px; max-width: 88vw;
+  background: #faf6ee;
+  z-index: 90;
+  display: flex; flex-direction: column;
+  transform: translateX(100%);
+  transition: transform .32s var(--ease);
+  box-shadow: -16px 0 40px rgba(0,0,0,.25);
+}
+.nav-drawer.is-open{ transform: translateX(0); }
+
+.nav-drawer-head{
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 22px;
+  border-bottom: 1px solid var(--line);
+  flex: 0 0 auto;
+}
+.nav-drawer-head .brand{ display: flex; align-items: center; gap: 10px; }
+.nav-drawer-head .brand-text{ display: flex; flex-direction: column; }
+.nav-drawer-head .brand-name{
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.15rem; font-weight: 600; color: var(--ink);
+  line-height: 1;
+}
+.nav-drawer-head .brand-sub{
+  font-size: .58rem; letter-spacing: .25em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-top: 2px;
+}
+
+.nav-drawer-links{
+  display: flex; flex-direction: column;
+  padding: 14px 0;
+  flex: 1; overflow-y: auto;
+}
+.nav-drawer-links a{
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 22px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.18rem;
+  color: var(--ink);
+  text-decoration: none;
+  border-left: 3px solid transparent;
+  transition: background .15s var(--ease), border-color .15s var(--ease), color .15s var(--ease);
+}
+.nav-drawer-links a:hover{
+  background: rgba(15, 77, 114, .06);
+  border-left-color: var(--ocean-deep);
+  color: var(--ocean-deep);
+}
+.nav-drawer-links a svg{
+  flex: 0 0 auto;
+  color: var(--ocean-deep);
+  opacity: .75;
+  transition: opacity .15s var(--ease);
+}
+.nav-drawer-links a:hover svg{ opacity: 1; }
+
+.nav-drawer-foot{
+  flex: 0 0 auto;
+  padding: 16px 22px 22px;
+  border-top: 1px solid var(--line);
+  background: linear-gradient(180deg, transparent, rgba(212,176,106,.06));
+}
+.nav-drawer-admin{
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 14px;
+  background: rgba(28,19,10,.06);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: .68rem; letter-spacing: .2em;
+  text-transform: uppercase; font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+  transition: background .15s var(--ease), border-color .15s var(--ease);
+}
+.nav-drawer-admin:hover{
+  background: rgba(212,176,106,.12);
+  border-color: var(--line-2);
+}
+.nav-drawer-admin svg{ color: var(--ocean-deep); }
+.nav-drawer-tagline{
+  margin: 14px 0 0;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: .82rem;
+  color: var(--ink-soft);
 }
 
 /* =========================================================
