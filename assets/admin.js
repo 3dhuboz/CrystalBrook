@@ -657,13 +657,15 @@ function openAdminModal(label, view){
         || DEFAULT_IMAGE_BUILDER_ENDPOINT;
   }
 
-  async function callRealBackend(prompt){
+  async function callRealBackend(subject, category){
     const endpoint = getEndpoint();
     if (!endpoint) return null;
     const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt, count: 4 }),
+      // New 2-stage API: send raw subject + category, the Worker
+      // expands via Llama → detailed FLUX prompt → 4 images.
+      body: JSON.stringify({ subject, category, count: 4 }),
     });
     if (!res.ok){
       const text = await res.text().catch(() => '');
@@ -671,15 +673,20 @@ function openAdminModal(label, view){
     }
     const data = await res.json();
     if (!data.generations?.length) throw new Error('Worker returned no generations');
+    if (data.expandedPrompt){
+      console.log('[image-builder] Llama expanded prompt:', data.expandedPrompt);
+    }
     return data.generations;
   }
 
   async function generate(){
-    const fullPrompt = buildPrompt();
-    if (!fullPrompt){
+    const subject = (ibSubject.value || '').trim();
+    if (!subject || !state.template){
       toast('Pick a category and type what you want first.');
       return;
     }
+    // Legacy fallback prompt for the mockup pool ONLY (when backend is unreachable)
+    const fullPrompt = buildPrompt();
     if (state.busy) return;
     state.busy = true;
     ibGen.disabled = true;
@@ -699,7 +706,7 @@ function openAdminModal(label, view){
     let backendError = null;
 
     // Kick off the real backend call in parallel with the progress animation
-    const realPromise = usingReal ? callRealBackend(fullPrompt).catch(err => {
+    const realPromise = usingReal ? callRealBackend(subject, state.template).catch(err => {
       backendError = err;
       return null;
     }) : Promise.resolve(null);

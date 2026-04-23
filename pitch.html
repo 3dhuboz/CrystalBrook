@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="A complete bespoke storefront, admin and AI image-builder for Crystal Brook Wall Mounts — handcrafted by Penny Wise I.T." />
+<meta name="theme-color" content="#1c130a" />
+<title>Crystal Brook · The pitch</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet" />
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+
+<style>
+:root{
+  --ink: #1c130a;
+  --cream: #f6efe1;
+  --paper: #fbf6e9;
+  --gold: #d4b06a;
+  --gold-deep: #a87a3e;
+  --ocean: #0f4d72;
+  --ocean-deep: #063d6e;
+  --line: rgba(212, 176, 106, .25);
+  --green: #3a8a4f;
+}
+*{ box-sizing: border-box; }
+html, body{ margin:0; padding:0; }
+body{
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--cream);
+  background:
+    radial-gradient(ellipse at top, #2a1c10 0%, #0f0a05 60%, #050302 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+  overflow-x: clip;
+}
+img{ max-width: 100%; display: block; }
+a{ color: var(--gold); text-decoration: none; transition: color .15s; }
+a:hover{ color: #f4d28e; }
+
+.eyebrow{
+  font-family: 'Inter', sans-serif;
+  font-size: .68rem;
+  letter-spacing: .3em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.serif{ font-family: 'Cormorant Garamond', serif; }
+.serif-italic{ font-family: 'Cormorant Garamond', serif; font-style: italic; }
+.cinzel{ font-family: 'Cinzel', serif; }
+.script{ font-family: 'Great Vibes', cursive; }
+
+h1, h2, h3{ font-family: 'Cormorant Garamond', serif; font-weight: 600; line-height: 1.1; color: var(--cream); }
+h1{ font-size: clamp(2.8rem, 6.5vw, 5.4rem); margin: .3em 0; }
+h2{ font-size: clamp(2rem, 4.5vw, 3.4rem); margin: .4em 0 .8em; }
+h3{ font-size: clamp(1.4rem, 2.4vw, 1.95rem); margin: .3em 0 .6em; }
+p{ margin: 0 0 1em; }
+
+/* ============ TOP BAR ============ */
+.topbar{
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 32px;
+  background: rgba(15, 10, 5, .75);
+  -webkit-backdrop-filter: blur(14px);
+          backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--line);
+}
+.topbar-brand{
+  display: inline-flex; align-items: center; gap: 12px;
+  text-decoration: none; color: var(--cream);
+}
+.topbar-mark{
+  width: 38px; height: 38px; border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(180deg, #d4a872, #c89554, #a87a3e);
+  box-shadow: 0 0 0 1px rgba(212, 176, 106, .55), 0 4px 12px rgba(0,0,0,.4);
+}
+.topbar-mark svg{ width: 100%; height: 100%; }
+.topbar-name{ font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 600; }
+.topbar-sub{ font-size: .58rem; letter-spacing: .3em; text-transform: uppercase; color: var(--gold); display: block; }
+.topbar-actions{ display: inline-flex; gap: 12px; }
+.topbar-actions a{
+  padding: 9px 18px; border-radius: 999px;
+  font-size: .72rem; letter-spacing: .18em; text-transform: uppercase;
+  font-weight: 600;
+  transition: all .15s;
+}
+.topbar-link{ color: var(--cream); border: 1px solid var(--line); }
+.topbar-link:hover{ background: rgba(212,176,106,.08); color: var(--gold); }
+.topbar-cta{
+  background: var(--gold); color: var(--ink) !important;
+  border: 1px solid var(--gold);
+}
+.topbar-cta:hover{ background: #f4d28e; }
+
+/* ============ HERO ============ */
+.hero{
+  position: relative;
+  padding: 100px 32px 80px;
+  text-align: center;
+  overflow: hidden;
+}
+.hero::before{
+  content: ""; position: absolute; inset: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' seed='5'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 .9  0 0 0 0 .65  0 0 0 .12 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  opacity: .35;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+.hero-inner{ max-width: 980px; margin: 0 auto; position: relative; z-index: 1; }
+.hero h1{ color: var(--cream); }
+.hero h1 em{
+  font-style: italic;
+  background: linear-gradient(135deg, #d4b06a, #ead7a0);
+  -webkit-background-clip: text;
+          background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.hero-lede{
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(1.15rem, 2vw, 1.45rem);
+  color: rgba(246, 239, 225, .82);
+  max-width: 720px; margin: 0 auto 2em;
+}
+.hero-stats{
+  display: flex; justify-content: center; gap: 48px; flex-wrap: wrap;
+  padding-top: 18px;
+}
+.hero-stat strong{
+  font-family: 'Cinzel', serif;
+  font-size: 2.2rem;
+  color: var(--gold);
+  display: block;
+}
+.hero-stat span{
+  font-size: .68rem; letter-spacing: .22em;
+  text-transform: uppercase;
+  color: rgba(246, 239, 225, .55);
+}
+.hero-ctas{
+  display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;
+  margin-top: 38px;
+}
+.btn{
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 14px 28px; border-radius: 999px;
+  font-size: .76rem; letter-spacing: .22em;
+  text-transform: uppercase; font-weight: 700;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: all .2s;
+  cursor: pointer;
+}
+.btn-gold{ background: linear-gradient(180deg, #ead7a0, #c89554); color: var(--ink) !important; box-shadow: 0 6px 14px rgba(212,176,106,.3); }
+.btn-gold:hover{ transform: translateY(-2px); box-shadow: 0 10px 22px rgba(212,176,106,.4); }
+.btn-ghost{ background: transparent; color: var(--cream) !important; border-color: rgba(212, 176, 106, .35); }
+.btn-ghost:hover{ background: rgba(212, 176, 106, .08); border-color: var(--gold); color: var(--gold) !important; }
+
+/* ============ SECTIONS ============ */
+section{ padding: 80px 32px; max-width: 1280px; margin: 0 auto; }
+.section-head{ text-align: center; max-width: 760px; margin: 0 auto 48px; }
+.section-head .eyebrow{ display: block; margin-bottom: 12px; }
+.section-head p{
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.18rem;
+  color: rgba(246, 239, 225, .72);
+}
+
+/* ============ TWO HALVES ============ */
+.halves{
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 28px;
+}
+@media (max-width: 880px){ .halves{ grid-template-columns: 1fr; } }
+.half{
+  padding: 36px;
+  background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01));
+  border: 1px solid var(--line);
+  border-radius: 18px;
+}
+.half-eyebrow{ color: var(--gold); }
+.half h3{ margin-top: 8px; }
+.half ul{ list-style: none; padding: 0; margin: 18px 0 0; }
+.half li{
+  display: flex; gap: 12px; padding: 8px 0;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.08rem;
+  color: rgba(246, 239, 225, .85);
+}
+.half li::before{ content: "✓"; color: var(--gold); font-weight: 700; flex-shrink: 0; }
+
+/* ============ FEATURE GRID ============ */
+.feature-grid{
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+}
+@media (max-width: 980px){ .feature-grid{ grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px){ .feature-grid{ grid-template-columns: 1fr; } }
+.feat{
+  padding: 28px;
+  background: rgba(255, 255, 255, .03);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  transition: transform .25s, border-color .25s;
+}
+.feat:hover{ transform: translateY(-4px); border-color: rgba(212, 176, 106, .55); }
+.feat-icon{
+  width: 44px; height: 44px;
+  display: grid; place-items: center;
+  border-radius: 12px;
+  background: rgba(212, 176, 106, .15);
+  color: var(--gold);
+  margin-bottom: 14px;
+}
+.feat h3{ font-size: 1.18rem; margin: 0 0 8px; }
+.feat p{
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.02rem;
+  color: rgba(246, 239, 225, .72);
+  margin: 0;
+}
+
+/* ============ TECH STRIP ============ */
+.tech{
+  background: linear-gradient(180deg, rgba(212, 176, 106, .06), rgba(212, 176, 106, 0));
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.tech-grid{
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;
+}
+@media (max-width: 980px){ .tech-grid{ grid-template-columns: repeat(2, 1fr); } }
+.tech-card{
+  padding: 22px 24px;
+  background: rgba(15, 10, 5, .55);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.tech-card .pill{
+  display: inline-block;
+  background: rgba(15, 77, 114, .25);
+  color: #8cd9d9;
+  font-size: .58rem; letter-spacing: .18em;
+  text-transform: uppercase; font-weight: 700;
+  padding: 3px 8px; border-radius: 999px;
+  margin-bottom: 10px;
+}
+.tech-card h3{ font-size: 1.05rem; margin: 0 0 6px; }
+.tech-card p{
+  font-family: 'Cormorant Garamond', serif;
+  font-size: .96rem;
+  color: rgba(246, 239, 225, .68);
+  margin: 0;
+}
+
+/* ============ NUMBERS ============ */
+.numbers{
+  text-align: center;
+}
+.numbers-grid{
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px;
+}
+@media (max-width: 720px){ .numbers-grid{ grid-template-columns: repeat(2, 1fr); } }
+.num{
+  padding: 32px 16px;
+  background: rgba(255, 255, 255, .03);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.num strong{
+  font-family: 'Cinzel', serif;
+  font-size: 2.6rem;
+  color: var(--gold);
+  display: block;
+  line-height: 1;
+}
+.num span{
+  display: block; margin-top: 8px;
+  font-size: .68rem; letter-spacing: .22em;
+  text-transform: uppercase;
+  color: rgba(246, 239, 225, .62);
+}
+
+/* ============ SHOWCASE STRIP ============ */
+.showcase{
+  display: grid; grid-template-columns: 1fr 1fr; gap: 60px;
+  align-items: center;
+}
+@media (max-width: 880px){ .showcase{ grid-template-columns: 1fr; } }
+.showcase.flip{ direction: rtl; }
+.showcase.flip > *{ direction: ltr; }
+.showcase-img{
+  background: rgba(255,255,255,.03);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 28px;
+  position: relative;
+  overflow: hidden;
+}
+.showcase-img img{ border-radius: 8px; }
+.showcase-text h3{ margin-top: 8px; }
+.showcase-text p{
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.12rem;
+  color: rgba(246, 239, 225, .78);
+}
+.showcase-meta{
+  display: flex; gap: 8px; flex-wrap: wrap;
+  margin-top: 18px;
+}
+.showcase-meta span{
+  background: rgba(212, 176, 106, .12);
+  color: var(--gold);
+  font-size: .68rem; letter-spacing: .12em;
+  text-transform: uppercase; font-weight: 600;
+  padding: 5px 12px; border-radius: 999px;
+}
+
+/* ============ AI HIGHLIGHT ============ */
+.ai-highlight{
+  background:
+    radial-gradient(circle at 30% 20%, rgba(140, 217, 217, .15), transparent 60%),
+    radial-gradient(circle at 80% 80%, rgba(212, 176, 106, .12), transparent 60%),
+    linear-gradient(135deg, rgba(15, 77, 114, .25), rgba(28, 19, 10, .85));
+  border: 1px solid rgba(140, 217, 217, .25);
+  border-radius: 24px;
+  padding: 56px;
+  margin: 32px auto 0;
+}
+.ai-highlight h2{ margin-top: 8px; }
+.ai-highlight-flow{
+  display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 16px;
+  align-items: stretch;
+  margin-top: 36px;
+}
+@media (max-width: 880px){
+  .ai-highlight{ padding: 32px 24px; }
+  .ai-highlight-flow{ grid-template-columns: 1fr; }
+  .ai-arrow{ display: none; }
+}
+.ai-step{
+  padding: 22px;
+  background: rgba(15, 10, 5, .65);
+  border: 1px solid rgba(140, 217, 217, .25);
+  border-radius: 12px;
+  text-align: center;
+}
+.ai-step-num{
+  display: inline-block;
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  color: #8cd9d9;
+  margin-bottom: 8px;
+  letter-spacing: .14em;
+}
+.ai-step h4{
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.15rem;
+  margin: 0 0 6px;
+  color: var(--cream);
+}
+.ai-step p{
+  font-size: .88rem;
+  color: rgba(246, 239, 225, .65);
+  margin: 0;
+}
+.ai-arrow{
+  display: grid; place-items: center;
+  color: var(--gold);
+  font-size: 1.5rem;
+}
+
+/* ============ COMPARE TABLE ============ */
+.compare{
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-top: 24px;
+}
+@media (max-width: 720px){ .compare{ grid-template-columns: 1fr; } .compare-cell{ border-right: 0 !important; } }
+.compare-cell{
+  padding: 22px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.02rem;
+}
+.compare-cell:last-child{ border-right: 0; }
+.compare-row-heading{
+  background: rgba(212, 176, 106, .08);
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: .68rem;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.compare-cell.shopify{
+  color: rgba(246, 239, 225, .55);
+  text-decoration: line-through;
+  text-decoration-color: rgba(192, 60, 60, .5);
+}
+.compare-cell.crystal{
+  color: var(--cream);
+  background: rgba(212, 176, 106, .04);
+  font-weight: 500;
+}
+.compare-cell.crystal::before{
+  content: "✓ ";
+  color: var(--green);
+  font-weight: 700;
+}
+.compare-header{
+  background: linear-gradient(180deg, rgba(15, 10, 5, .85), rgba(15, 10, 5, .55));
+  padding: 18px 22px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  border-bottom: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+}
+.compare-header.shopify-h{ color: rgba(246, 239, 225, .55); }
+.compare-header.crystal-h{ color: var(--gold); background: rgba(212,176,106,.12); }
+
+/* ============ DRAFT LINK BLOCK ============ */
+.draft-link{
+  background: linear-gradient(135deg, rgba(212, 176, 106, .14), rgba(15, 77, 114, .12));
+  border: 1px solid var(--gold);
+  border-radius: 18px;
+  padding: 36px 32px;
+  text-align: center;
+  margin: 32px auto 0;
+  box-shadow: 0 10px 40px -10px rgba(212, 176, 106, .35);
+}
+.draft-link strong{
+  display: block;
+  font-family: 'Cinzel', serif;
+  font-size: 1.5rem;
+  letter-spacing: .04em;
+  color: var(--gold);
+  margin: 8px 0 14px;
+  word-break: break-all;
+}
+.draft-link a.draft-url{
+  display: inline-block;
+  padding: 10px 22px;
+  background: rgba(15, 10, 5, .85);
+  border: 1px solid var(--gold);
+  border-radius: 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 1.05rem;
+  letter-spacing: .04em;
+  color: #f4d28e;
+  word-break: break-all;
+}
+.draft-link a.draft-url:hover{ background: var(--gold); color: var(--ink); }
+
+/* ============ FINAL CTA ============ */
+.final{
+  text-align: center;
+  padding: 100px 32px 120px;
+  position: relative;
+}
+.final::before{
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center, rgba(212, 176, 106, .08), transparent 70%);
+  pointer-events: none;
+}
+.final h2{ font-size: clamp(2.2rem, 4.8vw, 3.6rem); }
+.final-script{
+  font-family: 'Great Vibes', cursive;
+  font-size: clamp(2.4rem, 5.4vw, 4rem);
+  background: linear-gradient(135deg, #d4b06a, #ead7a0);
+  -webkit-background-clip: text;
+          background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0;
+  line-height: 1;
+}
+.final-lede{
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.3rem;
+  color: rgba(246, 239, 225, .8);
+  max-width: 640px; margin: 24px auto 36px;
+}
+
+/* ============ FOOTER ============ */
+.foot{
+  padding: 36px 32px;
+  text-align: center;
+  font-size: .76rem;
+  color: rgba(246, 239, 225, .42);
+  border-top: 1px solid var(--line);
+  background: rgba(15, 10, 5, .55);
+}
+.foot a{ color: var(--gold); }
+</style>
+</head>
+<body>
+
+<!-- ============ TOPBAR ============ -->
+<header class="topbar">
+  <a href="#top" class="topbar-brand">
+    <span class="topbar-mark">
+      <svg viewBox="0 0 48 48" aria-hidden="true">
+        <defs>
+          <linearGradient id="pPine" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#d4a872"/><stop offset="50%" stop-color="#c89554"/><stop offset="100%" stop-color="#a87a3e"/></linearGradient>
+          <linearGradient id="pBrook" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#0f4d72"/><stop offset="50%" stop-color="#33a5c7"/><stop offset="100%" stop-color="#8cd9d9"/></linearGradient>
+        </defs>
+        <rect x="0" y="0" width="48" height="48" fill="url(#pPine)"/>
+        <g fill="none" stroke="url(#pBrook)" stroke-width="1.6" stroke-linecap="round">
+          <path d="M 4 14 Q 14 10 24 14 Q 34 18 44 14"/>
+          <path d="M 4 24 Q 14 19 24 24 Q 34 29 44 24"/>
+          <path d="M 4 34 Q 14 30 24 34 Q 34 38 44 34"/>
+        </g>
+      </svg>
+    </span>
+    <span>
+      <span class="topbar-name">Crystal Brook</span>
+      <span class="topbar-sub">The Pitch</span>
+    </span>
+  </a>
+  <div class="topbar-actions">
+    <a href="index.html" class="topbar-link">Storefront →</a>
+    <a href="admin/index.html" class="topbar-cta">Admin →</a>
+  </div>
+</header>
+
+<!-- ============ HERO ============ -->
+<section class="hero" id="top">
+  <div class="hero-inner">
+    <p class="eyebrow">Built for Max White · Crystal Brook Wall Mounts</p>
+    <h1>Your shop, online.<br/><em>Built around how you work.</em></h1>
+    <p class="hero-lede">A complete handcrafted storefront, an admin panel a 70-year-old can drive, and an AI image studio that turns "a barramundi leaping" into a print-ready product photo in ten seconds. No subscriptions. No middlemen. Yours.</p>
+    <div class="hero-ctas">
+      <a class="btn btn-gold" href="index.html">See the storefront →</a>
+      <a class="btn btn-ghost" href="admin/index.html">Open the admin →</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><strong>9</strong><span>Pages</span></div>
+      <div class="hero-stat"><strong>30+</strong><span>Products</span></div>
+      <div class="hero-stat"><strong>5</strong><span>Categories</span></div>
+      <div class="hero-stat"><strong>1</strong><span>Workshop, FNQ</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TWO HALVES ============ -->
+<section>
+  <div class="section-head">
+    <span class="eyebrow">What's in the box</span>
+    <h2>Two halves. Both yours.</h2>
+    <p>One side runs your shop for the world to see. The other runs your business for you. Every line of code in both is sitting in your repo, on your domain, no monthly platform fees.</p>
+  </div>
+
+  <div class="halves">
+    <div class="half">
+      <span class="eyebrow half-eyebrow">For your customers</span>
+      <h3>The storefront</h3>
+      <ul>
+        <li>A homepage that opens with a hand-framed wood stage, the brook ripples, and a story — not a generic e-commerce template</li>
+        <li>5 categories, 30+ pieces, real product photos on themed wood backgrounds</li>
+        <li>Live search with a / shortcut — type "barra" and the right pieces surface instantly</li>
+        <li>Filters by price, size, sort by featured/price/size — for shoppers who know what they want</li>
+        <li>Per-product pages with breadcrumbs, related pieces, and "Add to cart" everywhere</li>
+        <li>A wishlist with a heart on every card — saved between visits</li>
+        <li>A 4-step checkout (cart → shipping → card → confirmation) with free-shipping progress bar</li>
+        <li>Order tracking with a real status timeline — "Print → Cut → Mount → Resin → Cure → Ship"</li>
+        <li>Custom Commissions wizard — they upload a photo, AI cuts the background, they pick timber + size, and pay</li>
+        <li>Installable as an app on iPhone / Android / desktop, works offline</li>
+        <li>Mobile-first: real hamburger nav, sticky filters, full-bleed photos</li>
+        <li>Plain-English shipping &amp; returns policies, FNQ workshop map, friendly 404</li>
+      </ul>
+    </div>
+
+    <div class="half">
+      <span class="eyebrow half-eyebrow">For you, Max</span>
+      <h3>The admin</h3>
+      <ul>
+        <li>A dashboard you open in the morning: revenue this month, orders to fulfil, low-stock items, custom requests</li>
+        <li>Stocktake — list every piece, edit prices, mark sold-out, import a CSV from your spreadsheet</li>
+        <li>Orders &amp; Custom Orders — drag-and-drop kanban from "New" to "Printing" to "Resin" to "Shipped"</li>
+        <li>Image Builder — type "a wedge-tailed eagle in flight", get 4 print-ready photos in 10 seconds (powered by Cloudflare's FLUX AI)</li>
+        <li>Revenue charts — last 12 months, top sellers, average order value</li>
+        <li>Homepage Editor — change the headline, swap the hero piece, hit Publish</li>
+        <li>Settings — shipping rates, payment account, business details</li>
+        <li>Help button on every page — written in plain English for "the workshop, not the dev console"</li>
+        <li>Tooltips on every element — hover anything you don't recognise and it tells you what it does</li>
+        <li>Export anything to CSV with one click — for your accountant, your records, BAS time</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ AI HIGHLIGHT ============ -->
+<section>
+  <div class="section-head">
+    <span class="eyebrow">The headline feature</span>
+    <h2>Image Builder.</h2>
+    <p>Need a new product photo? You don't need a camera, a lightbox, or three hours in front of an AI prompt editor. You type. It draws. You pick.</p>
+  </div>
+
+  <div class="ai-highlight">
+    <p style="text-align:center; margin: 0;"><span class="eyebrow">How it works</span></p>
+    <h2 style="text-align:center;">Plain English in. <em>Print-ready PNG out.</em></h2>
+    <p style="text-align:center; max-width: 720px; margin: 0 auto;" class="serif">Three steps. No fancy "AI prompt" knowledge needed. The system speaks fishing, cars, dogs, birds and Australian wildlife — including FNQ-specific species. If you say "Cairns butterfly" it knows you mean the Birdwing.</p>
+
+    <div class="ai-highlight-flow">
+      <div class="ai-step">
+        <div class="ai-step-num">STEP 1</div>
+        <h4>Pick a kind</h4>
+        <p>🐠 Saltwater · 🎣 Freshwater · 🚗 Classic car · 🐾 Animal · 🦜 Bird · ✨ Anything else</p>
+      </div>
+      <div class="ai-arrow">→</div>
+      <div class="ai-step">
+        <div class="ai-step-num">STEP 2</div>
+        <h4>Describe it</h4>
+        <p>"a barra leaping out of the water" or "a 1971 Mach-1 Mustang in side profile"</p>
+      </div>
+      <div class="ai-arrow">→</div>
+      <div class="ai-step">
+        <div class="ai-step-num">STEP 3</div>
+        <h4>Pick your favourite</h4>
+        <p>4 photos appear in 10 seconds. Use one in the shop. Download the print version.</p>
+      </div>
+    </div>
+
+    <p style="text-align:center; margin: 32px 0 0;" class="serif">
+      <strong style="color: var(--gold);">Under the hood:</strong> your description goes to <strong>Llama 3.1 8B Instruct</strong> which expands it into a detailed prompt with proper species names, colours and pose. That feeds <strong>FLUX 1 Schnell</strong> which renders 4 photos in parallel, all isolated on white background, ready to drop straight into the catalogue.
+    </p>
+  </div>
+</section>
+
+<!-- ============ TECH STRIP ============ -->
+<section class="tech">
+  <div class="section-head">
+    <span class="eyebrow">The smart tech</span>
+    <h2>Best-in-class. Mostly free.</h2>
+    <p>Everything sitting on Cloudflare's edge — sub-100ms load anywhere in the world, ten thousand AI generations a day on the free tier, no servers to maintain.</p>
+  </div>
+
+  <div class="tech-grid">
+    <div class="tech-card">
+      <span class="pill">AI</span>
+      <h3>Cloudflare Workers AI</h3>
+      <p>FLUX 1 Schnell for image generation, Llama 3.1 8B for prompt expansion. 10,000 free neurons/day — enough for ~60 image generations daily.</p>
+    </div>
+    <div class="tech-card">
+      <span class="pill">Edge</span>
+      <h3>Cloudflare Workers</h3>
+      <p>Stateless serverless functions running on every continent. Cold start &lt;5ms. Same network as your storefront.</p>
+    </div>
+    <div class="tech-card">
+      <span class="pill">PWA</span>
+      <h3>Installable, offline-ready</h3>
+      <p>Service worker pre-caches the shell. Customers can add Crystal Brook to their home screen — opens like a native app, works on the train.</p>
+    </div>
+    <div class="tech-card">
+      <span class="pill">Vision</span>
+      <h3>Client-side background removal</h3>
+      <p>Custom flood-fill algorithm in the customer wizard. White edges become transparent in the browser, no server round-trip.</p>
+    </div>
+    <div class="tech-card">
+      <span class="pill">Pay</span>
+      <h3>Stripe-ready checkout</h3>
+      <p>4-step modal flow with auto-formatted card inputs, free-shipping progress, persistent orders. Drop in Stripe keys to go live.</p>
+    </div>
+    <div class="tech-card">
+      <span class="pill">Search</span>
+      <h3>Live search + deep links</h3>
+      <p>Press "/" anywhere to open. Type "monaro" — clicks land on the Cars filter with the Monaro card pulsing in view.</p>
+    </div>
+    <div class="tech-card">
+      <span class="pill">UI</span>
+      <h3>Hand-written, no framework</h3>
+      <p>Pure HTML / CSS / JS. No React, no build step, no node_modules to babysit. The whole site loads in ~80kb of JS, gzipped.</p>
+    </div>
+    <div class="tech-card">
+      <span class="pill">Host</span>
+      <h3>GitHub Pages → Cloudflare</h3>
+      <p>Currently live on GitHub Pages (free). Drops onto Cloudflare Pages or Workers with one command when you want a custom domain.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ STOREFRONT SHOWCASE ============ -->
+<section>
+  <div class="section-head">
+    <span class="eyebrow">For your customers</span>
+    <h2>What they'll see.</h2>
+  </div>
+
+  <div class="showcase">
+    <div class="showcase-img">
+      <img src="assets/images/products/coral.png" alt="Coral Trout product photo" style="background: linear-gradient(135deg, rgba(228,90,58,.12), rgba(15,77,114,.18)); padding: 16px;"/>
+    </div>
+    <div class="showcase-text">
+      <span class="eyebrow">The Storefront</span>
+      <h3>A homepage that feels like the workshop, not Wix.</h3>
+      <p>The hero is a real wood frame with a coral trout floating inside. Below it, a 5-card category showcase. Then the "Craft Reel" — print → cut → mount → resin, animated. Then 6 testimonials. Then a contact form with a live OpenStreetMap of 41–45 Dempsey Street.</p>
+      <div class="showcase-meta">
+        <span>Hero stage</span><span>Craft reel</span><span>Map</span><span>Stories</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="height: 60px;"></div>
+
+  <div class="showcase flip">
+    <div class="showcase-img">
+      <img src="assets/images/products/monaro.png" alt="HQ Monaro product photo" style="background: linear-gradient(135deg, rgba(60,150,195,.12), rgba(28,19,10,.4)); padding: 16px;"/>
+    </div>
+    <div class="showcase-text">
+      <span class="eyebrow">Per-product pages</span>
+      <h3>Real product detail pages — each with its own URL.</h3>
+      <p>Click any piece and you land on a full PDP with a sticky info column, spec table (size, mount, finish, lead time), 4 related pieces from the same category, and a "Get one made" CTA at the bottom. Clean URLs that the customer can share or bookmark.</p>
+      <div class="showcase-meta">
+        <span>Sticky info</span><span>Related pieces</span><span>Wishlist heart</span><span>SEO-ready</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="height: 60px;"></div>
+
+  <div class="showcase">
+    <div class="showcase-img">
+      <img src="assets/images/products/lorikeet.png" alt="Rainbow Lorikeet product photo" style="background: linear-gradient(135deg, rgba(212,176,106,.12), rgba(15,77,114,.18)); padding: 16px;"/>
+    </div>
+    <div class="showcase-text">
+      <span class="eyebrow">Custom Commissions</span>
+      <h3>The hero feature: their photo, on the wall, in 4 weeks.</h3>
+      <p>Customer uploads any image. Our background removal cuts the subject from the white. They pick timber, size, get a live $ quote. Pay. The order, the file, and the brief all land in your Custom Orders inbox automatically.</p>
+      <div class="showcase-meta">
+        <span>5-step wizard</span><span>Live AI cut</span><span>Live price</span><span>Order in 4 wk</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FEATURE GRID ============ -->
+<section>
+  <div class="section-head">
+    <span class="eyebrow">Every feature</span>
+    <h2>The full shopping list.</h2>
+  </div>
+
+  <div class="feature-grid">
+    <div class="feat">
+      <div class="feat-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></div>
+      <h3>Live Search</h3>
+      <p>Press "/" anywhere. Type any product. Click and you land in the right category with the right card pulsing.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"/></svg></div>
+      <h3>Wishlist</h3>
+      <p>Heart on every card. Persists between visits. Move from wishlist → cart with one click.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6h15l-1.5 9H8L6 3H3"/><circle cx="10" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg></div>
+      <h3>Smart Cart</h3>
+      <p>Real product photos, qty steppers, free-shipping progress bar that fills as you add items.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 11h18"/></svg></div>
+      <h3>4-Step Checkout</h3>
+      <p>Cart → Shipping → Stripe-style card form → Confirmation. Order saved to localStorage.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M16 8 8 16M8 8l8 8"/></svg></div>
+      <h3>Order Tracking</h3>
+      <p>Every order gets a CB-XXXXXX number and a status timeline customers can revisit any time.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7h18M3 12h18M3 17h12"/></svg></div>
+      <h3>Advanced Filters</h3>
+      <p>Price, size, sort by anything. Slide-down panel with active-filter count chip.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10v8a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V10"/><path d="M3 10l9-7 9 7"/><path d="M9 22V12h6v10"/></svg></div>
+      <h3>Install as App</h3>
+      <p>iPhone, Android, desktop. Works offline. Looks like a native app once installed.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M7 12h10M10 17h4"/></svg></div>
+      <h3>Mobile Nav</h3>
+      <p>Hamburger menu, full-screen drawer with line-art icons, body-scroll lock.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+      <h3>Workshop Map</h3>
+      <p>Live OpenStreetMap of 41–45 Dempsey St with a brand-pin overlay and "Get directions" link.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ NUMBERS ============ -->
+<section class="numbers">
+  <div class="section-head">
+    <span class="eyebrow">By the numbers</span>
+    <h2>What's been built.</h2>
+  </div>
+  <div class="numbers-grid">
+    <div class="num"><strong>9</strong><span>HTML pages</span></div>
+    <div class="num"><strong>8k+</strong><span>Lines of CSS</span></div>
+    <div class="num"><strong>40+</strong><span>Git commits</span></div>
+    <div class="num"><strong>0</strong><span>Subscriptions</span></div>
+    <div class="num"><strong>5</strong><span>Storefront drawers / modals</span></div>
+    <div class="num"><strong>7</strong><span>Admin views</span></div>
+    <div class="num"><strong>30+</strong><span>Products in catalogue</span></div>
+    <div class="num"><strong>1</strong><span>Cloudflare Worker (live)</span></div>
+  </div>
+</section>
+
+<!-- ============ SHOPIFY COMPARE ============ -->
+<section>
+  <div class="section-head">
+    <span class="eyebrow">vs. Shopify</span>
+    <h2>Why not just use Shopify?</h2>
+    <p>Shopify is brilliant — for someone who wants a generic catalogue with someone else's design. You wanted a wall-mount workshop with a Custom Commissions wizard, a built-in AI image studio and a homepage that feels like the workshop. Different job.</p>
+  </div>
+
+  <div class="compare">
+    <div class="compare-header"></div>
+    <div class="compare-header shopify-h">Shopify (Basic + apps)</div>
+    <div class="compare-header crystal-h">Crystal Brook (this build)</div>
+
+    <div class="compare-cell compare-row-heading">Monthly platform fee</div>
+    <div class="compare-cell shopify">$51/mo Basic = <strong>$612/yr</strong></div>
+    <div class="compare-cell crystal">$0/mo. Hosted free on GitHub Pages. Cloudflare free tier covers the AI.</div>
+
+    <div class="compare-cell compare-row-heading">Transaction fees</div>
+    <div class="compare-cell shopify">2.9% + 30¢ <em>plus</em> a 0.6%–2% Shopify cut on top</div>
+    <div class="compare-cell crystal">Just Stripe's 1.7% + 30¢ AU. No middleman cut.</div>
+
+    <div class="compare-cell compare-row-heading">Custom design</div>
+    <div class="compare-cell shopify">Templated themes. Looks like every other Shopify store. Theme dev = $2k–$10k extra.</div>
+    <div class="compare-cell crystal">Hand-built around your brand: real wood-frame stages, brook-ripple mark, Cormorant + Cinzel typography.</div>
+
+    <div class="compare-cell compare-row-heading">Custom Commissions form</div>
+    <div class="compare-cell shopify">Need a 3rd-party app like Mageworx Custom Form: <strong>$15–$30/mo</strong>. Still doesn't do AI cutout.</div>
+    <div class="compare-cell crystal">Built in. 5-step wizard with live AI background removal. Order, photo + brief lands in your inbox.</div>
+
+    <div class="compare-cell compare-row-heading">AI image generation</div>
+    <div class="compare-cell shopify">Need apps like ShopAi or Magic AI Studio: <strong>$10–$50/mo</strong> with credits/limits.</div>
+    <div class="compare-cell crystal">Built in via Cloudflare Workers AI. ~10,000 neurons/day free = ~60 generations.</div>
+
+    <div class="compare-cell compare-row-heading">Order tracking page</div>
+    <div class="compare-cell shopify">Generic Shopify status page. Need an app like Aftership for branded tracking: <strong>$11–$199/mo</strong>.</div>
+    <div class="compare-cell crystal">Built-in branded tracking page with the actual workshop stages: Print → Cut → Mount → Resin → Cure → Ship.</div>
+
+    <div class="compare-cell compare-row-heading">Wishlist</div>
+    <div class="compare-cell shopify">Need an app like Wishlist Plus: <strong>$5–$50/mo</strong>.</div>
+    <div class="compare-cell crystal">Built in. Heart on every card, drawer, persists across visits.</div>
+
+    <div class="compare-cell compare-row-heading">Search</div>
+    <div class="compare-cell shopify">Default search is poor. Boost AI Search: <strong>$22–$299/mo</strong>.</div>
+    <div class="compare-cell crystal">Live overlay with "/" shortcut, deep-links to filtered grid. Free.</div>
+
+    <div class="compare-cell compare-row-heading">Mobile app</div>
+    <div class="compare-cell shopify">Generic Shopify app, customers see your store inside someone else's chrome.</div>
+    <div class="compare-cell crystal">Installable PWA — your brand on the home screen, works offline.</div>
+
+    <div class="compare-cell compare-row-heading">Total monthly</div>
+    <div class="compare-cell shopify"><strong>~$110/mo minimum</strong> just for the apps you need ($1,320/yr)</div>
+    <div class="compare-cell crystal"><strong>$0/mo</strong> platform &amp; AI. Stripe fees on actual sales only.</div>
+
+    <div class="compare-cell compare-row-heading">Code ownership</div>
+    <div class="compare-cell shopify">Locked into Shopify. Migrate = full rebuild.</div>
+    <div class="compare-cell crystal">Sitting in your GitHub repo. Move to any host any time. Penny Wise I.T. maintains.</div>
+  </div>
+
+  <p style="text-align: center; margin-top: 32px; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 1.15rem; color: rgba(246, 239, 225, .7);">
+    Five-year cost difference: <strong style="color: var(--gold); font-style: normal;">~$6,600 saved</strong> on platform fees alone, before counting one-off theme dev costs.
+  </p>
+</section>
+
+<!-- ============ FINAL CTA ============ -->
+<section class="final">
+  <p class="eyebrow">Ready when you are</p>
+  <h2>This is your app, Max.</h2>
+  <p class="final-script">— signed by the maker —</p>
+  <p class="final-lede">Hand-built start to finish for Crystal Brook Wall Mounts. Yours to keep, edit, sell from. Penny Wise I.T. handles the deploys, the updates and the AI bills.</p>
+
+  <div class="draft-link">
+    <span class="eyebrow">Have a click around the live draft</span>
+    <strong>https://3dhuboz.github.io/CrystalBrook/</strong>
+    <a href="https://3dhuboz.github.io/CrystalBrook/" class="draft-url" target="_blank" rel="noopener">Open the storefront →</a>
+  </div>
+
+  <div class="hero-ctas" style="margin-top: 32px;">
+    <a class="btn btn-gold" href="index.html">Walk through the storefront →</a>
+    <a class="btn btn-ghost" href="admin/index.html">Open the admin →</a>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="foot">
+  Crystal Brook Wall Mounts · Built by <a href="#">Penny Wise I.T.</a> · Hosted on Cloudflare · April 2026
+</footer>
+
+</body>
+</html>
