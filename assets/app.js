@@ -649,28 +649,88 @@ function addToCart(p){
   openCart();
 }
 function removeFromCart(id){ items = items.filter(i=>i.id!==id); saveCart(); }
+function setCartQty(id, delta){
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  item.qty = Math.max(1, item.qty + delta);
+  saveCart();
+}
 function renderCart(){
   if (!cartCount || !cartBody || !cartFoot) return; // page has no cart UI (e.g. about.html)
   cartCount.textContent = items.reduce((s,i)=>s+i.qty, 0);
   if(!items.length){
-    cartBody.innerHTML = `<p class="cart-empty">Your cart's empty.<br/>Have a browse of <a href="shop.html">the collection →</a></p>`;
+    cartBody.innerHTML = `
+      <div class="cart-empty">
+        <div class="cart-empty-mark" aria-hidden="true">
+          <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="none" stroke="#d4b06a" stroke-width="1" opacity=".4"/><path d="M18 22h28l-3 22H21z" fill="none" stroke="#d4b06a" stroke-width="1.5"/><path d="M22 22V18a10 10 0 0 1 20 0v4" fill="none" stroke="#d4b06a" stroke-width="1.5"/></svg>
+        </div>
+        <p>Your cart's empty.<br/>Have a browse of <a href="shop.html">the collection →</a></p>
+      </div>`;
     cartFoot.hidden = true;
     return;
   }
-  cartBody.innerHTML = items.map(i=>`
-    <div class="cart-item">
-      <div class="pimg ${i.pimg} cart-item-img">${shortName(i.name)}</div>
-      <div>
-        <div class="cart-item-name">${i.name}</div>
-        <div class="cart-item-meta">Qty ${i.qty}</div>
-        <a class="cart-item-remove" data-rm="${i.id}">Remove</a>
-      </div>
-      <div class="cart-item-price">$${(i.price*i.qty).toLocaleString()}</div>
-    </div>
-  `).join('');
-  cartBody.querySelectorAll('[data-rm]').forEach(a=>a.addEventListener('click', ()=>removeFromCart(a.dataset.rm)));
+  cartBody.innerHTML = items.map(i => {
+    const p = PRODUCTS.find(x => x.id === i.id);
+    const cat = p?.cat || 'animals';
+    const size = p?.size || '';
+    const thumb = p?.image
+      ? `<img src="${p.image}" alt="" loading="lazy"/>`
+      : `<span class="cart-thumb-mark">${shortName(i.name)}</span>`;
+    return `
+      <div class="cart-item">
+        <a class="cart-thumb stage-${cat}" href="product.html?id=${i.id}">${thumb}</a>
+        <div class="cart-meta">
+          <a class="cart-item-name" href="product.html?id=${i.id}">${i.name}</a>
+          <div class="cart-item-sub">${size}</div>
+          <div class="cart-qty-row">
+            <div class="cart-qty">
+              <button class="cart-qty-btn" data-qty-dec="${i.id}" type="button" aria-label="Decrease quantity">−</button>
+              <span class="cart-qty-val">${i.qty}</span>
+              <button class="cart-qty-btn" data-qty-inc="${i.id}" type="button" aria-label="Increase quantity">+</button>
+            </div>
+            <button class="cart-remove" data-rm="${i.id}" type="button" aria-label="Remove from cart">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m-9 0v14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V6"/></svg>
+              Remove
+            </button>
+          </div>
+        </div>
+        <div class="cart-item-price">$${(i.price*i.qty).toLocaleString()}</div>
+      </div>`;
+  }).join('');
+  cartBody.querySelectorAll('[data-rm]').forEach(a => a.addEventListener('click', () => removeFromCart(a.dataset.rm)));
+  cartBody.querySelectorAll('[data-qty-inc]').forEach(b => b.addEventListener('click', () => setCartQty(b.dataset.qtyInc, 1)));
+  cartBody.querySelectorAll('[data-qty-dec]').forEach(b => b.addEventListener('click', () => setCartQty(b.dataset.qtyDec, -1)));
+
   cartFoot.hidden = false;
-  cartTotal.textContent = '$' + items.reduce((s,i)=>s+i.price*i.qty, 0).toLocaleString();
+  const subtotal = items.reduce((s,i)=>s+i.price*i.qty, 0);
+  const FREE_SHIP = 500;
+  const remaining = Math.max(0, FREE_SHIP - subtotal);
+  const progress = Math.min(100, (subtotal / FREE_SHIP) * 100);
+
+  // Update the existing #cartTotal in place (don't rebuild innerHTML, that
+  // would orphan the checkout button's click handler from the modal IIFE)
+  if (cartTotal) cartTotal.textContent = '$' + subtotal.toLocaleString();
+
+  // Inject the shipping-progress bar as the cart-foot's first child if it
+  // doesn't exist yet, otherwise update it in place
+  let progressEl = cartFoot.querySelector('.cart-ship-progress');
+  if (!progressEl){
+    progressEl = document.createElement('div');
+    progressEl.className = 'cart-ship-progress';
+    cartFoot.insertBefore(progressEl, cartFoot.firstChild);
+  }
+  progressEl.classList.toggle('is-met', remaining === 0);
+  progressEl.innerHTML = `
+    ${remaining === 0
+      ? `<p><span class="cart-ship-tick">✓</span> You qualify for <strong>free shipping</strong></p>`
+      : `<p>Add <strong>$${remaining.toLocaleString()}</strong> more for free shipping</p>`}
+    <div class="cart-ship-bar"><div class="cart-ship-fill" style="width: ${progress}%"></div></div>`;
+
+  // Update the checkout button's label to include the running total
+  const checkoutBtn = cartFoot.querySelector('#checkoutBtn');
+  if (checkoutBtn){
+    checkoutBtn.textContent = `Checkout · $${subtotal.toLocaleString()}`;
+  }
 }
 renderCart();
 

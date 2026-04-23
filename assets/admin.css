@@ -561,10 +561,13 @@ table{ border-collapse: collapse; width:100%; }
    HELP DRAWER + HELP CONTROLS
    ========================================================= */
 .tb-help{
+  /* Override .tb-btn's fixed 36px width so the "Help" label has room to breathe */
+  width: auto !important;
+  height: auto !important;
   display: inline-flex;
   align-items: center;
   gap: .4rem;
-  padding: .5rem .8rem;
+  padding: .5rem .9rem;
   background: rgba(212, 176, 106, .14);
   border: 1px solid rgba(212, 176, 106, .35);
   border-radius: 999px;
@@ -573,6 +576,7 @@ table{ border-collapse: collapse; width:100%; }
   font-size: .82rem;
   letter-spacing: .04em;
   cursor: pointer;
+  white-space: nowrap;
   transition: background .25s ease, color .25s ease, transform .2s ease;
 }
 .tb-help:hover{

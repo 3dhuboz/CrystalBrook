@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Great+Vibes&family=Dancing+Script:wght@500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/styles.css?v=20260423-21" />
+<link rel="stylesheet" href="assets/styles.css?v=20260423-22" />
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
 <link rel="apple-touch-icon" href="assets/icon-192.svg" />
 <link rel="manifest" href="manifest.webmanifest" />
@@ -949,6 +949,50 @@
       <button type="submit" class="btn btn-primary">Send message</button>
     </form>
   </div>
+
+  <!-- ===== Workshop map ===== -->
+  <div class="contact-map reveal">
+    <div class="contact-map-frame">
+      <iframe
+        src="https://www.openstreetmap.org/export/embed.html?bbox=145.7780%2C-17.1010%2C145.7950%2C-17.0880&amp;layer=mapnik&amp;marker=-17.0944%2C145.7864"
+        title="Map showing the Crystal Brook Wall Mounts workshop on Dempsey Street, Gordonvale, QLD"
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+        allowfullscreen
+      ></iframe>
+      <div class="contact-map-pin" aria-hidden="true">
+        <div class="contact-map-pin-stem"></div>
+        <div class="contact-map-pin-card">
+          <span class="contact-map-pin-mark">
+            <svg viewBox="0 0 48 48" width="22" height="22" aria-hidden="true">
+              <defs>
+                <linearGradient id="pinPine" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#d4a872"/><stop offset="50%" stop-color="#c89554"/><stop offset="100%" stop-color="#a87a3e"/></linearGradient>
+                <linearGradient id="pinBrook" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#0f4d72"/><stop offset="50%" stop-color="#33a5c7"/><stop offset="100%" stop-color="#8cd9d9"/></linearGradient>
+              </defs>
+              <rect x="0" y="0" width="48" height="48" rx="7" fill="#1c130a"/>
+              <rect x="4" y="4" width="40" height="40" rx="3" fill="url(#pinPine)"/>
+              <g fill="none" stroke="url(#pinBrook)" stroke-width="1.4" stroke-linecap="round">
+                <path d="M 8 14 Q 14 11 24 14 Q 34 17 40 14"/>
+                <path d="M 7 24 Q 14 20 24 24 Q 34 28 41 24"/>
+                <path d="M 8 34 Q 14 31 24 34 Q 34 37 40 34"/>
+              </g>
+            </svg>
+          </span>
+          <span class="contact-map-pin-text">
+            <strong>Crystal Brook</strong>
+            <small>41–45 Dempsey St · Gordonvale</small>
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="contact-map-actions">
+      <a class="btn btn-ghost" href="https://www.google.com/maps/dir/?api=1&amp;destination=41-45+Dempsey+Street+Gordonvale+QLD+4865" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" style="margin-right:6px;vertical-align:-3px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        Get directions →
+      </a>
+      <a class="btn btn-ghost" href="https://www.openstreetmap.org/?mlat=-17.0944&amp;mlon=145.7864#map=16/-17.0944/145.7864" target="_blank" rel="noopener">View larger map →</a>
+    </div>
+  </div>
 </section>
 
 <!-- ============ FOOTER ============ -->
@@ -1505,6 +1549,6 @@
 <!-- ============ TOAST ============ -->
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/app.js?v=20260423-21"></script>
+<script src="assets/app.js?v=20260423-22"></script>
 </body>
 </html>
