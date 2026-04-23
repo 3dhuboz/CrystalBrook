@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="Browse the full Crystal Brook collection — saltwater fish, freshwater fish, classic cars, animals and birds. Resin-coated archival cutouts on Australian hardwood, handcrafted in Gordonvale, Far North Queensland." />
+<title>Shop the Collection · Crystal Brook Wall Mounts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Great+Vibes&family=Dancing+Script:wght@500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/styles.css?v=20260423-7" />
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+<link rel="apple-touch-icon" href="assets/icon-192.svg" />
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#1c130a" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Crystal Brook" />
+</head>
+<body class="page-shop">
+
+<!-- ============ NAV ============ -->
+<header class="site-nav" id="siteNav">
+  <div class="nav-inner">
+    <a href="index.html" class="brand">
+      <span class="brand-mark">
+        <svg viewBox="0 0 48 48" width="34" height="34" aria-hidden="true">
+          <defs>
+            <linearGradient id="brandPine" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#d4a872"/>
+              <stop offset="50%" stop-color="#c89554"/>
+              <stop offset="100%" stop-color="#a87a3e"/>
+            </linearGradient>
+            <linearGradient id="brandBrook" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#0f4d72"/>
+              <stop offset="50%" stop-color="#33a5c7"/>
+              <stop offset="100%" stop-color="#8cd9d9"/>
+            </linearGradient>
+          </defs>
+          <rect x="2" y="9" width="44" height="30" rx="2" fill="#1c130a" stroke="#000" stroke-opacity=".55" stroke-width=".6"/>
+          <rect x="5" y="12" width="38" height="24" rx="1" fill="url(#brandPine)"/>
+          <g fill="none" stroke="url(#brandBrook)" stroke-width="1.4" stroke-linecap="round">
+            <path d="M 8 18 Q 13 16 18 18 Q 23 20 28 18 Q 33 16 40 18"/>
+            <path d="M 7 24 Q 13 21 19 24 Q 25 27 31 24 Q 37 21 41 24"/>
+            <path d="M 8 30 Q 13 28 18 30 Q 23 32 28 30 Q 33 28 40 30"/>
+          </g>
+        </svg>
+      </span>
+      <span class="brand-text">
+        <span class="brand-name">Crystal Brook</span>
+        <span class="brand-sub">Wall Mounts</span>
+      </span>
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="index.html">Home</a>
+      <a href="shop.html" aria-current="page">Shop</a>
+      <a href="about.html">About Max</a>
+      <a href="index.html#custom">Custom</a>
+      <a href="index.html#contact">Contact</a>
+    </nav>
+    <div class="nav-actions">
+      <button class="icon-btn" aria-label="Search">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      </button>
+      <button class="icon-btn" id="cartBtn" aria-label="Cart">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6h15l-1.5 9H8L6 3H3"/><circle cx="10" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg>
+        <span class="cart-count" id="cartCount">0</span>
+      </button>
+      <a class="admin-link" href="admin/index.html" title="Admin">Admin</a>
+    </div>
+  </div>
+</header>
+
+<!-- ============ SHOP HERO ============ -->
+<section class="shop-hero" id="top">
+  <div class="shop-hero-grain" aria-hidden="true"></div>
+  <div class="shop-hero-inner">
+    <p class="eyebrow">The Collection</p>
+    <h1>Browse the wall.</h1>
+    <p class="shop-hero-lede">Thirty hand-finished pieces across five categories. Each one resin-sealed, signed and numbered in the Gordonvale workshop. Pick a category — or browse the lot.</p>
+    <ul class="shop-hero-stats">
+      <li><strong>30</strong><span>Pieces</span></li>
+      <li><strong>5</strong><span>Categories</span></li>
+      <li><strong>4–6 wk</strong><span>Made to order</span></li>
+      <li><strong>FNQ</strong><span>Made in</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ CATEGORY SHOWCASE STRIP ============ -->
+<section class="shop-cats" aria-labelledby="shopCatsHeading">
+  <div class="section-head reveal">
+    <p class="eyebrow">Browse by category</p>
+    <h2 id="shopCatsHeading">Pick your obsession.</h2>
+  </div>
+  <div class="cat-showcase reveal reveal-delay-1" id="catShowcase">
+    <!-- Cards injected by app.js — each links to shop.html#<cat> -->
+  </div>
+</section>
+
+<!-- ============ FILTER TABS + GRID ============ -->
+<section class="shop-grid-wrap" id="all">
+  <div class="shop-tabs-bar">
+    <div class="shop-tabs-inner">
+      <div class="cat-tabs" id="catTabs" role="tablist" aria-label="Filter the collection">
+        <button class="cat-tab is-active" data-cat="all"        role="tab">All <span class="cat-tab-count">30</span></button>
+        <button class="cat-tab"           data-cat="saltwater"  role="tab">Saltwater <span class="cat-tab-count">6</span></button>
+        <button class="cat-tab"           data-cat="freshwater" role="tab">Freshwater <span class="cat-tab-count">5</span></button>
+        <button class="cat-tab"           data-cat="cars"       role="tab">Cars <span class="cat-tab-count">5</span></button>
+        <button class="cat-tab"           data-cat="animals"    role="tab">Animals <span class="cat-tab-count">7</span></button>
+        <button class="cat-tab"           data-cat="birds"      role="tab">Birds <span class="cat-tab-count">5</span></button>
+      </div>
+      <a href="index.html#custom" class="shop-cta-custom">
+        <span>Want something custom?</span>
+        <strong>Build your own →</strong>
+      </a>
+    </div>
+  </div>
+
+  <div class="shop-grid-shell">
+    <div class="product-grid" id="productGrid">
+      <!-- Injected by app.js -->
+    </div>
+  </div>
+</section>
+
+<!-- ============ MAKER STRIP ============ -->
+<section class="shop-maker">
+  <div class="shop-maker-inner">
+    <div class="shop-maker-copy">
+      <p class="eyebrow">From the Maker</p>
+      <h3>Don't see your fish, your dog, your old car?</h3>
+      <p>Max makes one-of-a-kind commissions from your photos. Upload, watch the AI cut it out, pick your timber, and Max ships it to your door.</p>
+      <div class="shop-maker-ctas">
+        <a class="btn btn-primary" href="index.html#custom">Start a custom piece →</a>
+        <a class="btn btn-ghost" href="about.html">Meet Max →</a>
+      </div>
+    </div>
+    <div class="shop-maker-stamp" aria-hidden="true">
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="shop-stamp-bg" cx="50%" cy="38%" r="68%">
+            <stop offset="0%" stop-color="#241c14"/>
+            <stop offset="65%" stop-color="#120c08"/>
+            <stop offset="100%" stop-color="#080503"/>
+          </radialGradient>
+          <path id="shop-stamp-top" d="M 28 100 A 72 72 0 0 1 172 100" fill="none"/>
+          <path id="shop-stamp-bot" d="M 28 100 A 72 72 0 0 0 172 100" fill="none"/>
+        </defs>
+        <circle cx="100" cy="100" r="98" fill="url(#shop-stamp-bg)"/>
+        <circle cx="100" cy="100" r="93" fill="none" stroke="#d4b06a" stroke-width="1.2" opacity=".95"/>
+        <circle cx="100" cy="100" r="89" fill="none" stroke="#d4b06a" stroke-width=".4" opacity=".5"/>
+        <circle cx="25" cy="100" r="2.2" fill="#d4b06a"/>
+        <circle cx="175" cy="100" r="2.2" fill="#d4b06a"/>
+        <g transform="translate(100 86)" stroke="#d4b06a" stroke-linecap="round" fill="none">
+          <path d="M -18 -3 Q -9 -10 0 -3 Q 9 4 18 -3" stroke-width="1.7"/>
+          <path d="M -18 4 Q -9 -3 0 4 Q 9 11 18 4" stroke-width="1.5" opacity=".78"/>
+          <path d="M -18 11 Q -9 4 0 11 Q 9 18 18 11" stroke-width="1.3" opacity=".55"/>
+        </g>
+        <text x="100" y="128" text-anchor="middle" font-family="Cormorant Garamond, serif" font-style="italic" font-size="13" fill="#f6efe1" opacity=".92">est. 2019</text>
+        <text font-family="Cinzel, serif" font-size="10.5" letter-spacing="3" fill="#f6efe1">
+          <textPath href="#shop-stamp-top" startOffset="50%" text-anchor="middle">CRYSTAL BROOK · HANDCRAFTED</textPath>
+        </text>
+        <text font-family="Cinzel, serif" font-size="9" letter-spacing="4" fill="#d4b06a">
+          <textPath href="#shop-stamp-bot" startOffset="50%" text-anchor="middle">GORDONVALE · QLD</textPath>
+        </text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="site-footer">
+  <div class="foot-top">
+    <div class="foot-brand">
+      <span class="brand-name">Crystal Brook Wall Mounts</span>
+      <span class="brand-sub">Bring the world to your walls</span>
+      <p>Handcrafted resin-coated wall mounts from our Gordonvale workshop in Far North Queensland. Saltwater fish, freshwater fish, cars, animals and birds — no two pieces alike.</p>
+    </div>
+    <div class="foot-cols">
+      <div>
+        <h5>Shop</h5>
+        <a href="shop.html#saltwater">Saltwater Fish</a><a href="shop.html#freshwater">Freshwater Fish</a><a href="shop.html#cars">Cars</a><a href="shop.html#animals">Animals</a><a href="shop.html#birds">Birds</a><a href="index.html#custom">Custom</a>
+      </div>
+      <div>
+        <h5>Company</h5>
+        <a href="about.html">About Max</a><a href="index.html#contact">Contact</a><a href="#">Shipping</a><a href="#">Returns</a>
+      </div>
+      <div>
+        <h5>Follow</h5>
+        <a href="#">Facebook</a><a href="#">Instagram</a><a href="#">TikTok</a>
+      </div>
+    </div>
+  </div>
+  <div class="foot-bot">
+    <span>© <span id="year"></span> Crystal Brook Wall Mounts · ABN 00 000 000 000</span>
+    <span>Built by <a href="#">Penny Wise I.T.</a></span>
+  </div>
+</footer>
+
+<!-- ============ LIGHTBOX / QUICK VIEW ============ -->
+<div class="lightbox" id="lightbox" aria-hidden="true" role="dialog" aria-modal="true">
+  <button class="icon-btn lightbox-close" id="lightboxClose" aria-label="Close">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m6 6 12 12M18 6 6 18"/></svg>
+  </button>
+  <div class="lightbox-body" id="lightboxBody"></div>
+</div>
+
+<!-- ============ CART DRAWER ============ -->
+<aside class="cart-drawer" id="cartDrawer" aria-hidden="true">
+  <div class="cart-head">
+    <h3>Your cart</h3>
+    <button class="icon-btn" id="cartClose" aria-label="Close cart">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m6 6 12 12M18 6 6 18"/></svg>
+    </button>
+  </div>
+  <div class="cart-body" id="cartBody">
+    <p class="cart-empty">Your cart's empty.<br/>Have a browse of <a href="shop.html">the collection →</a></p>
+  </div>
+  <div class="cart-foot" id="cartFoot" hidden>
+    <div class="cart-total"><span>Subtotal</span><strong id="cartTotal">$0</strong></div>
+    <button class="btn btn-primary btn-block">Checkout</button>
+    <small>Free shipping Australia-wide on orders over $500.</small>
+  </div>
+</aside>
+<div class="scrim" id="scrim"></div>
+
+<!-- ============ PWA INSTALL PROMPT ============ -->
+<div class="pwa-install" id="pwaInstall" hidden role="dialog" aria-labelledby="pwaInstallTitle">
+  <div class="pwa-install-mark" aria-hidden="true">
+    <svg viewBox="0 0 48 48" width="44" height="44">
+      <defs>
+        <linearGradient id="pwaPine" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#d4a872"/><stop offset="50%" stop-color="#c89554"/><stop offset="100%" stop-color="#a87a3e"/></linearGradient>
+        <linearGradient id="pwaBrook" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#0f4d72"/><stop offset="50%" stop-color="#33a5c7"/><stop offset="100%" stop-color="#8cd9d9"/></linearGradient>
+      </defs>
+      <rect x="2" y="9" width="44" height="30" rx="2" fill="#1c130a" stroke="#000" stroke-opacity=".55" stroke-width=".6"/>
+      <rect x="5" y="12" width="38" height="24" rx="1" fill="url(#pwaPine)"/>
+      <g fill="none" stroke="url(#pwaBrook)" stroke-width="1.4" stroke-linecap="round">
+        <path d="M 8 18 Q 13 16 18 18 Q 23 20 28 18 Q 33 16 40 18"/>
+        <path d="M 7 24 Q 13 21 19 24 Q 25 27 31 24 Q 37 21 41 24"/>
+        <path d="M 8 30 Q 13 28 18 30 Q 23 32 28 30 Q 33 28 40 30"/>
+      </g>
+    </svg>
+  </div>
+  <div class="pwa-install-copy">
+    <strong id="pwaInstallTitle">Add Crystal Brook to your home screen</strong>
+    <span>One tap to browse — works offline, no app store.</span>
+  </div>
+  <div class="pwa-install-actions">
+    <button class="btn btn-primary" id="pwaInstallBtn" type="button">Install</button>
+    <button class="pwa-install-dismiss" id="pwaInstallDismiss" type="button" aria-label="Dismiss">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m6 6 12 12M18 6 6 18"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ============ TOAST ============ -->
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="assets/app.js?v=20260423-7"></script>
+</body>
+</html>

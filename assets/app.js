@@ -87,7 +87,7 @@ function renderCategoryShowcase(){
       ? `<img src="${p.image}" class="cat-show-cutout" alt="" loading="lazy"/>`
       : `<div class="cat-show-placeholder">${shortName(p?.name || c.title)}</div>`;
     return `
-      <a class="cat-show-card stage-${c.cat}${c.hero ? ' is-hero' : ''}" href="#stories" data-cat="${c.cat}">
+      <a class="cat-show-card stage-${c.cat}${c.hero ? ' is-hero' : ''}" href="shop.html#${c.cat}" data-cat="${c.cat}">
         <div class="cat-show-bg" aria-hidden="true"></div>
         <div class="cat-show-cutouts">${cutout}</div>
         <div class="cat-show-meta">
@@ -309,12 +309,31 @@ document.getElementById('lightboxClose').addEventListener('click', closeLightbox
 (() => {
   const tabs = document.getElementById('catTabs');
   if (!tabs) return;
+
+  // Initial filter from URL hash (e.g. shop.html#cars)
+  const fromHash = (location.hash || '').replace(/^#/, '').toLowerCase();
+  const validCats = ['all','saltwater','freshwater','cars','animals','birds'];
+  if (fromHash && validCats.includes(fromHash) && fromHash !== 'all'){
+    const target = tabs.querySelector(`[data-cat="${fromHash}"]`);
+    if (target){
+      tabs.querySelectorAll('.cat-tab').forEach(x => x.classList.remove('is-active'));
+      target.classList.add('is-active');
+      renderGrid(fromHash, { flip: false });
+    }
+  }
+
   tabs.addEventListener('click', e=>{
     const t = e.target.closest('.cat-tab'); if(!t) return;
     if (t.classList.contains('is-active')) return;
     document.querySelectorAll('.cat-tab').forEach(x=>x.classList.remove('is-active'));
     t.classList.add('is-active');
     renderGrid(t.dataset.cat, { flip: true });
+    // Reflect filter in the URL so it can be linked / refreshed
+    if (t.dataset.cat === 'all') {
+      history.replaceState(null, '', location.pathname);
+    } else {
+      history.replaceState(null, '', '#' + t.dataset.cat);
+    }
   });
 })();
 
@@ -350,7 +369,7 @@ function removeFromCart(id){ items = items.filter(i=>i.id!==id); saveCart(); }
 function renderCart(){
   cartCount.textContent = items.reduce((s,i)=>s+i.qty, 0);
   if(!items.length){
-    cartBody.innerHTML = `<p class="cart-empty">Your cart's empty.<br/>Have a browse of <a href="#shop">the collection →</a></p>`;
+    cartBody.innerHTML = `<p class="cart-empty">Your cart's empty.<br/>Have a browse of <a href="shop.html">the collection →</a></p>`;
     cartFoot.hidden = true;
     return;
   }
@@ -440,7 +459,7 @@ document.getElementById('customForm')?.addEventListener('submit', async e => {
   const ap = document.getElementById('aiPreview');
   if (ap) ap.hidden = true;
 });
-document.getElementById('contactForm').addEventListener('submit', async e => {
+document.getElementById('contactForm')?.addEventListener('submit', async e => {
   e.preventDefault();
   const f = e.target;
   if (!f.name.value.trim() || !f.email.value.trim() || !f.message.value.trim()){
