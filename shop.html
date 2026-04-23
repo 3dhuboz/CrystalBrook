@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Great+Vibes&family=Dancing+Script:wght@500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/styles.css?v=20260423-10" />
+<link rel="stylesheet" href="assets/styles.css?v=20260423-11" />
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
 <link rel="apple-touch-icon" href="assets/icon-192.svg" />
 <link rel="manifest" href="manifest.webmanifest" />
@@ -110,10 +110,65 @@
         <button class="cat-tab"           data-cat="animals"    role="tab">Animals <span class="cat-tab-count">7</span></button>
         <button class="cat-tab"           data-cat="birds"      role="tab">Birds <span class="cat-tab-count">5</span></button>
       </div>
-      <a href="index.html#custom" class="shop-cta-custom">
-        <span>Want something custom?</span>
-        <strong>Build your own →</strong>
-      </a>
+      <div class="shop-toolbar">
+        <button class="shop-filter-btn" id="shopFilterBtn" type="button" aria-expanded="false" aria-controls="shopFilterPanel">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+          <span>Filters</span>
+          <span class="shop-filter-count" id="shopFilterCount" hidden>0</span>
+          <svg class="shop-filter-chev" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div class="shop-sort">
+          <label for="shopSort">Sort</label>
+          <select id="shopSort">
+            <option value="featured">Featured</option>
+            <option value="price-asc">Price: low to high</option>
+            <option value="price-desc">Price: high to low</option>
+            <option value="size-desc">Size: large first</option>
+            <option value="size-asc">Size: small first</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Collapsible advanced filter panel -->
+    <div class="shop-filter-panel" id="shopFilterPanel" role="region" aria-label="Advanced filters">
+      <div class="shop-filter-grid">
+        <div class="shop-filter-group">
+          <h4>Price</h4>
+          <div class="shop-filter-pills" data-filter="price">
+            <button class="shop-filter-pill is-active" data-val="" type="button">Any price</button>
+            <button class="shop-filter-pill" data-val="0-399" type="button">Under $400</button>
+            <button class="shop-filter-pill" data-val="400-599" type="button">$400 – $599</button>
+            <button class="shop-filter-pill" data-val="600-9999" type="button">$600+</button>
+          </div>
+        </div>
+        <div class="shop-filter-group">
+          <h4>Size</h4>
+          <div class="shop-filter-pills" data-filter="size">
+            <button class="shop-filter-pill is-active" data-val="" type="button">Any size</button>
+            <button class="shop-filter-pill" data-val="small" type="button">Small <small>≤ 50cm</small></button>
+            <button class="shop-filter-pill" data-val="medium" type="button">Medium <small>50–80cm</small></button>
+            <button class="shop-filter-pill" data-val="large" type="button">Large <small>80–100cm</small></button>
+            <button class="shop-filter-pill" data-val="xl" type="button">XL <small>100cm+</small></button>
+          </div>
+        </div>
+        <div class="shop-filter-group shop-filter-group-aux">
+          <h4>Availability</h4>
+          <label class="shop-filter-switch">
+            <input type="checkbox" id="shopFilterInStock" checked/>
+            <span class="shop-filter-switch-track" aria-hidden="true"></span>
+            <span>In stock only</span>
+          </label>
+          <a href="index.html#custom" class="shop-filter-custom">
+            <span>Don't see it?</span>
+            <strong>Build your own →</strong>
+          </a>
+        </div>
+      </div>
+      <div class="shop-filter-actions">
+        <button class="shop-filter-clear" id="shopFilterClear" type="button">Clear all</button>
+        <span class="shop-filter-result" id="shopFilterResult">30 pieces</span>
+      </div>
     </div>
   </div>
 
@@ -376,6 +431,6 @@
 <!-- ============ TOAST ============ -->
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/app.js?v=20260423-10"></script>
+<script src="assets/app.js?v=20260423-11"></script>
 </body>
 </html>

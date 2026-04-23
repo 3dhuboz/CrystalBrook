@@ -165,9 +165,13 @@ function bindCardInteractions(){
 const prefersReducedMotion = () =>
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-function renderGrid(cat='all', { flip = false } = {}){
+function renderGrid(catOrList='all', { flip = false } = {}){
   if (!grid) return; // homepage no longer has a product grid; only category pages do
-  const list = cat==='all' ? PRODUCTS : PRODUCTS.filter(p=>p.cat===cat);
+  // Accept either a category string OR a pre-filtered list (used by the
+  // advanced filter panel on shop.html). Keeps catTabs handler unchanged.
+  const list = Array.isArray(catOrList)
+    ? catOrList
+    : (catOrList === 'all' ? PRODUCTS : PRODUCTS.filter(p => p.cat === catOrList));
 
   // First render, no animation requested, or reduced motion → simple stagger reveal
   if (!flip || !grid.children.length || prefersReducedMotion()) {
@@ -351,7 +355,13 @@ document.getElementById('lightboxClose').addEventListener('click', closeLightbox
     if (t.classList.contains('is-active')) return;
     document.querySelectorAll('.cat-tab').forEach(x=>x.classList.remove('is-active'));
     t.classList.add('is-active');
-    renderGrid(t.dataset.cat, { flip: true });
+    // If the advanced filter panel is wired, let it own re-rendering so
+    // active filters (price/size/sort) survive a category change.
+    if (window.__cbApplyShopFilters){
+      window.__cbApplyShopFilters({ flip: true });
+    } else {
+      renderGrid(t.dataset.cat, { flip: true });
+    }
     // Reflect filter in the URL so it can be linked / refreshed
     if (t.dataset.cat === 'all') {
       history.replaceState(null, '', location.pathname);
@@ -359,6 +369,130 @@ document.getElementById('lightboxClose').addEventListener('click', closeLightbox
       history.replaceState(null, '', '#' + t.dataset.cat);
     }
   });
+})();
+
+/* ---------- ADVANCED SHOP FILTERS (shop.html) ---------- */
+(() => {
+  const panel = document.getElementById('shopFilterPanel');
+  const filterBtn = document.getElementById('shopFilterBtn');
+  if (!panel || !filterBtn) return;
+
+  const filterCount  = document.getElementById('shopFilterCount');
+  const filterClear  = document.getElementById('shopFilterClear');
+  const filterResult = document.getElementById('shopFilterResult');
+  const sortSel      = document.getElementById('shopSort');
+  const inStockEl    = document.getElementById('shopFilterInStock');
+
+  const state = { price: '', size: '', sort: 'featured', inStock: true };
+
+  function getSizeBucket(p){
+    const m = (p.size || '').match(/(\d+)\s*[×x]\s*(\d+)/);
+    if (!m) return null;
+    const max = Math.max(+m[1], +m[2]);
+    if (max < 50) return 'small';
+    if (max < 80) return 'medium';
+    if (max < 100) return 'large';
+    return 'xl';
+  }
+  function getMaxDim(p){
+    const m = (p.size || '').match(/(\d+)\s*[×x]\s*(\d+)/);
+    return m ? Math.max(+m[1], +m[2]) : 0;
+  }
+  function getActiveCat(){
+    return document.querySelector('#catTabs .cat-tab.is-active')?.dataset.cat || 'all';
+  }
+
+  function buildList(){
+    const cat = getActiveCat();
+    let list = cat === 'all' ? PRODUCTS.slice() : PRODUCTS.filter(p => p.cat === cat);
+    if (state.price){
+      const [lo, hi] = state.price.split('-').map(Number);
+      list = list.filter(p => p.price >= lo && p.price <= hi);
+    }
+    if (state.size){
+      list = list.filter(p => getSizeBucket(p) === state.size);
+    }
+    // inStock toggle is mockup-only — every product is in stock today
+    if (state.sort === 'price-asc')  list.sort((a,b) => a.price - b.price);
+    if (state.sort === 'price-desc') list.sort((a,b) => b.price - a.price);
+    if (state.sort === 'size-desc')  list.sort((a,b) => getMaxDim(b) - getMaxDim(a));
+    if (state.sort === 'size-asc')   list.sort((a,b) => getMaxDim(a) - getMaxDim(b));
+    return list;
+  }
+
+  function activeFilterCount(){
+    let n = 0;
+    if (state.price) n++;
+    if (state.size)  n++;
+    if (state.sort && state.sort !== 'featured') n++;
+    return n;
+  }
+
+  function applyFilters(opts = {}){
+    const list = buildList();
+    renderGrid(list, { flip: opts.flip ?? false });
+    const total = list.length;
+    if (filterResult){
+      filterResult.textContent = total === 1 ? '1 piece' : `${total} pieces`;
+    }
+    const n = activeFilterCount();
+    if (n > 0){
+      filterCount.hidden = false;
+      filterCount.textContent = n;
+    } else {
+      filterCount.hidden = true;
+    }
+  }
+
+  // Wire the pill groups (price + size)
+  panel.querySelectorAll('.shop-filter-pills').forEach(group => {
+    const key = group.dataset.filter;
+    group.addEventListener('click', e => {
+      const pill = e.target.closest('.shop-filter-pill');
+      if (!pill) return;
+      group.querySelectorAll('.shop-filter-pill').forEach(p => p.classList.remove('is-active'));
+      pill.classList.add('is-active');
+      state[key] = pill.dataset.val;
+      applyFilters({ flip: true });
+    });
+  });
+
+  // Sort dropdown
+  sortSel?.addEventListener('change', () => {
+    state.sort = sortSel.value;
+    applyFilters({ flip: true });
+  });
+
+  // In-stock toggle (visual only for now)
+  inStockEl?.addEventListener('change', () => {
+    state.inStock = inStockEl.checked;
+    applyFilters({ flip: true });
+  });
+
+  // Clear all
+  filterClear?.addEventListener('click', () => {
+    state.price = ''; state.size = ''; state.sort = 'featured';
+    panel.querySelectorAll('.shop-filter-pills').forEach(group => {
+      group.querySelectorAll('.shop-filter-pill').forEach((p, i) => {
+        p.classList.toggle('is-active', i === 0);
+      });
+    });
+    if (sortSel) sortSel.value = 'featured';
+    applyFilters({ flip: true });
+  });
+
+  // Toggle the panel open/closed
+  filterBtn.addEventListener('click', () => {
+    const open = panel.classList.toggle('is-open');
+    filterBtn.classList.toggle('is-open', open);
+    filterBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+
+  // Expose hook so catTabs handler re-runs through us on category change
+  window.__cbApplyShopFilters = applyFilters;
+
+  // Initial render — surfaces the result count & re-applies any URL-based cat
+  applyFilters();
 })();
 
 /* ---------- SEARCH OVERLAY (any page) ---------- */
