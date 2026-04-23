@@ -882,15 +882,19 @@ table{ border-collapse: collapse; width:100%; }
   font-family: 'Cormorant Garamond', serif;
   font-size: 1rem;
   font-weight: 600;
+  color: #1c130a;
   color: var(--ink);
 }
 .ib-tpl small{
   font-size: .68rem;
-  color: var(--ink-mute);
+  color: rgba(28, 19, 10, .55);
   letter-spacing: .04em;
 }
 
-/* Step 2 — large input */
+/* Step 2 — large input
+   NOTE: admin's --ink is cream (dark theme), but this input has a
+   white background — explicit dark text/placeholder colours so it's
+   actually readable. */
 .ib-input{
   width: 100%;
   padding: 18px 22px;
@@ -899,11 +903,11 @@ table{ border-collapse: collapse; width:100%; }
   background: #fff;
   border: 2px solid var(--line);
   border-radius: 12px;
-  color: var(--ink);
+  color: #1c130a !important;
   transition: border-color .15s ease, box-shadow .15s ease;
 }
 .ib-input::placeholder{
-  color: rgba(28, 19, 10, .35);
+  color: rgba(28, 19, 10, .42);
   font-style: italic;
 }
 .ib-input:focus{
@@ -996,7 +1000,7 @@ table{ border-collapse: collapse; width:100%; }
 .ib-results-title{
   font-family: 'Cormorant Garamond', serif;
   font-size: 1.6rem; font-weight: 600;
-  color: var(--ink);
+  color: #1c130a;
   margin: 0 0 20px;
   text-align: center;
 }
