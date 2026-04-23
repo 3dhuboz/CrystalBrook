@@ -53,10 +53,24 @@ function json(data, init = {}, cors = {}) {
 }
 
 /**
- * Convert a Workers AI image binary (Uint8Array) to a base64 data URL.
- * Workers AI's FLUX returns raw PNG bytes via response.image OR via the
- * raw response body depending on the SDK shape. Handle both.
+ * Convert a Workers AI image response to a base64 data URL with the
+ * CORRECT mime type. FLUX 1 Schnell returns JPEG bytes despite the
+ * common assumption it's PNG — we sniff the magic bytes so the data
+ * URL is honest and download filenames get the right extension.
+ *
+ *   FF D8 FF  → JPEG
+ *   89 50 4E 47 → PNG
+ *   47 49 46 38 → GIF
+ *   52 49 46 46 → WebP (RIFF container)
  */
+function detectMime(byte0, byte1, byte2, byte3) {
+  if (byte0 === 0xff && byte1 === 0xd8 && byte2 === 0xff) return 'image/jpeg';
+  if (byte0 === 0x89 && byte1 === 0x50 && byte2 === 0x4e && byte3 === 0x47) return 'image/png';
+  if (byte0 === 0x47 && byte1 === 0x49 && byte2 === 0x46) return 'image/gif';
+  if (byte0 === 0x52 && byte1 === 0x49 && byte2 === 0x46 && byte3 === 0x46) return 'image/webp';
+  return 'image/png'; // sensible default
+}
+
 function toDataUrl(image) {
   let bytes;
   if (image instanceof Uint8Array) {
@@ -64,18 +78,24 @@ function toDataUrl(image) {
   } else if (image instanceof ArrayBuffer) {
     bytes = new Uint8Array(image);
   } else if (typeof image === 'string') {
-    // Already base64 — wrap it
-    return `data:image/png;base64,${image}`;
+    // Already base64 — sniff the first 4 bytes by decoding the head
+    const head = atob(image.slice(0, 8));
+    const mime = detectMime(
+      head.charCodeAt(0), head.charCodeAt(1),
+      head.charCodeAt(2), head.charCodeAt(3),
+    );
+    return `data:${mime};base64,${image}`;
   } else {
     throw new Error('Unknown image format from Workers AI');
   }
-  // Convert to base64
+  const mime = detectMime(bytes[0], bytes[1], bytes[2], bytes[3]);
+  // Convert bytes to base64 in chunks (avoids stack overflow on large images)
   let bin = '';
   const chunk = 8192;
   for (let i = 0; i < bytes.length; i += chunk) {
     bin += String.fromCharCode(...bytes.subarray(i, i + chunk));
   }
-  return `data:image/png;base64,${btoa(bin)}`;
+  return `data:${mime};base64,${btoa(bin)}`;
 }
 
 async function generate(env, prompt, count) {

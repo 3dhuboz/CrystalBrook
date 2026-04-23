@@ -66,11 +66,19 @@ table{ border-collapse: collapse; width:100%; }
   margin-bottom: 18px;
 }
 .side-brand .mark{
-  width: 44px; height: 44px; border-radius: 50%;
-  display:grid; place-items:center;
-  background: radial-gradient(circle at 30% 30%, #2a2218, #15110c);
-  border: 1px solid var(--line-2);
-  color: var(--gold);
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: block;
+  background: #1c130a;
+  box-shadow:
+    0 0 0 1px rgba(212, 176, 106, .45),
+    0 4px 10px rgba(0, 0, 0, .35),
+    inset 0 1px 0 rgba(255, 255, 255, .12);
+}
+.side-brand .mark svg{
+  width: 100%; height: 100%;
+  display: block;
 }
 .side-brand .b-name{ display:block; font-family:'Cormorant Garamond', serif; font-weight:700; color: var(--gold-2); font-size: 1.05rem; line-height: 1; }
 .side-brand .b-sub{ display:block; font-size:.62rem; letter-spacing:.35em; text-transform:uppercase; color: var(--ink-dim); margin-top: 5px; }
@@ -764,6 +772,34 @@ table{ border-collapse: collapse; width:100%; }
   font-size: .75rem;
   color: #1c130a;
 }
+
+/* =========================================================
+   TOPBAR BRAND MARK — small wood plaque next to crumbs,
+   click to view storefront
+   ========================================================= */
+.tb-brand-mark{
+  display: inline-grid; place-items: center;
+  width: 30px; height: 30px;
+  margin-right: 6px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #1c130a;
+  box-shadow:
+    0 0 0 1px rgba(212, 176, 106, .35),
+    0 2px 6px rgba(0, 0, 0, .35);
+  transition: transform .2s ease, box-shadow .2s ease;
+  text-decoration: none;
+  flex: 0 0 auto;
+}
+.tb-brand-mark:hover{
+  transform: scale(1.08) rotate(-3deg);
+  box-shadow:
+    0 0 0 1px rgba(212, 176, 106, .65),
+    0 4px 12px rgba(0, 0, 0, .45);
+}
+.tb-brand-mark svg{ width: 100%; height: 100%; display: block; }
+
+.crumbs{ display: inline-flex; align-items: center; gap: 8px; }
 
 /* =========================================================
    IMAGE BUILDER — three-step large-button studio for Max

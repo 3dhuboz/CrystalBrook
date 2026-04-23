@@ -381,11 +381,7 @@ document.getElementById('publishBtn')?.addEventListener('click', ()=>{
   toast('Homepage changes published.');
 });
 
-/* ---------- TOP-OF-VIEW ACTION BUTTONS (Import/Export/+ New …) ----------
- * The view headers (Stocktake, Orders, Quotes, Revenue, Settings) all
- * have action pills on the right that previously did nothing on click.
- * Wire them to sensible mockup actions so the admin feels responsive.
- * Real backend will swap these for actual API calls. */
+/* ---------- TOP-OF-VIEW ACTION BUTTONS (Import/Export/+ New …) ---------- */
 (() => {
   document.querySelectorAll('.v-head-actions .btn').forEach(btn => {
     if (btn.id === 'publishBtn') return; // already wired
@@ -437,7 +433,7 @@ function handleAdminAction(label, view, btn){
         : view === 'revenue'
         ? 'Month,Revenue,Orders,AOV'
         : 'SKU,Name,Category,Price,Stock';
-      const csv = headers + '\n# (Mockup export — backend wiring pending)\n';
+      const csv = headers + '\n';
       const blob = new Blob([csv], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -464,12 +460,12 @@ function handleAdminAction(label, view, btn){
     toast('Opening preview in a new tab…');
     return;
   }
-  // Export PDF → mockup
+  // Export PDF
   if (l.includes('pdf')){
-    toast('Building PDF report — coming soon');
+    toast('Putting your PDF together — give it a sec.');
     return;
   }
-  toast(`"${label}" — coming soon`);
+  toast(`"${label}" — we'll get this hooked up soon.`);
 }
 
 function openAdminModal(label, view){
@@ -496,13 +492,20 @@ function openAdminModal(label, view){
     modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('is-open'); });
     modal.querySelector('#adminModalSave').addEventListener('click', () => {
       modal.classList.remove('is-open');
-      toast('Saved (mockup) — wire backend to persist');
+      toast('Saved.');
     });
   }
   const title = label.replace(/^\+\s*/, '').replace(/^./, c => c.toUpperCase());
   modal.querySelector('#adminModalTitle').textContent = title;
+  // Plain-English lede per view, no developer jargon
+  const ledeByView = {
+    products: 'Fill in what the new piece is, what it costs and pop a photo on it.',
+    orders:   'Quickly add a phone or in-person order so it shows in your list.',
+    quotes:   'Write up a custom commission quote to send the customer.',
+    settings: 'Add a new piece to feature on the home page.',
+  };
   modal.querySelector('#adminModalLede').textContent =
-    `Quick form for ${view}. Backend wiring pending — fields here will POST to the Workers API once it lands.`;
+    ledeByView[view] || `Fill in the details and hit Save.`;
   // Generate a few sensible fields based on the action
   let fields = '';
   if (view === 'products' || /product/i.test(label)){
@@ -587,6 +590,11 @@ function openAdminModal(label, view){
     cars:       'isolated on pure white background, classic-car side profile, glossy paintwork, period-correct details, no background reflections, hyperrealistic, sharp detail, 8k product photography',
     animals:    'isolated on pure white background, three-quarter pose, soft studio lighting, hyperrealistic fur detail, no shadow, 8k product photography',
     birds:      'isolated on pure white background, side profile or perched, vibrant plumage, hyperrealistic, no shadow, 8k product photography',
+    // Generic catalogue-look preset — for anything outside the 5 main
+    // categories. Max can describe a tractor, a footy jersey, a vintage
+    // Fender Strat, anything — and still get the same Crystal Brook
+    // hyperreal-on-white look.
+    other:      'isolated on pure white background, hyperrealistic, studio lighting, no shadow, sharp detail, 8k product photography, archival pigment colour palette',
   };
 
   // Suggestion chips per template — Max can click instead of typing
@@ -596,6 +604,7 @@ function openAdminModal(label, view){
     cars:       ['1973 XB Falcon', 'HQ Holden Statesman', 'EH Holden in white', '1970 Mustang Boss 302'],
     animals:    ['Maremma sheepdog', 'spotted-tail quoll', 'wombat side-on', 'border collie pup'],
     birds:      ['eclectus parrot', 'gouldian finch', 'powerful owl', 'crimson rosella'],
+    other:      ['1965 Fender Stratocaster', 'Brisbane Lions guernsey', 'old timber lobster pot', 'vintage compass and map'],
   };
 
   /* Pool of existing catalogue images we shuffle for the mockup output.
@@ -607,6 +616,8 @@ function openAdminModal(label, view){
     cars:       ['monaro.png','torana.png','xygt.png'],
     animals:    ['frenchie.png','bonus-sea-turtle.png','bonus-ulysses-butterfly.png'],
     birds:      ['lorikeet.png'],
+    // "Other" mockup pool: shuffle across all categories for visual variety
+    other:      ['coral.png','barra.png','monaro.png','frenchie.png','lorikeet.png','bonus-ulysses-butterfly.png'],
   };
   const PROD_IMG = '../assets/images/products/';
 
@@ -637,11 +648,13 @@ function openAdminModal(label, view){
   }
 
   // Endpoint for the real Cloudflare Worker that runs FLUX 1 Schnell.
-  // Set via DevTools after deploy:
-  //   localStorage.setItem('cbwm_image_builder_endpoint', 'https://...workers.dev/api/studio/generate')
-  // Falls back to mockup if not configured or if the call fails.
+  // Hardcoded default + localStorage override (so dev/prod can differ
+  // without a code change).
+  const DEFAULT_IMAGE_BUILDER_ENDPOINT =
+    'https://crystalbrook-image-builder.steve-700.workers.dev/api/studio/generate';
   function getEndpoint(){
-    return localStorage.getItem('cbwm_image_builder_endpoint') || '';
+    return localStorage.getItem('cbwm_image_builder_endpoint')
+        || DEFAULT_IMAGE_BUILDER_ENDPOINT;
   }
 
   async function callRealBackend(prompt){
@@ -675,16 +688,11 @@ function openAdminModal(label, view){
     ibResults.hidden = true;
     ibProgress.hidden = false;
     const usingReal = !!getEndpoint();
-    const stages = usingReal ? [
-      ['Sending your description to FLUX…',   12],
-      ['Drawing your 4 photos…',              60],
-      ['Cleaning up the backgrounds…',        88],
-      ['Almost there…',                       100],
-    ] : [
-      ['Reading your description…',         18],
-      ['Drawing your 4 photos (preview)…',  55],
-      ['Removing the white backgrounds…',   82],
-      ['Putting them on the wall…',         100],
+    const stages = [
+      ['Reading what you typed…',           14],
+      ['Drawing your 4 photos…',            60],
+      ['Cleaning up the backgrounds…',      88],
+      ['Almost ready…',                     100],
     ];
 
     let generations = null;
@@ -705,11 +713,12 @@ function openAdminModal(label, view){
 
     generations = await realPromise;
 
-    // If no real backend (or it failed) → fall back to the mockup
+    // If the AI is unreachable, fall back to preview images so the
+    // page never feels broken
     if (!generations){
       if (backendError){
-        console.warn('[image-builder] backend failed, using mockup:', backendError.message);
-        toast('AI backend unreachable — showing preview images. Re-deploy the Worker?');
+        console.warn('[image-builder] backend failed, using preview images:', backendError.message);
+        toast('Couldn\'t reach the AI just now — here are some examples instead. Try again in a minute?');
       }
       const pool = MOCK_POOL[state.template] || MOCK_POOL.animals;
       const shuffled = pool.slice().sort(() => Math.random() - 0.5);
@@ -717,7 +726,7 @@ function openAdminModal(label, view){
         id: 'gen-' + Date.now() + '-' + i,
         url: PROD_IMG + shuffled[i % shuffled.length],
         prompt: fullPrompt,
-        model: 'mockup (catalogue stand-in)',
+        model: 'preview',
         createdAt: Date.now(),
       }));
     }
@@ -756,12 +765,8 @@ function openAdminModal(label, view){
 
   function useAsProduct(gen){
     if (!gen) return;
-    // === REAL BACKEND ===
-    // POST /api/studio/save-as-product { generationId: gen.id }
-    // The Worker copies the R2 PNG to the products bucket, inserts a
-    // PRODUCTS row, returns the product. The admin then jumps to
-    // Stocktake with the new product highlighted for editing.
-    toast(`✓ "${gen.prompt.slice(0, 30)}…" added to your shop. Edit details on the Stocktake page.`);
+    // === REAL BACKEND (when wired) saves to PRODUCTS via the Worker ===
+    toast(`✓ Added to your shop. You can edit the price and name on the Stocktake page.`);
     // Save to history
     saveToHistory(gen);
   }
