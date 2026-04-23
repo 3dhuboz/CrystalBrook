@@ -1201,6 +1201,142 @@ document.addEventListener('keydown', e=>{
   recalc();
 })();
 
+/* ---------- CHECKOUT MODAL ---------- */
+(() => {
+  const modal     = document.getElementById('checkoutModal');
+  const openBtn   = document.getElementById('checkoutBtn');
+  if (!modal || !openBtn) return;
+
+  const closeBtn  = document.getElementById('checkoutClose');
+  const steps     = [...modal.querySelectorAll('.co-step')];
+  const dots      = [...modal.querySelectorAll('.co-dot')];
+  const reviewList   = document.getElementById('coReviewList');
+  const reviewSub    = document.getElementById('coReviewSub');
+  const reviewShip   = document.getElementById('coReviewShip');
+  const reviewTotal  = document.getElementById('coReviewTotal');
+  const shipTotal    = document.getElementById('coShipTotal');
+  const payTotal     = document.getElementById('coPayTotal');
+  const successOrder = document.getElementById('coSuccessOrder');
+  const successItems = document.getElementById('coSuccessItems');
+  const successEmail = document.getElementById('coSuccessEmail');
+
+  const SHIP_FREE_THRESHOLD = 500;
+  const SHIP_COST = 25;
+
+  const subtotal = () => items.reduce((s, i) => s + i.price * i.qty, 0);
+  const shipping = () => subtotal() >= SHIP_FREE_THRESHOLD ? 0 : SHIP_COST;
+  const total    = () => subtotal() + shipping();
+
+  let currentStep = 0;
+  function go(stepIdx){
+    currentStep = stepIdx;
+    steps.forEach((s, i) => s.classList.toggle('is-current', i === stepIdx));
+    dots.forEach((d, i) => {
+      d.classList.toggle('is-current', i === stepIdx);
+      d.classList.toggle('is-done', i < stepIdx);
+    });
+  }
+  function open(){
+    if (!items.length){ toast('Your cart is empty — add a piece first.'); return; }
+    refreshReview();
+    go(0);
+    modal.hidden = false;
+    requestAnimationFrame(() => {
+      modal.classList.add('is-open');
+      scrim.classList.add('is-open');
+    });
+  }
+  function close(){
+    modal.classList.remove('is-open');
+    if (!cart.classList.contains('is-open')) scrim.classList.remove('is-open');
+    setTimeout(() => { modal.hidden = true; }, 220);
+  }
+  function refreshReview(){
+    if (!items.length){ close(); return; }
+    reviewList.innerHTML = items.map(i => `
+      <div class="co-line">
+        <div class="co-line-meta">
+          <strong>${i.name}</strong>
+          <span>Qty ${i.qty}</span>
+        </div>
+        <span class="co-line-price">$${(i.price * i.qty).toLocaleString()}</span>
+      </div>`).join('');
+    const sub = subtotal();
+    const ship = shipping();
+    reviewSub.textContent   = '$' + sub.toLocaleString();
+    reviewShip.textContent  = ship === 0 ? 'Free' : '$' + ship.toLocaleString();
+    reviewTotal.textContent = '$' + (sub + ship).toLocaleString();
+    if (shipTotal) shipTotal.textContent = '$' + (sub + ship).toLocaleString();
+    if (payTotal)  payTotal.textContent  = '$' + (sub + ship).toLocaleString();
+  }
+
+  // Bind Next / Back / Pay
+  modal.querySelectorAll('[data-co-next]').forEach(b => {
+    b.addEventListener('click', () => {
+      // Validate shipping form before advancing past step 1 (ship)
+      if (currentStep === 1){
+        const form = modal.querySelector('#coShipForm');
+        if (!form.checkValidity()){ form.reportValidity(); return; }
+      }
+      // Validate payment form before processing
+      if (currentStep === 2){
+        const form = modal.querySelector('#coPayForm');
+        if (!form.checkValidity()){ form.reportValidity(); return; }
+        // Simulate processing
+        const btn = b;
+        const orig = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'Processing payment…';
+        apiPost(API.checkout, {
+          items, total: total(),
+          ship: serializeForm(modal.querySelector('#coShipForm')),
+          payment: { last4: form.cardNumber.value.replace(/\s/g, '').slice(-4) },
+        }).then(() => {
+          btn.disabled = false;
+          btn.textContent = orig;
+          // Generate order number
+          const orderId = 'CB-' + Math.floor(100000 + Math.random() * 900000);
+          successOrder.textContent = orderId;
+          successItems.textContent = items.reduce((s, i) => s + i.qty, 0);
+          successEmail.textContent = modal.querySelector('#coShipForm input[name="email"]').value;
+          // Clear cart
+          items = [];
+          saveCart();
+          go(3);
+        });
+        return;
+      }
+      go(currentStep + 1);
+    });
+  });
+  modal.querySelectorAll('[data-co-back]').forEach(b => {
+    b.addEventListener('click', () => go(Math.max(0, currentStep - 1)));
+  });
+
+  // Card-number formatting (groups of 4)
+  modal.querySelector('#coCardNum')?.addEventListener('input', (e) => {
+    const v = e.target.value.replace(/\D/g, '').slice(0, 16);
+    e.target.value = v.replace(/(\d{4})(?=\d)/g, '$1 ');
+  });
+  modal.querySelector('#coCardExp')?.addEventListener('input', (e) => {
+    const v = e.target.value.replace(/\D/g, '').slice(0, 4);
+    e.target.value = v.length > 2 ? v.slice(0, 2) + '/' + v.slice(2) : v;
+  });
+  modal.querySelector('#coCardCvc')?.addEventListener('input', (e) => {
+    e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4);
+  });
+
+  openBtn.addEventListener('click', () => {
+    closeCart();
+    open();
+  });
+  closeBtn.addEventListener('click', close);
+  modal.addEventListener('click', e => { if (e.target === modal) close(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !modal.hidden && currentStep !== 3) close();
+  });
+})();
+
 /* ---------- PRODUCT DETAIL PAGE (product.html) ---------- */
 (() => {
   const titleEl = document.getElementById('pdpTitle');

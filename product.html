@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Great+Vibes&family=Dancing+Script:wght@500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/styles.css?v=20260423-9" />
+<link rel="stylesheet" href="assets/styles.css?v=20260423-10" />
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
 <link rel="apple-touch-icon" href="assets/icon-192.svg" />
 <link rel="manifest" href="manifest.webmanifest" />
@@ -210,6 +210,110 @@
 </aside>
 <div class="scrim" id="scrim"></div>
 
+<!-- ============ CHECKOUT MODAL ============ -->
+<div class="checkout-modal" id="checkoutModal" hidden role="dialog" aria-modal="true" aria-label="Checkout">
+  <div class="co-card">
+    <button class="co-close" id="checkoutClose" aria-label="Close checkout" type="button">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m6 6 12 12M18 6 6 18"/></svg>
+    </button>
+    <div class="co-progress" aria-hidden="true">
+      <span class="co-dot is-current"><b>1</b><small>Cart</small></span>
+      <span class="co-prog-line"></span>
+      <span class="co-dot"><b>2</b><small>Shipping</small></span>
+      <span class="co-prog-line"></span>
+      <span class="co-dot"><b>3</b><small>Payment</small></span>
+    </div>
+    <div class="co-step is-current" data-step="0">
+      <h2>Review your cart</h2>
+      <p class="co-step-lede">Make sure everything looks right before we head to shipping.</p>
+      <div class="co-list" id="coReviewList"></div>
+      <div class="co-totals">
+        <div class="co-total-row"><span>Subtotal</span><strong id="coReviewSub">$0</strong></div>
+        <div class="co-total-row"><span>Shipping</span><strong id="coReviewShip">$0</strong></div>
+        <div class="co-total-row co-grand"><span>Total</span><strong id="coReviewTotal">$0</strong></div>
+      </div>
+      <p class="co-fineprint">Free shipping Australia-wide on orders over $500.</p>
+      <div class="co-actions">
+        <button class="btn btn-primary btn-block" data-co-next type="button">Continue to shipping →</button>
+      </div>
+    </div>
+    <div class="co-step" data-step="1">
+      <h2>Where's it going?</h2>
+      <p class="co-step-lede">Max ships Australia-wide. International? <a href="index.html#contact">Get in touch</a> for a quote.</p>
+      <form id="coShipForm" class="co-form" novalidate>
+        <label><span>Full name *</span><input type="text" name="name" required autocomplete="name"/></label>
+        <label><span>Email *</span><input type="email" name="email" required autocomplete="email"/></label>
+        <label><span>Phone</span><input type="tel" name="phone" autocomplete="tel"/></label>
+        <label><span>Street address *</span><input type="text" name="address" required autocomplete="street-address"/></label>
+        <div class="co-row-2">
+          <label><span>Suburb *</span><input type="text" name="city" required autocomplete="address-level2"/></label>
+          <label><span>State *</span>
+            <select name="state" required autocomplete="address-level1">
+              <option value="">Pick one</option>
+              <option>QLD</option><option>NSW</option><option>VIC</option><option>WA</option><option>SA</option><option>TAS</option><option>ACT</option><option>NT</option>
+            </select>
+          </label>
+        </div>
+        <label><span>Postcode *</span><input type="text" name="postcode" required pattern="[0-9]{4}" autocomplete="postal-code"/></label>
+      </form>
+      <div class="co-totals co-totals-mini">
+        <div class="co-total-row co-grand"><span>Total</span><strong id="coShipTotal">$0</strong></div>
+      </div>
+      <div class="co-actions">
+        <button class="btn btn-ghost" data-co-back type="button">← Back</button>
+        <button class="btn btn-primary" data-co-next type="button">Continue to payment →</button>
+      </div>
+    </div>
+    <div class="co-step" data-step="2">
+      <h2>Pay securely.</h2>
+      <p class="co-step-lede">Test mode — no real charges. Use any card details to preview the flow.</p>
+      <form id="coPayForm" class="co-form co-pay-form" novalidate>
+        <label><span>Cardholder name *</span><input type="text" name="cardName" required/></label>
+        <label class="co-card-row">
+          <span>Card number *</span>
+          <div class="co-card-input">
+            <input type="text" name="cardNumber" id="coCardNum" required pattern="[0-9 ]{18,19}" placeholder="4242 4242 4242 4242" inputmode="numeric"/>
+            <span class="co-card-brand">
+              <svg viewBox="0 0 36 22"><rect width="36" height="22" rx="3" fill="#0f4d72"/><text x="18" y="15" font-family="Arial" font-size="9" font-weight="700" fill="white" text-anchor="middle" letter-spacing="0.5">VISA</text></svg>
+            </span>
+          </div>
+        </label>
+        <div class="co-row-2">
+          <label><span>Expiry *</span><input type="text" name="cardExp" id="coCardExp" required pattern="[0-9]{2}/[0-9]{2}" placeholder="MM/YY" inputmode="numeric"/></label>
+          <label><span>CVC *</span><input type="text" name="cardCvc" id="coCardCvc" required pattern="[0-9]{3,4}" placeholder="123" inputmode="numeric"/></label>
+        </div>
+      </form>
+      <div class="co-totals co-totals-mini">
+        <div class="co-total-row co-grand"><span>Pay now</span><strong id="coPayTotal">$0</strong></div>
+      </div>
+      <div class="co-secure">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        <span>Secure payment processed by Stripe · 256-bit encryption</span>
+      </div>
+      <div class="co-actions">
+        <button class="btn btn-ghost" data-co-back type="button">← Back</button>
+        <button class="btn btn-primary" data-co-next type="button">Pay now →</button>
+      </div>
+    </div>
+    <div class="co-step co-success" data-step="3">
+      <div class="co-success-mark">
+        <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="none" stroke="#3a8a4f" stroke-width="3"/><path d="M19 33 L28 42 L46 22" fill="none" stroke="#3a8a4f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h2>Thank you.</h2>
+      <p class="co-success-lede">Your order's in. Max will print, mount and resin-seal each piece by hand — you'll have it on your wall in 4–6 weeks.</p>
+      <div class="co-success-card">
+        <div><strong>Order number</strong><span id="coSuccessOrder">CB-000000</span></div>
+        <div><strong>Pieces</strong><span id="coSuccessItems">0</span></div>
+        <div><strong>Confirmation sent to</strong><span id="coSuccessEmail">…</span></div>
+      </div>
+      <p class="co-fineprint">Max will email progress photos before the resin pour, and again before shipping.</p>
+      <div class="co-actions">
+        <a href="shop.html" class="btn btn-primary">Browse the collection →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ============ SEARCH OVERLAY ============ -->
 <div class="search-overlay" id="searchOverlay" hidden role="dialog" aria-modal="true" aria-label="Search the collection">
   <div class="search-card">
@@ -228,6 +332,6 @@
 <!-- ============ TOAST ============ -->
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/app.js?v=20260423-9"></script>
+<script src="assets/app.js?v=20260423-10"></script>
 </body>
 </html>
