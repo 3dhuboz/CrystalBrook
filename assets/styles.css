@@ -3787,11 +3787,23 @@ body.reel-open{ overflow: hidden; }
   padding: 110px 24px 64px;
   text-align: center;
   background:
+    /* "Gallery wall" of mounted pieces — small dark plaques with tiny gold ripples,
+       repeated diagonally as a low-opacity backdrop */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='280' height='280' viewBox='0 0 280 280'><defs><linearGradient id='gp' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23dab07a' stop-opacity='.35'/><stop offset='1' stop-color='%23a87a3e' stop-opacity='.35'/></linearGradient></defs><g transform='rotate(-8 140 140)'><g transform='translate(20 30)'><rect width='80' height='56' rx='4' fill='%231c130a' opacity='.18'/><rect x='5' y='5' width='70' height='46' rx='2' fill='url(%23gp)'/><path d='M 12 22 Q 22 18 32 22 Q 42 26 52 22 Q 62 18 70 22' stroke='%23d4b06a' stroke-width='1.2' fill='none' opacity='.35'/><path d='M 12 30 Q 22 26 32 30 Q 42 34 52 30 Q 62 26 70 30' stroke='%23d4b06a' stroke-width='1' fill='none' opacity='.25'/></g><g transform='translate(150 80)'><rect width='80' height='56' rx='4' fill='%231c130a' opacity='.18'/><rect x='5' y='5' width='70' height='46' rx='2' fill='url(%23gp)'/></g><g transform='translate(60 160)'><rect width='80' height='56' rx='4' fill='%231c130a' opacity='.18'/><rect x='5' y='5' width='70' height='46' rx='2' fill='url(%23gp)'/></g><g transform='translate(180 200)'><rect width='80' height='56' rx='4' fill='%231c130a' opacity='.18'/><rect x='5' y='5' width='70' height='46' rx='2' fill='url(%23gp)'/></g></g></svg>"),
     radial-gradient(circle at 20% 0%, rgba(212,176,106,.18) 0%, transparent 55%),
     radial-gradient(circle at 80% 100%, rgba(60,150,195,.12) 0%, transparent 55%),
     linear-gradient(180deg, #f6efe1 0%, #fbf6e9 100%);
+  background-size: 280px 280px, auto, auto, auto;
+  background-repeat: repeat, no-repeat, no-repeat, no-repeat;
   border-bottom: 1px solid rgba(28,19,10,.08);
   overflow: hidden;
+}
+.shop-hero::before{
+  /* Soft cream wash over the wall pattern so the headline still pops */
+  content: ""; position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 50%, rgba(251, 246, 233, .82) 0%, rgba(251, 246, 233, .55) 60%, transparent 100%);
+  pointer-events: none;
 }
 .shop-hero-grain{
   position:absolute; inset:0; pointer-events:none; opacity:.18;

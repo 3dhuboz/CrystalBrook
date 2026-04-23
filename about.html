@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Great+Vibes&family=Dancing+Script:wght@500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/styles.css?v=20260423-18" />
+<link rel="stylesheet" href="assets/styles.css?v=20260423-19" />
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
 <link rel="apple-touch-icon" href="assets/icon-192.svg" />
 <link rel="manifest" href="manifest.webmanifest" />
@@ -108,14 +108,57 @@
 .about-portrait{
   position: relative;
   aspect-ratio: 4 / 5;
-  border-radius: 8px;
-  overflow: hidden;
+  border-radius: 10px;
+  overflow: visible; /* let the gold halo show beyond the frame */
   background:
     radial-gradient(ellipse at 50% 35%, #2c2014 0%, #14100a 70%, #0a0806 100%);
   box-shadow:
-    0 30px 80px rgba(0,0,0,.45),
-    inset 0 0 0 1px rgba(212,176,106,.25);
+    0 0 0 12px #1c130a,                          /* dark wood-frame thickness */
+    0 0 0 14px rgba(212, 176, 106, .55),         /* thin gold inlay */
+    0 36px 70px -10px rgba(212, 176, 106, .35),  /* warm gold glow */
+    0 50px 100px -20px rgba(0, 0, 0, .65),       /* heavy drop shadow */
+    inset 0 0 0 1px rgba(212, 176, 106, .35);
+  transform: rotate(-1deg);
+  transition: transform .5s var(--ease);
+  z-index: 1;
 }
+.about-portrait:hover{ transform: rotate(0deg) scale(1.015); }
+/* Warm aurora wash behind the portrait */
+.about-portrait::after{
+  content: ""; position: absolute;
+  inset: -50px;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(255, 200, 130, .32), transparent 55%),
+    radial-gradient(ellipse at 75% 80%, rgba(60, 150, 195, .22), transparent 50%);
+  filter: blur(24px);
+  border-radius: 30px;
+  pointer-events: none;
+}
+/* Wrap the img+placeholder in an inner clipping container so the photo
+   stays within the rounded frame, but the wax seal can spill outside */
+.about-portrait > .about-portrait-img,
+.about-portrait > .portrait-placeholder,
+.about-portrait > .about-portrait-frame,
+.about-portrait::before{
+  border-radius: 8px;
+}
+.about-portrait > .about-portrait-img,
+.about-portrait > .portrait-placeholder,
+.about-portrait::before{
+  clip-path: inset(0 0 0 0 round 8px);
+}
+/* Gold "Signed by the Maker" wax-seal stamp in the bottom-right corner */
+.about-signed{
+  position: absolute;
+  bottom: -22px; right: -22px;
+  width: 92px; height: 92px;
+  z-index: 4;
+  filter: drop-shadow(0 8px 18px rgba(0,0,0,.55));
+  transform: rotate(8deg);
+  transition: transform .35s var(--ease);
+}
+.about-portrait:hover .about-signed{ transform: rotate(2deg) scale(1.08); }
 .about-portrait-img{
   position: absolute;
   inset: 0;
@@ -466,20 +509,24 @@
   position: relative;
   border-radius: 12px;
   overflow: hidden;
-  background:
-    radial-gradient(ellipse at 50% 40%, rgba(180, 130, 80, .25) 0%, rgba(40, 28, 16, .5) 70%, rgba(10, 8, 4, .9) 100%);
-  box-shadow: inset 0 0 0 1px rgba(212, 176, 106, .15);
-  display: grid;
-  place-items: center;
-  color: rgba(212, 176, 106, .35);
-  font-family: 'Inter', sans-serif;
-  font-size: .72rem;
-  letter-spacing: .25em;
-  text-transform: uppercase;
+  background: #0d0805;
+  box-shadow:
+    inset 0 0 0 1px rgba(212, 176, 106, .25),
+    0 18px 40px -12px rgba(0, 0, 0, .55);
+  display: block;
+  transition: transform .35s var(--ease);
+  cursor: pointer;
 }
+.about-shot:hover{ transform: translateY(-4px); }
 .about-shot.hero{
   grid-row: span 2;
 }
+.about-shot-art{
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  display: block;
+}
+/* Subtle scan-line texture over the illustrations */
 .about-shot::before{
   content: "";
   position: absolute;
@@ -487,17 +534,25 @@
   background-image:
     repeating-linear-gradient(92deg, rgba(212,176,106,.04) 0 1px, transparent 1px 8px);
   pointer-events: none;
+  z-index: 2;
 }
+/* Caption strip across the bottom */
 .about-shot-label{
-  text-align: center;
-  z-index: 1;
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  z-index: 3;
+  padding: 14px 18px 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: .68rem;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: #d4b06a;
+  background: linear-gradient(180deg, transparent, rgba(10, 8, 4, .85) 60%);
+  text-align: left;
 }
-.about-shot-label svg{
-  width: 28px;
-  height: 28px;
-  display: block;
-  margin: 0 auto .4rem;
-  opacity: .65;
+.about-shot.hero .about-shot-label{
+  font-size: .78rem;
+  padding: 22px 24px 18px;
 }
 
 .about-workshop-cta{
@@ -628,12 +683,12 @@
               <stop offset="100%" stop-color="#8cd9d9"/>
             </linearGradient>
           </defs>
-          <rect x="2" y="9" width="44" height="30" rx="2" fill="#1c130a" stroke="#000" stroke-opacity=".55" stroke-width=".6"/>
-          <rect x="5" y="12" width="38" height="24" rx="1" fill="url(#brandPineAbout)"/>
+          <rect x="0" y="0" width="48" height="48" rx="7" fill="#1c130a"/>
+          <rect x="4" y="4" width="40" height="40" rx="3" fill="url(#brandPineAbout)"/>
           <g fill="none" stroke="url(#brandBrookAbout)" stroke-width="1.4" stroke-linecap="round">
-            <path d="M 8 18 Q 13 16 18 18 Q 23 20 28 18 Q 33 16 40 18"/>
-            <path d="M 7 24 Q 13 21 19 24 Q 25 27 31 24 Q 37 21 41 24"/>
-            <path d="M 8 30 Q 13 28 18 30 Q 23 32 28 30 Q 33 28 40 30"/>
+            <path d="M 8 14 Q 14 11 24 14 Q 34 17 40 14"/>
+            <path d="M 7 24 Q 14 20 24 24 Q 34 28 41 24"/>
+            <path d="M 8 34 Q 14 31 24 34 Q 34 37 40 34"/>
           </g>
         </svg>
       </span>
@@ -685,7 +740,28 @@
     </div>
     <div>
       <div class="about-portrait">
-        <img class="about-portrait-img" src="assets/images/max-portrait.jpg?v=20260423-18" alt="Max White on the FNQ coast holding one of his torched-wood shark mounts" />
+        <img class="about-portrait-img" src="assets/images/max-portrait.jpg?v=20260423-19" alt="Max White on the FNQ coast holding one of his torched-wood shark mounts" />
+        <!-- Wax-seal style "Signed by the Maker" stamp, peeking off the frame -->
+        <svg class="about-signed" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <radialGradient id="signedBg" cx="50%" cy="40%" r="65%">
+              <stop offset="0%" stop-color="#241c14"/>
+              <stop offset="100%" stop-color="#080503"/>
+            </radialGradient>
+            <path id="signedTop" d="M 16 50 A 34 34 0 0 1 84 50" fill="none"/>
+            <path id="signedBot" d="M 16 50 A 34 34 0 0 0 84 50" fill="none"/>
+          </defs>
+          <circle cx="50" cy="50" r="48" fill="url(#signedBg)"/>
+          <circle cx="50" cy="50" r="44" fill="none" stroke="#d4b06a" stroke-width=".7" opacity=".95"/>
+          <circle cx="50" cy="50" r="41" fill="none" stroke="#d4b06a" stroke-width=".3" opacity=".55"/>
+          <text font-family="Cinzel, serif" font-size="6" letter-spacing="2" fill="#f6efe1">
+            <textPath href="#signedTop" startOffset="50%" text-anchor="middle">· SIGNED ·</textPath>
+          </text>
+          <text font-family="Cinzel, serif" font-size="5.5" letter-spacing="3" fill="#d4b06a">
+            <textPath href="#signedBot" startOffset="50%" text-anchor="middle">BY THE MAKER</textPath>
+          </text>
+          <text x="50" y="58" text-anchor="middle" font-family="Great Vibes, cursive" font-size="22" fill="#d4b06a">Max</text>
+        </svg>
         <div class="portrait-placeholder" hidden>
           <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true">
             <circle cx="50" cy="38" r="14" stroke="#d4b06a"/>
@@ -843,35 +919,229 @@
     <p>Until Max sends real workshop photos through, these placeholders sit in their stead. The Craft Reel on the homepage walks through what each stage looks like.</p>
   </div>
   <div class="about-workshop-grid">
+
+    <!-- ===== Tile 1 (large): Workshop wide-shot ===== -->
     <div class="about-shot hero">
-      <div class="about-shot-label">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="m3 8 9 6 9-6"/></svg>
-        Workshop wide-shot
-      </div>
+      <svg class="about-shot-art" viewBox="0 0 600 480" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <linearGradient id="wsSky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3a2614"/>
+            <stop offset="100%" stop-color="#160c06"/>
+          </linearGradient>
+          <linearGradient id="wsLamp" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#fff5d8" stop-opacity=".55"/>
+            <stop offset="100%" stop-color="#fff5d8" stop-opacity="0"/>
+          </linearGradient>
+          <linearGradient id="wsBench" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#c89554"/>
+            <stop offset="100%" stop-color="#7a4f24"/>
+          </linearGradient>
+          <pattern id="wsBenchGrain" width="600" height="6" patternUnits="userSpaceOnUse">
+            <rect width="600" height="6" fill="url(#wsBench)"/>
+            <line x1="0" y1="3" x2="600" y2="3" stroke="rgba(40,20,8,.25)" stroke-width=".5"/>
+          </pattern>
+        </defs>
+        <!-- Wall + back -->
+        <rect width="600" height="320" fill="url(#wsSky)"/>
+        <!-- Pegboard with hanging tools (silhouettes) -->
+        <g opacity=".5" fill="none" stroke="#d4b06a" stroke-width="1.4" stroke-linecap="round">
+          <!-- Pegboard outline -->
+          <rect x="60" y="60" width="220" height="160" rx="4" stroke-opacity=".4"/>
+          <!-- Hanging tools: blade, brush, mallet, hand-saw silhouette -->
+          <line x1="100" y1="90" x2="100" y2="160"/><polygon points="92,160 108,160 100,180" fill="#d4b06a"/>
+          <line x1="140" y1="90" x2="140" y2="155"/><rect x="134" y="155" width="12" height="22" rx="2" fill="#d4b06a"/>
+          <line x1="180" y1="90" x2="180" y2="170"/><circle cx="180" cy="178" r="10" fill="#d4b06a"/>
+          <path d="M 220 90 L 220 170 L 260 165 L 220 170" stroke-width="1.2"/>
+        </g>
+        <!-- Pendant lamp -->
+        <line x1="430" y1="0" x2="430" y2="60" stroke="#1c130a" stroke-width="2"/>
+        <ellipse cx="430" cy="80" rx="40" ry="26" fill="#1c130a"/>
+        <ellipse cx="430" cy="80" rx="32" ry="18" fill="#fff5d8"/>
+        <!-- Warm light cone -->
+        <path d="M 380 90 L 480 90 L 530 320 L 330 320 Z" fill="url(#wsLamp)"/>
+        <!-- Workbench surface -->
+        <rect x="0" y="320" width="600" height="160" fill="url(#wsBenchGrain)"/>
+        <line x1="0" y1="320" x2="600" y2="320" stroke="rgba(40,20,8,.55)" stroke-width="2"/>
+        <!-- Mounted piece in progress (centred, lit) -->
+        <g transform="translate(360 220)">
+          <rect x="-70" y="0" width="140" height="100" rx="3" fill="#1c130a"/>
+          <rect x="-64" y="6" width="128" height="88" rx="2" fill="url(#wsBench)"/>
+          <!-- Aurora cutout silhouette -->
+          <path d="M -45 60 Q -25 35 0 50 Q 25 65 45 40" fill="none" stroke="#e45a3a" stroke-width="6" stroke-linecap="round" opacity=".85"/>
+          <circle cx="35" cy="42" r="3" fill="#0a0806"/>
+        </g>
+        <!-- Resin bottle on bench -->
+        <rect x="120" y="350" width="32" height="60" rx="3" fill="#0f4d72" opacity=".75"/>
+        <rect x="124" y="346" width="24" height="8" rx="2" fill="#1c130a"/>
+        <!-- Wood shavings -->
+        <g fill="#7a4f24" opacity=".7">
+          <ellipse cx="220" cy="450" rx="14" ry="3"/>
+          <ellipse cx="500" cy="445" rx="18" ry="2.5"/>
+          <ellipse cx="280" cy="460" rx="10" ry="2"/>
+        </g>
+        <!-- Stacked planks far right -->
+        <g transform="translate(530 280)">
+          <rect x="0" y="0" width="60" height="6" fill="#a87a3e" stroke="#1c130a" stroke-width=".5"/>
+          <rect x="0" y="8" width="60" height="6" fill="#c89554" stroke="#1c130a" stroke-width=".5"/>
+          <rect x="0" y="16" width="60" height="6" fill="#7a4f24" stroke="#1c130a" stroke-width=".5"/>
+          <rect x="0" y="24" width="60" height="6" fill="#a87a3e" stroke="#1c130a" stroke-width=".5"/>
+        </g>
+      </svg>
+      <div class="about-shot-label">Workshop wide-shot</div>
     </div>
+
+    <!-- ===== Tile 2: Hand-cut detail ===== -->
     <div class="about-shot">
-      <div class="about-shot-label">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 3l14 14M19 3 5 17"/></svg>
-        Hand-cut detail
-      </div>
+      <svg class="about-shot-art" viewBox="0 0 400 280" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <linearGradient id="cutPaper" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#fbf6e9"/>
+            <stop offset="100%" stop-color="#ead9b8"/>
+          </linearGradient>
+          <linearGradient id="cutBlade" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#f6f6f6"/>
+            <stop offset="100%" stop-color="#7a7a7a"/>
+          </linearGradient>
+        </defs>
+        <!-- Dark mat backdrop -->
+        <rect width="400" height="280" fill="#160c06"/>
+        <!-- Cotton-rag paper sheet -->
+        <rect x="40" y="50" width="320" height="180" rx="2" fill="url(#cutPaper)" transform="rotate(-3 200 140)"/>
+        <!-- Fish printed on paper (red-orange coral trout silhouette) -->
+        <g transform="translate(200 140) rotate(-3)">
+          <ellipse cx="0" cy="0" rx="80" ry="28" fill="#e45a3a"/>
+          <path d="M -75 0 L -110 -22 L -100 0 L -110 22 Z" fill="#e45a3a"/>
+          <path d="M 60 -16 Q 75 -34 95 -28 Q 92 -16 86 -10 Z" fill="#e45a3a"/>
+          <circle cx="55" cy="-4" r="3.5" fill="#0a0806"/>
+          <!-- Dotted cut line tracing the silhouette -->
+          <path d="M -75 0 L -110 -22 L -100 0 L -110 22 L -75 0 Q -40 26 0 26 Q 40 26 60 16 Q 75 -34 95 -28 Q 92 -16 86 -10 Q 75 0 60 -16 Q 40 -26 0 -26 Q -40 -26 -75 0 Z" fill="none" stroke="#1c130a" stroke-width="1.2" stroke-dasharray="3 3"/>
+        </g>
+        <!-- X-acto blade slicing in from top-right -->
+        <g transform="translate(290 30) rotate(35)">
+          <rect x="-3" y="0" width="6" height="100" fill="#1c130a"/>
+          <polygon points="-9,90 9,90 0,170" fill="url(#cutBlade)" stroke="#1c130a" stroke-width="1"/>
+          <!-- Glint on blade -->
+          <line x1="0" y1="100" x2="0" y2="160" stroke="#fff" stroke-width="1" opacity=".7"/>
+        </g>
+        <!-- Tiny paper offcuts -->
+        <g fill="#fbf6e9" opacity=".7">
+          <polygon points="80,240 92,234 96,250 82,254"/>
+          <polygon points="320,250 332,244 336,260 322,264"/>
+        </g>
+      </svg>
+      <div class="about-shot-label">Hand-cut detail</div>
     </div>
+
+    <!-- ===== Tile 3: Timber stockpile ===== -->
     <div class="about-shot">
-      <div class="about-shot-label">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="6" width="18" height="14" rx="2"/></svg>
-        Timber stockpile
-      </div>
+      <svg class="about-shot-art" viewBox="0 0 400 280" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <pattern id="silkyOak" width="400" height="6" patternUnits="userSpaceOnUse"><rect width="400" height="6" fill="#dab07a"/><line x1="0" y1="3" x2="400" y2="3" stroke="rgba(60,30,10,.18)"/></pattern>
+          <pattern id="spottedGum" width="400" height="6" patternUnits="userSpaceOnUse"><rect width="400" height="6" fill="#e6cf94"/><line x1="0" y1="3" x2="400" y2="3" stroke="rgba(80,50,18,.18)"/></pattern>
+          <pattern id="blackwoodPat" width="400" height="6" patternUnits="userSpaceOnUse"><rect width="400" height="6" fill="#4a2c14"/><line x1="0" y1="3" x2="400" y2="3" stroke="rgba(0,0,0,.32)"/></pattern>
+          <pattern id="ironbarkPat" width="400" height="6" patternUnits="userSpaceOnUse"><rect width="400" height="6" fill="#5c241a"/><line x1="0" y1="3" x2="400" y2="3" stroke="rgba(0,0,0,.4)"/></pattern>
+        </defs>
+        <rect width="400" height="280" fill="#1a1108"/>
+        <!-- Stacked planks in perspective from front-left to back-right -->
+        <g transform="translate(60 70)">
+          <rect x="0" y="0" width="280" height="22" fill="url(#silkyOak)" stroke="#1c130a" stroke-width="1"/>
+          <rect x="6" y="22" width="280" height="22" fill="url(#spottedGum)" stroke="#1c130a" stroke-width="1"/>
+          <rect x="0" y="44" width="280" height="22" fill="url(#blackwoodPat)" stroke="#1c130a" stroke-width="1"/>
+          <rect x="8" y="66" width="280" height="22" fill="url(#ironbarkPat)" stroke="#1c130a" stroke-width="1"/>
+          <rect x="2" y="88" width="280" height="22" fill="url(#silkyOak)" stroke="#1c130a" stroke-width="1"/>
+          <rect x="6" y="110" width="280" height="22" fill="url(#spottedGum)" stroke="#1c130a" stroke-width="1"/>
+        </g>
+        <!-- Hand-written timber tag -->
+        <g transform="translate(260 168) rotate(8)">
+          <rect x="0" y="0" width="80" height="36" rx="2" fill="#fbf6e9" stroke="#1c130a" stroke-width=".8"/>
+          <text x="40" y="14" text-anchor="middle" font-family="Cinzel, serif" font-size="6" letter-spacing="1" fill="#1c130a">QLD MILL</text>
+          <text x="40" y="26" text-anchor="middle" font-family="Cormorant Garamond, serif" font-style="italic" font-size="9" fill="#1c130a">Silky oak</text>
+          <line x1="0" y1="-8" x2="6" y2="0" stroke="#7a4f24" stroke-width="1.2"/>
+        </g>
+      </svg>
+      <div class="about-shot-label">Timber stockpile</div>
     </div>
+
+    <!-- ===== Tile 4: Resin pour ===== -->
     <div class="about-shot">
-      <div class="about-shot-label">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12c3-4 7-4 9 0s6 4 9 0"/></svg>
-        Resin pour
-      </div>
+      <svg class="about-shot-art" viewBox="0 0 400 280" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <linearGradient id="resinFlow" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#fff" stop-opacity=".0"/>
+            <stop offset="50%" stop-color="#fff" stop-opacity=".55"/>
+            <stop offset="100%" stop-color="#fff" stop-opacity=".15"/>
+          </linearGradient>
+          <linearGradient id="rsBoard" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#c89554"/>
+            <stop offset="100%" stop-color="#7a4f24"/>
+          </linearGradient>
+        </defs>
+        <rect width="400" height="280" fill="#1c1308"/>
+        <!-- Mounted piece on bench, viewed top-down -->
+        <rect x="60" y="140" width="280" height="120" rx="3" fill="#1c130a"/>
+        <rect x="68" y="148" width="264" height="104" rx="2" fill="url(#rsBoard)"/>
+        <!-- Marlin silhouette in dark blue -->
+        <g transform="translate(200 200)">
+          <ellipse cx="0" cy="0" rx="100" ry="14" fill="#1a3f6c"/>
+          <path d="M -90 0 L -110 -14 L -104 0 L -110 14 Z" fill="#1a3f6c"/>
+          <line x1="60" y1="0" x2="100" y2="-26" stroke="#1a3f6c" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="60" cy="-3" r="2" fill="#0a0806"/>
+        </g>
+        <!-- Resin sheen pooling on top -->
+        <rect x="68" y="148" width="264" height="104" rx="2" fill="url(#resinFlow)"/>
+        <!-- Tilted bottle pouring from top -->
+        <g transform="translate(200 30) rotate(35)">
+          <rect x="-22" y="0" width="44" height="80" rx="4" fill="#0f4d72" stroke="#1c130a" stroke-width="1"/>
+          <rect x="-12" y="-12" width="24" height="14" rx="2" fill="#1c130a"/>
+          <!-- Label -->
+          <rect x="-18" y="22" width="36" height="22" fill="#fbf6e9"/>
+          <text x="0" y="35" text-anchor="middle" font-family="Cinzel, serif" font-size="6" font-weight="700" fill="#1c130a">EPOXY</text>
+        </g>
+        <!-- Resin stream pouring down -->
+        <path d="M 220 100 Q 222 130 218 175 Q 215 195 210 215" fill="none" stroke="url(#resinFlow)" stroke-width="6" stroke-linecap="round"/>
+        <!-- Highlight droplet about to land -->
+        <ellipse cx="208" cy="218" rx="6" ry="9" fill="#fff" opacity=".6"/>
+      </svg>
+      <div class="about-shot-label">Resin pour</div>
     </div>
+
+    <!-- ===== Tile 5: Signature on the back ===== -->
     <div class="about-shot">
-      <div class="about-shot-label">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5v14"/></svg>
-        Signature on the back
-      </div>
+      <svg class="about-shot-art" viewBox="0 0 400 280" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <linearGradient id="sigBoard" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#a87a3e"/>
+            <stop offset="100%" stop-color="#5a3818"/>
+          </linearGradient>
+          <pattern id="sigGrain" width="400" height="8" patternUnits="userSpaceOnUse">
+            <rect width="400" height="8" fill="url(#sigBoard)"/>
+            <line x1="0" y1="4" x2="400" y2="4" stroke="rgba(0,0,0,.2)"/>
+          </pattern>
+        </defs>
+        <rect width="400" height="280" fill="#160c06"/>
+        <!-- Back of a wood plaque, slightly tilted -->
+        <g transform="translate(200 140) rotate(-4)">
+          <rect x="-150" y="-100" width="300" height="200" rx="3" fill="url(#sigGrain)" stroke="#1c130a" stroke-width="2"/>
+          <!-- Hanging hardware silhouette top -->
+          <rect x="-12" y="-90" width="24" height="14" rx="2" fill="#1c130a" opacity=".5"/>
+          <!-- Wax-seal style stamp burned-in -->
+          <circle cx="-90" cy="40" r="38" fill="none" stroke="#1c130a" stroke-width="2" opacity=".75"/>
+          <circle cx="-90" cy="40" r="32" fill="none" stroke="#1c130a" stroke-width=".7" opacity=".55"/>
+          <text x="-90" y="36" text-anchor="middle" font-family="Cinzel, serif" font-size="6" letter-spacing="1.5" fill="#1c130a" opacity=".75">CRYSTAL BROOK</text>
+          <text x="-90" y="48" text-anchor="middle" font-family="Cormorant Garamond, serif" font-style="italic" font-size="8" fill="#1c130a" opacity=".75">est. 2019</text>
+          <!-- Hand-written signature + edition number -->
+          <text x="20" y="20" font-family="Great Vibes, cursive" font-size="32" fill="#0a0806">Max W.</text>
+          <text x="20" y="60" font-family="Cormorant Garamond, serif" font-style="italic" font-size="14" fill="#0a0806">Coral Trout</text>
+          <text x="20" y="82" font-family="Cinzel, serif" font-size="9" letter-spacing="1.5" fill="#0a0806">№ 142 / 2026</text>
+        </g>
+        <!-- Marker pen -->
+        <g transform="translate(280 200) rotate(20)">
+          <rect x="-6" y="0" width="12" height="60" rx="2" fill="#1c130a"/>
+          <rect x="-4" y="-10" width="8" height="14" rx="1" fill="#d4b06a"/>
+          <polygon points="-4,60 4,60 0,72" fill="#3a2618"/>
+        </g>
+      </svg>
+      <div class="about-shot-label">Signed on the back</div>
     </div>
   </div>
   <div class="about-workshop-cta">
@@ -946,12 +1216,12 @@
             <linearGradient id="ndPineA" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#d4a872"/><stop offset="50%" stop-color="#c89554"/><stop offset="100%" stop-color="#a87a3e"/></linearGradient>
             <linearGradient id="ndBrookA" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#0f4d72"/><stop offset="50%" stop-color="#33a5c7"/><stop offset="100%" stop-color="#8cd9d9"/></linearGradient>
           </defs>
-          <rect x="2" y="9" width="44" height="30" rx="2" fill="#1c130a" stroke="#000" stroke-opacity=".55" stroke-width=".6"/>
-          <rect x="5" y="12" width="38" height="24" rx="1" fill="url(#ndPineA)"/>
+          <rect x="0" y="0" width="48" height="48" rx="7" fill="#1c130a"/>
+          <rect x="4" y="4" width="40" height="40" rx="3" fill="url(#ndPineA)"/>
           <g fill="none" stroke="url(#ndBrookA)" stroke-width="1.4" stroke-linecap="round">
-            <path d="M 8 18 Q 13 16 18 18 Q 23 20 28 18 Q 33 16 40 18"/>
-            <path d="M 7 24 Q 13 21 19 24 Q 25 27 31 24 Q 37 21 41 24"/>
-            <path d="M 8 30 Q 13 28 18 30 Q 23 32 28 30 Q 33 28 40 30"/>
+            <path d="M 8 14 Q 14 11 24 14 Q 34 17 40 14"/>
+            <path d="M 7 24 Q 14 20 24 24 Q 34 28 41 24"/>
+            <path d="M 8 34 Q 14 31 24 34 Q 34 37 40 34"/>
           </g>
         </svg>
       </span>
@@ -983,6 +1253,6 @@
 <!-- ============ TOAST ============ -->
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/app.js?v=20260423-18"></script>
+<script src="assets/app.js?v=20260423-19"></script>
 </body>
 </html>

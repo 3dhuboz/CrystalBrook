@@ -353,6 +353,18 @@ document.getElementById('lightboxClose')?.addEventListener('click', closeLightbo
       tabs.querySelectorAll('.cat-tab').forEach(x => x.classList.remove('is-active'));
       target.classList.add('is-active');
       renderGrid(initialCat, { flip: false });
+      // When the user arrived via a category-deep-link (showcase card,
+      // search, footer link), scroll the filter tabs bar into view so
+      // they see what they clicked on — otherwise they land at the top
+      // of shop.html staring at the same showcase cards.
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          document.querySelector('.shop-tabs-bar')?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+          });
+        }, 250);
+      });
     }
   }
 
