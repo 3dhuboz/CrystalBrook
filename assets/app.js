@@ -256,6 +256,14 @@ function renderGrid(catOrList='all', { flip = false } = {}){
     });
   }, 1200);
 }
+// Wishlist storage MUST be initialised before renderGrid() — cardHTML
+// reads isWishlisted() which references this array. The full wishlist
+// module (drawer, helpers, etc.) lives further down; this is just the
+// state hoist so the first grid render doesn't ReferenceError.
+let wishlist = [];
+try { wishlist = JSON.parse(localStorage.getItem('cbwm_wishlist') || '[]'); } catch(_) {}
+function isWishlisted(id){ return Array.isArray(wishlist) && wishlist.includes(id); }
+
 renderGrid();
 renderCategoryShowcase();
 
@@ -661,10 +669,7 @@ const wishlistClose  = document.getElementById('wishlistClose');
 const wishlistBody   = document.getElementById('wishlistBody');
 const wishlistCount  = document.getElementById('wishlistCount');
 
-let wishlist = [];
-try { wishlist = JSON.parse(localStorage.getItem('cbwm_wishlist') || '[]'); } catch(_) {}
-
-function isWishlisted(id){ return wishlist.includes(id); }
+// (wishlist + isWishlisted hoisted above renderGrid call — see top of file)
 function saveWishlist(){
   localStorage.setItem('cbwm_wishlist', JSON.stringify(wishlist));
   renderWishlist();
