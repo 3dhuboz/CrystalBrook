@@ -636,6 +636,31 @@ function openAdminModal(label, view){
     return `${subject}, ${STYLE_PRESETS[state.template]}`;
   }
 
+  // Endpoint for the real Cloudflare Worker that runs FLUX 1 Schnell.
+  // Set via DevTools after deploy:
+  //   localStorage.setItem('cbwm_image_builder_endpoint', 'https://...workers.dev/api/studio/generate')
+  // Falls back to mockup if not configured or if the call fails.
+  function getEndpoint(){
+    return localStorage.getItem('cbwm_image_builder_endpoint') || '';
+  }
+
+  async function callRealBackend(prompt){
+    const endpoint = getEndpoint();
+    if (!endpoint) return null;
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, count: 4 }),
+    });
+    if (!res.ok){
+      const text = await res.text().catch(() => '');
+      throw new Error(`Worker ${res.status}: ${text.slice(0, 120)}`);
+    }
+    const data = await res.json();
+    if (!data.generations?.length) throw new Error('Worker returned no generations');
+    return data.generations;
+  }
+
   async function generate(){
     const fullPrompt = buildPrompt();
     if (!fullPrompt){
@@ -649,45 +674,57 @@ function openAdminModal(label, view){
     // Show progress
     ibResults.hidden = true;
     ibProgress.hidden = false;
-    const stages = [
-      ['Reading your description…',   18],
-      ['Drawing your 4 photos…',      55],
-      ['Removing the white backgrounds…', 82],
-      ['Putting them on the wall…',   100],
+    const usingReal = !!getEndpoint();
+    const stages = usingReal ? [
+      ['Sending your description to FLUX…',   12],
+      ['Drawing your 4 photos…',              60],
+      ['Cleaning up the backgrounds…',        88],
+      ['Almost there…',                       100],
+    ] : [
+      ['Reading your description…',         18],
+      ['Drawing your 4 photos (preview)…',  55],
+      ['Removing the white backgrounds…',   82],
+      ['Putting them on the wall…',         100],
     ];
+
+    let generations = null;
+    let backendError = null;
+
+    // Kick off the real backend call in parallel with the progress animation
+    const realPromise = usingReal ? callRealBackend(fullPrompt).catch(err => {
+      backendError = err;
+      return null;
+    }) : Promise.resolve(null);
+
+    // Animate progress while waiting for the real (or simulated) result
     for (const [label, pct] of stages){
       ibProgressTx.textContent = label;
       ibProgressFl.style.width = pct + '%';
       await new Promise(r => setTimeout(r, 700 + Math.random() * 600));
     }
 
-    // === REAL BACKEND CALL would go here ===
-    // const res = await fetch('/api/studio/generate', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({
-    //     prompt: fullPrompt,
-    //     count: 4,
-    //     transparent: true,
-    //     resolution: 2048,
-    //     refStyle: 'crystalbrook-catalogue',
-    //   })
-    // });
-    // const { generations } = await res.json();
-    // === MOCKUP ===
-    const pool = MOCK_POOL[state.template] || MOCK_POOL.animals;
-    const shuffled = pool.slice().sort(() => Math.random() - 0.5);
-    const generations = Array.from({ length: 4 }, (_, i) => ({
-      id: 'gen-' + Date.now() + '-' + i,
-      url: PROD_IMG + shuffled[i % shuffled.length],
-      prompt: fullPrompt,
-      model: 'flux-1.1-schnell (mockup)',
-      createdAt: Date.now(),
-    }));
+    generations = await realPromise;
+
+    // If no real backend (or it failed) → fall back to the mockup
+    if (!generations){
+      if (backendError){
+        console.warn('[image-builder] backend failed, using mockup:', backendError.message);
+        toast('AI backend unreachable — showing preview images. Re-deploy the Worker?');
+      }
+      const pool = MOCK_POOL[state.template] || MOCK_POOL.animals;
+      const shuffled = pool.slice().sort(() => Math.random() - 0.5);
+      generations = Array.from({ length: 4 }, (_, i) => ({
+        id: 'gen-' + Date.now() + '-' + i,
+        url: PROD_IMG + shuffled[i % shuffled.length],
+        prompt: fullPrompt,
+        model: 'mockup (catalogue stand-in)',
+        createdAt: Date.now(),
+      }));
+    }
 
     ibProgress.hidden = true;
     renderResults(generations);
-    saveToHistory(generations[0]); // log first as the "session"
+    saveToHistory(generations[0]);
     state.busy = false;
     ibGen.disabled = false;
   }

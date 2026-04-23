@@ -1,0 +1,26 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "crystalbrook-image-builder"
+main = "src/index.js"
+compatibility_date = "2025-04-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Workers AI binding — gives the Worker access to env.AI.run(model, …)
+# without any client-side API token.
+[ai]
+binding = "AI"
+
+# Optional: route the Worker on a custom domain once you've added
+# crystalbrook.com.au to Cloudflare. Until then, the Worker is reachable at
+#   https://crystalbrook-image-builder.<your-subdomain>.workers.dev
+# (printed by `wrangler deploy`)
+#
+# [[routes]]
+# pattern = "crystalbrook.com.au/api/studio/*"
+# zone_name = "crystalbrook.com.au"
+
+# Observability — log inspections in the Cloudflare dashboard
+[observability]
+enabled = true
+
+# This Worker is stateless — no D1/KV/R2 needed for image generation.
+# The admin frontend caches generations in localStorage on the user's machine.
