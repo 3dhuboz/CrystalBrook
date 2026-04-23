@@ -381,6 +381,161 @@ document.getElementById('publishBtn')?.addEventListener('click', ()=>{
   toast('Homepage changes published.');
 });
 
+/* ---------- TOP-OF-VIEW ACTION BUTTONS (Import/Export/+ New …) ----------
+ * The view headers (Stocktake, Orders, Quotes, Revenue, Settings) all
+ * have action pills on the right that previously did nothing on click.
+ * Wire them to sensible mockup actions so the admin feels responsive.
+ * Real backend will swap these for actual API calls. */
+(() => {
+  document.querySelectorAll('.v-head-actions .btn').forEach(btn => {
+    if (btn.id === 'publishBtn') return; // already wired
+    if (btn.dataset.wired) return;
+    btn.dataset.wired = '1';
+    const label = (btn.textContent || '').trim();
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      // Find which view we're in
+      const view = btn.closest('.view')?.dataset.view || 'dashboard';
+      handleAdminAction(label, view, btn);
+    });
+  });
+  // Same for the Settings page "+ Add product" featured-block button
+  document.querySelectorAll('.btn-block').forEach(btn => {
+    if (btn.dataset.wired) return;
+    btn.dataset.wired = '1';
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      handleAdminAction((btn.textContent || '').trim(), 'settings', btn);
+    });
+  });
+})();
+
+function handleAdminAction(label, view, btn){
+  const l = label.toLowerCase();
+  // Import CSV → simulated file picker + progress
+  if (l.includes('import')){
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv,text/csv';
+    input.addEventListener('change', () => {
+      const f = input.files?.[0];
+      if (!f) return;
+      toast(`Importing ${f.name}…`);
+      setTimeout(() => toast(`✓ Imported ${f.name} (${Math.floor(f.size/1024)} KB) — 0 errors`), 1400);
+    });
+    input.click();
+    return;
+  }
+  // Export → fake CSV download
+  if (l.includes('export')){
+    const orig = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Exporting…';
+    setTimeout(() => {
+      const headers = view === 'orders'
+        ? 'Order,Customer,Items,Total,Status,Date'
+        : view === 'revenue'
+        ? 'Month,Revenue,Orders,AOV'
+        : 'SKU,Name,Category,Price,Stock';
+      const csv = headers + '\n# (Mockup export — backend wiring pending)\n';
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `crystalbrook-${view}-${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      btn.disabled = false;
+      btn.textContent = orig;
+      toast(`✓ Exported ${view} CSV`);
+    }, 700);
+    return;
+  }
+  // + New product / + Manual order / + New quote / + Add product → modal
+  if (l.startsWith('+') || l.includes('new') || l.includes('add') || l.includes('manual')){
+    openAdminModal(label, view);
+    return;
+  }
+  // Preview button on Settings → open the home page in new tab
+  if (l.includes('preview')){
+    window.open('../index.html?preview=1', '_blank');
+    toast('Opening preview in a new tab…');
+    return;
+  }
+  // Export PDF → mockup
+  if (l.includes('pdf')){
+    toast('Building PDF report — coming soon');
+    return;
+  }
+  toast(`"${label}" — coming soon`);
+}
+
+function openAdminModal(label, view){
+  // Build a one-shot modal scaffold the first time, reuse it after
+  let modal = document.getElementById('adminActionModal');
+  if (!modal){
+    modal = document.createElement('div');
+    modal.id = 'adminActionModal';
+    modal.className = 'admin-modal';
+    modal.innerHTML = `
+      <div class="admin-modal-card">
+        <button class="admin-modal-close" type="button" aria-label="Close">×</button>
+        <h2 id="adminModalTitle"></h2>
+        <p id="adminModalLede"></p>
+        <div id="adminModalBody"></div>
+        <div class="admin-modal-actions">
+          <button class="btn btn-ghost" id="adminModalCancel" type="button">Cancel</button>
+          <button class="btn btn-gold" id="adminModalSave" type="button">Save</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.querySelector('.admin-modal-close').addEventListener('click', () => modal.classList.remove('is-open'));
+    modal.querySelector('#adminModalCancel').addEventListener('click', () => modal.classList.remove('is-open'));
+    modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('is-open'); });
+    modal.querySelector('#adminModalSave').addEventListener('click', () => {
+      modal.classList.remove('is-open');
+      toast('Saved (mockup) — wire backend to persist');
+    });
+  }
+  const title = label.replace(/^\+\s*/, '').replace(/^./, c => c.toUpperCase());
+  modal.querySelector('#adminModalTitle').textContent = title;
+  modal.querySelector('#adminModalLede').textContent =
+    `Quick form for ${view}. Backend wiring pending — fields here will POST to the Workers API once it lands.`;
+  // Generate a few sensible fields based on the action
+  let fields = '';
+  if (view === 'products' || /product/i.test(label)){
+    fields = `
+      <label><span>Product name</span><input class="inp" placeholder="e.g. Coral Trout"/></label>
+      <label><span>Category</span>
+        <select class="inp">
+          <option>Saltwater Fish</option><option>Freshwater Fish</option>
+          <option>Cars</option><option>Animals</option><option>Birds</option>
+        </select>
+      </label>
+      <label><span>Price (AUD)</span><input class="inp" type="number" placeholder="495"/></label>
+      <label><span>Size (cm)</span><input class="inp" placeholder="68 × 32 cm"/></label>
+      <label><span>Image</span><div class="mini-drop">Drop a transparent PNG or click to choose</div></label>`;
+  } else if (view === 'orders'){
+    fields = `
+      <label><span>Customer name</span><input class="inp"/></label>
+      <label><span>Customer email</span><input class="inp" type="email"/></label>
+      <label><span>Items (one SKU per line)</span><textarea class="inp" rows="4"></textarea></label>
+      <label><span>Total</span><input class="inp" type="number"/></label>`;
+  } else if (view === 'quotes'){
+    fields = `
+      <label><span>Customer name</span><input class="inp"/></label>
+      <label><span>Customer email</span><input class="inp" type="email"/></label>
+      <label><span>Brief</span><textarea class="inp" rows="3" placeholder="What does the customer want made?"></textarea></label>
+      <label><span>Quoted price</span><input class="inp" type="number"/></label>`;
+  } else {
+    fields = `<label><span>Notes</span><textarea class="inp" rows="4"></textarea></label>`;
+  }
+  modal.querySelector('#adminModalBody').innerHTML = `<div class="form">${fields}</div>`;
+  modal.classList.add('is-open');
+}
+
 /* ---------- TOAST ---------- */
 const toastEl = document.getElementById('toast');
 let toastTimer;

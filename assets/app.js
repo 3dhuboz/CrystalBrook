@@ -1227,11 +1227,31 @@ document.addEventListener('keydown', e=>{
           const w4 = w * 4;
 
           // "near-white" test: bright + low channel spread (= neutral / not coloured)
+          // Slightly looser threshold than before so JPEG-edge tints get caught
+          // (compression often leaves slightly off-white columns at image edges).
           const isNearWhite = (i) => {
             const r = d[i], g = d[i+1], b = d[i+2];
             const max = Math.max(r,g,b), min = Math.min(r,g,b);
-            return min > 228 && (max - min) < 22;
+            return min > 215 && (max - min) < 30;
           };
+
+          // PRE-TRIM: zero out the outer 3-pixel border unconditionally.
+          // This kills any thin colored strip the camera/JPEG left at the
+          // edge (the source of the "green line on the right" artifact)
+          // and gives flood-fill clean transparent seed pixels to grow from.
+          const TRIM = 3;
+          for (let y = 0; y < h; y++){
+            for (let x = 0; x < TRIM; x++){
+              d[(y*w + x)*4 + 3] = 0;
+              d[(y*w + (w-1-x))*4 + 3] = 0;
+            }
+          }
+          for (let x = 0; x < w; x++){
+            for (let y = 0; y < TRIM; y++){
+              d[(y*w + x)*4 + 3] = 0;
+              d[((h-1-y)*w + x)*4 + 3] = 0;
+            }
+          }
 
           // Flood fill from all 4 edges
           const visited = new Uint8Array(w * h);

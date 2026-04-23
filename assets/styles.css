@@ -133,11 +133,23 @@ em{ font-style: italic; }
 }
 .brand{ display:flex; align-items:center; gap:12px; color: var(--ocean-deep); }
 .brand-mark{
-  width:44px; height:44px; border-radius:50%;
-  display:grid; place-items:center;
-  background: radial-gradient(circle at 30% 30%, #fff, var(--paper));
-  border: 1px solid var(--line-2);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.6), var(--shadow-sm);
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: block;
+  background: #1c130a; /* match dark wood frame so any gap looks intentional */
+  box-shadow:
+    0 0 0 1px rgba(212,176,106,.4),
+    0 2px 6px rgba(0,0,0,.25),
+    inset 0 1px 0 rgba(255,255,255,.12);
+}
+.brand-mark svg{
+  width: 100%; height: 100%;
+  display: block;
+  /* The square SVG (with the wood plaque filling its viewBox) gets
+     clipped to the parent's circle by overflow:hidden + border-radius:50%.
+     The plaque corners tuck behind the circle edge — exactly the desired
+     wood-disc effect. */
 }
 .brand-text{ display:flex; flex-direction:column; line-height:1; color: var(--ink); }
 .brand-name{ font-family:'Cormorant Garamond', serif; font-weight:700; font-size:1.25rem; letter-spacing:.5px; color: var(--ink); }
@@ -3982,10 +3994,14 @@ body.reel-open{ overflow: hidden; }
 .shop-filter-panel.is-open{
   grid-template-rows: 1fr;
 }
-.shop-filter-panel > *{
+/* Single inner wrapper takes the panel's only grid row so the
+   filter-grid and filter-actions stack properly. Without this they'd
+   both try to occupy the same 1fr row and overlap horribly. */
+.shop-filter-panel-inner{
   min-height: 0;
+  overflow: hidden;
 }
-.shop-filter-panel.is-open > *{
+.shop-filter-panel.is-open .shop-filter-panel-inner{
   border-top: 1px solid rgba(28,19,10,.08);
   padding: 24px 24px 18px;
   background: rgba(255, 252, 244, .85);
@@ -4932,6 +4948,235 @@ body.reel-open{ overflow: hidden; }
   font-style: italic;
   font-size: .82rem;
   color: var(--ink-soft);
+}
+
+/* =========================================================
+   POLICIES PAGE (policies.html — Shipping & Returns)
+   ========================================================= */
+.page-policies{ background: var(--bg); }
+.pol-hero{
+  max-width: 880px; margin: 0 auto;
+  padding: 48px 28px 28px;
+  text-align: center;
+}
+.pol-hero h1{
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(2.4rem, 5vw, 3.6rem);
+  font-weight: 600;
+  margin: 12px 0 16px;
+  color: var(--ink);
+}
+.pol-hero-lede{
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.2rem;
+  color: var(--ink-soft);
+  margin: 0 auto 28px;
+}
+.pol-jump{
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;
+}
+.pol-jump a{
+  padding: 8px 16px;
+  background: rgba(255,255,255,.65);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: .98rem;
+  color: var(--ink);
+  text-decoration: none;
+  transition: all .15s var(--ease);
+}
+.pol-jump a:hover{
+  background: var(--ocean-deep); color: #fff;
+  border-color: var(--ocean-deep);
+}
+.pol-section{
+  padding: 64px 28px;
+  scroll-margin-top: 80px;
+}
+.pol-section-alt{
+  background: linear-gradient(180deg, #fbf6e9 0%, #f6efe1 100%);
+  border-top: 1px solid rgba(212,176,106,.25);
+  border-bottom: 1px solid rgba(212,176,106,.25);
+}
+.pol-section-inner{
+  max-width: 1100px; margin: 0 auto;
+}
+.pol-section-head{
+  text-align: center; margin-bottom: 36px;
+  position: relative;
+}
+.pol-num{
+  display: inline-block;
+  font-family: 'Cinzel', serif;
+  font-size: 3rem;
+  color: rgba(212, 176, 106, .35);
+  line-height: 1;
+  margin-bottom: 10px;
+}
+.pol-section-head h2{
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(1.7rem, 3.6vw, 2.4rem);
+  font-weight: 600;
+  margin: 8px 0 0;
+  color: var(--ink);
+}
+.pol-grid{
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+.pol-card{
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 8px 22px -16px rgba(28, 19, 10, .25);
+  transition: transform .2s var(--ease), box-shadow .2s var(--ease);
+}
+.pol-card:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 16px 30px -16px rgba(28, 19, 10, .3);
+}
+.pol-card-feature{
+  grid-column: span 2;
+  background: linear-gradient(135deg, #1c130a 0%, #0f0a05 100%);
+  color: #f6efe1;
+  border-color: rgba(212, 176, 106, .35);
+}
+.pol-card-icon{
+  width: 48px; height: 48px;
+  display: grid; place-items: center;
+  border-radius: 10px;
+  background: rgba(212, 176, 106, .12);
+  color: var(--ocean-deep);
+  margin-bottom: 14px;
+}
+.pol-card-feature .pol-card-icon{
+  background: rgba(212, 176, 106, .18);
+  color: #d4b06a;
+}
+.pol-card h3{
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 10px;
+}
+.pol-card-feature h3{ color: #f6efe1; }
+.pol-card p{
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.02rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  margin: 0;
+}
+.pol-card-feature p{ color: rgba(246, 239, 225, .8); }
+.pol-card a{ color: var(--ocean-deep); font-weight: 600; }
+.pol-card-feature a{ color: #d4b06a; }
+.pol-callout{
+  margin-top: 24px;
+  padding: 16px 20px;
+  background: rgba(212, 176, 106, .12);
+  border: 1px solid rgba(212, 176, 106, .35);
+  border-radius: 10px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1rem;
+  color: var(--ink);
+}
+.pol-callout strong{ font-weight: 600; }
+
+/* Returns list */
+.pol-returns-list{
+  display: flex; flex-direction: column; gap: 18px;
+}
+.pol-return{
+  display: grid; grid-template-columns: 56px 1fr; gap: 20px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 22px 24px;
+}
+.pol-return-icon{
+  width: 44px; height: 44px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  flex: 0 0 auto;
+}
+.pol-return-good{ background: #3a8a4f; }
+.pol-return-meh{ background: var(--ocean-deep); }
+.pol-return-warn{ background: #c0673b; }
+.pol-return h3{
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.2rem; font-weight: 600;
+  margin: 0 0 6px; color: var(--ink);
+}
+.pol-return p{
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1rem; line-height: 1.55;
+  color: var(--ink-soft);
+  margin: 0;
+}
+.pol-return p strong{ color: var(--ink); font-weight: 600; }
+
+/* Guarantee + commissions list */
+.pol-guarantee-lede{
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.18rem;
+  color: var(--ink-soft);
+  margin: 0 auto 28px;
+  max-width: 60ch; text-align: center;
+}
+.pol-guarantee-list{
+  list-style: none; padding: 0; margin: 0;
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px;
+}
+.pol-guarantee-list li{
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 20px 22px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  border-left: 3px solid var(--ocean-deep);
+}
+.pol-guarantee-list strong{
+  font-family: 'Cinzel', serif;
+  font-size: .8rem; letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink);
+  font-weight: 600;
+}
+.pol-guarantee-list span{
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1rem;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+.pol-cta{
+  margin-top: 32px;
+  padding: 28px;
+  text-align: center;
+  background: linear-gradient(135deg, #1c130a, #0f0a05);
+  color: #f6efe1;
+  border-radius: 14px;
+}
+.pol-cta h3{
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.4rem; font-weight: 600;
+  margin: 0 0 8px; color: #f6efe1;
+}
+.pol-cta p{
+  font-family: 'Cormorant Garamond', serif;
+  color: rgba(246, 239, 225, .8);
+  margin: 0 0 18px;
+  font-size: 1.05rem;
+}
+.pol-cta a{ color: #d4b06a; font-weight: 600; }
+@media (max-width: 720px){
+  .pol-grid{ grid-template-columns: 1fr; }
+  .pol-card-feature{ grid-column: auto; }
+  .pol-guarantee-list{ grid-template-columns: 1fr; }
+  .pol-section{ padding: 48px 20px; }
 }
 
 /* =========================================================
