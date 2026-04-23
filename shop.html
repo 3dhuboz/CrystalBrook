@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Great+Vibes&family=Dancing+Script:wght@500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/styles.css?v=20260423-13" />
+<link rel="stylesheet" href="assets/styles.css?v=20260423-14" />
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
 <link rel="apple-touch-icon" href="assets/icon-192.svg" />
 <link rel="manifest" href="manifest.webmanifest" />
@@ -61,6 +61,10 @@
     <div class="nav-actions">
       <button class="icon-btn" id="searchBtn" aria-label="Search the collection" title="Search (press /)">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      </button>
+      <button class="icon-btn" id="wishlistBtn" aria-label="Wishlist" title="Wishlist">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"/></svg>
+        <span class="cart-count" id="wishlistCount" hidden>0</span>
       </button>
       <button class="icon-btn" id="cartBtn" aria-label="Cart">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6h15l-1.5 9H8L6 3H3"/><circle cx="10" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg>
@@ -281,6 +285,18 @@
     <small>Free shipping Australia-wide on orders over $500.</small>
   </div>
 </aside>
+
+<!-- ============ WISHLIST DRAWER ============ -->
+<aside class="cart-drawer wishlist-drawer" id="wishlistDrawer" aria-hidden="true">
+  <div class="cart-head">
+    <h3>Wishlist</h3>
+    <button class="icon-btn" id="wishlistClose" aria-label="Close wishlist">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m6 6 12 12M18 6 6 18"/></svg>
+    </button>
+  </div>
+  <div class="cart-body" id="wishlistBody"></div>
+</aside>
+
 <div class="scrim" id="scrim"></div>
 
 <!-- ============ PWA INSTALL PROMPT ============ -->
@@ -479,6 +495,6 @@
 <!-- ============ TOAST ============ -->
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/app.js?v=20260423-13"></script>
+<script src="assets/app.js?v=20260423-14"></script>
 </body>
 </html>

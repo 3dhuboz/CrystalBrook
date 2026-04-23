@@ -117,9 +117,13 @@ function cardHTML(p){
            <span class="ph-sub">Photo coming soon</span>
          </div>
        </div>`;
+  const heartActive = (typeof isWishlisted === 'function' && isWishlisted(p.id)) ? ' is-wishlisted' : '';
   return `
     <article class="product-card" data-cat="${p.cat}" data-id="${p.id}">
       ${p.badge ? `<span class="product-badge">${p.badge}</span>` : ''}
+      <button class="product-heart${heartActive}" data-wishlist-toggle="${p.id}" aria-label="Save to wishlist" type="button">
+        <svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 11c0 5.5-7 10-7 10z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+      </button>
       <div class="product-img">
         ${stage}
         <div class="product-overlay">
@@ -152,10 +156,17 @@ function bindCardInteractions(){
       openQuickView(btn.dataset.view);
     });
   });
+  grid.querySelectorAll('[data-wishlist-toggle]').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      e.preventDefault();
+      toggleWishlist(btn.dataset.wishlistToggle);
+    });
+  });
   grid.querySelectorAll('.product-card').forEach(card=>{
     // Card-level click → full product page (Quick View button stays as lightbox)
     card.addEventListener('click', (e)=>{
-      if (e.target.closest('[data-add]') || e.target.closest('[data-view]')) return;
+      if (e.target.closest('[data-add]') || e.target.closest('[data-view]') || e.target.closest('[data-wishlist-toggle]')) return;
       location.href = `product.html?id=${card.dataset.id}`;
     });
     bindTilt(card);
@@ -642,6 +653,102 @@ function renderCart(){
   cartTotal.textContent = '$' + items.reduce((s,i)=>s+i.price*i.qty, 0).toLocaleString();
 }
 renderCart();
+
+/* ---------- WISHLIST ---------- */
+const wishlistBtn    = document.getElementById('wishlistBtn');
+const wishlistDrawer = document.getElementById('wishlistDrawer');
+const wishlistClose  = document.getElementById('wishlistClose');
+const wishlistBody   = document.getElementById('wishlistBody');
+const wishlistCount  = document.getElementById('wishlistCount');
+
+let wishlist = [];
+try { wishlist = JSON.parse(localStorage.getItem('cbwm_wishlist') || '[]'); } catch(_) {}
+
+function isWishlisted(id){ return wishlist.includes(id); }
+function saveWishlist(){
+  localStorage.setItem('cbwm_wishlist', JSON.stringify(wishlist));
+  renderWishlist();
+  // Sync heart UI on every visible toggle button
+  document.querySelectorAll('[data-wishlist-toggle]').forEach(btn => {
+    btn.classList.toggle('is-wishlisted', isWishlisted(btn.dataset.wishlistToggle));
+  });
+}
+function addToWishlist(id){
+  if (!wishlist.includes(id)) wishlist.push(id);
+  saveWishlist();
+  const p = PRODUCTS.find(x => x.id === id);
+  if (p) toast(`Saved: ${p.name}`);
+}
+function removeFromWishlistById(id){
+  wishlist = wishlist.filter(x => x !== id);
+  saveWishlist();
+}
+function toggleWishlist(id){
+  if (isWishlisted(id)) {
+    removeFromWishlistById(id);
+    const p = PRODUCTS.find(x => x.id === id);
+    if (p) toast(`Removed: ${p.name}`);
+  } else {
+    addToWishlist(id);
+  }
+}
+function openWishlist(){
+  if (!wishlistDrawer) return;
+  wishlistDrawer.classList.add('is-open');
+  scrim?.classList.add('is-open');
+  wishlistDrawer.setAttribute('aria-hidden','false');
+}
+function closeWishlist(){
+  if (!wishlistDrawer) return;
+  wishlistDrawer.classList.remove('is-open');
+  if (!cart?.classList.contains('is-open')) scrim?.classList.remove('is-open');
+  wishlistDrawer.setAttribute('aria-hidden','true');
+}
+function renderWishlist(){
+  if (!wishlistCount || !wishlistBody) return;
+  wishlistCount.textContent = wishlist.length;
+  wishlistCount.hidden = wishlist.length === 0;
+  if (!wishlist.length){
+    wishlistBody.innerHTML = `<p class="cart-empty">Your wishlist is empty.<br/>Tap the heart on any piece to save it for later.</p>`;
+    return;
+  }
+  wishlistBody.innerHTML = wishlist.map(id => {
+    const p = PRODUCTS.find(x => x.id === id);
+    if (!p) return '';
+    const thumb = p.image
+      ? `<img src="${p.image}" alt=""/>`
+      : `<span class="wish-thumb-mark">${shortName(p.name)}</span>`;
+    return `
+      <div class="cart-item wish-item">
+        <a class="wish-thumb stage-${p.cat}" href="product.html?id=${p.id}">${thumb}</a>
+        <div class="wish-meta">
+          <a class="cart-item-name" href="product.html?id=${p.id}">${p.name}</a>
+          <div class="cart-item-meta">${p.size} · ${CAT_LABELS[p.cat]}</div>
+          <div class="wish-actions">
+            <button class="wish-add" data-wish-add="${p.id}" type="button">Add to cart</button>
+            <a class="cart-item-remove" data-rm-wish="${p.id}">Remove</a>
+          </div>
+        </div>
+        <div class="cart-item-price">$${p.price.toLocaleString()}</div>
+      </div>
+    `;
+  }).join('');
+  wishlistBody.querySelectorAll('[data-rm-wish]').forEach(a => {
+    a.addEventListener('click', () => removeFromWishlistById(a.dataset.rmWish));
+  });
+  wishlistBody.querySelectorAll('[data-wish-add]').forEach(b => {
+    b.addEventListener('click', () => {
+      const p = PRODUCTS.find(x => x.id === b.dataset.wishAdd);
+      if (p){
+        addToCart(p);
+        removeFromWishlistById(p.id);
+      }
+    });
+  });
+}
+wishlistBtn?.addEventListener('click', openWishlist);
+wishlistClose?.addEventListener('click', closeWishlist);
+renderWishlist();
 
 /* ---------- API ENDPOINTS ----------
  * Centralised so the backend can be wired in one place.
@@ -1582,6 +1689,16 @@ document.addEventListener('keydown', e=>{
 
   // Add to cart
   document.getElementById('pdpAdd').addEventListener('click', () => addToCart(product));
+
+  // Heart / wishlist
+  const heartBtn = document.getElementById('pdpHeart');
+  if (heartBtn){
+    if (isWishlisted(product.id)) heartBtn.classList.add('is-wishlisted');
+    heartBtn.addEventListener('click', () => {
+      toggleWishlist(product.id);
+      heartBtn.classList.toggle('is-wishlisted', isWishlisted(product.id));
+    });
+  }
 
   // Related products from the same category
   const relatedGrid = document.getElementById('pdpRelatedGrid');
