@@ -1564,18 +1564,39 @@ document.addEventListener('keydown', e=>{
         const orig = btn.textContent;
         btn.disabled = true;
         btn.textContent = 'Processing payment…';
+        const ship = serializeForm(modal.querySelector('#coShipForm'));
         apiPost(API.checkout, {
           items, total: total(),
-          ship: serializeForm(modal.querySelector('#coShipForm')),
+          ship,
           payment: { last4: form.cardNumber.value.replace(/\s/g, '').slice(-4) },
         }).then(() => {
           btn.disabled = false;
           btn.textContent = orig;
-          // Generate order number
+          // Generate order number + persist to localStorage so the
+          // order tracking page can resurrect it later
           const orderId = 'CB-' + Math.floor(100000 + Math.random() * 900000);
+          const order = {
+            id: orderId,
+            createdAt: Date.now(),
+            items: items.map(i => ({ id: i.id, name: i.name, price: i.price, pimg: i.pimg, qty: i.qty })),
+            subtotal: subtotal(),
+            shipping: shipping(),
+            total: total(),
+            ship,
+            payment: { last4: form.cardNumber.value.replace(/\s/g, '').slice(-4) },
+          };
+          let orders = [];
+          try { orders = JSON.parse(localStorage.getItem('cbwm_orders') || '[]'); } catch(_) {}
+          orders.unshift(order);
+          // Keep only last 20 to bound storage
+          if (orders.length > 20) orders = orders.slice(0, 20);
+          localStorage.setItem('cbwm_orders', JSON.stringify(orders));
+
           successOrder.textContent = orderId;
           successItems.textContent = items.reduce((s, i) => s + i.qty, 0);
           successEmail.textContent = modal.querySelector('#coShipForm input[name="email"]').value;
+          const trackLink = modal.querySelector('#coTrackLink');
+          if (trackLink) trackLink.href = `order.html?id=${orderId}`;
           // Clear cart
           items = [];
           saveCart();
@@ -1612,6 +1633,156 @@ document.addEventListener('keydown', e=>{
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && !modal.hidden && currentStep !== 3) close();
   });
+})();
+
+/* ---------- ORDER TRACKING PAGE (order.html) ---------- */
+(() => {
+  const heroInner = document.getElementById('orderHeroInner');
+  if (!heroInner) return;
+
+  const params = new URLSearchParams(location.search);
+  const id = (params.get('id') || '').trim();
+
+  let orders = [];
+  try { orders = JSON.parse(localStorage.getItem('cbwm_orders') || '[]'); } catch(_) {}
+  const order = id ? orders.find(o => o.id === id) : null;
+
+  if (!order){
+    heroInner.innerHTML = `
+      <div class="order-404">
+        <p class="eyebrow">Lost order</p>
+        <h1>Couldn't find that order.</h1>
+        <p class="order-404-lede">${id ? `No record of order <em>${id}</em> on this device.` : 'No order ID was provided.'} If you placed an order on a different browser, the tracking link in your confirmation email will open it. Otherwise, drop us a line.</p>
+        <div class="order-404-ctas">
+          <a class="btn btn-primary" href="shop.html">Browse the collection →</a>
+          <a class="btn btn-ghost" href="index.html#contact">Contact Max →</a>
+        </div>
+      </div>`;
+    return;
+  }
+
+  // Title
+  document.title = `Order ${order.id} · Crystal Brook Wall Mounts`;
+
+  const STAGES = [
+    { key: 'received', label: 'Order received',     blurb: 'We\'ve got it. Confirmation emailed.' },
+    { key: 'printing', label: 'Archival print',     blurb: 'Pigment ink laid on cotton-rag.' },
+    { key: 'cut',      label: 'Hand-cut to silhouette', blurb: 'Each piece traced and cut by hand.' },
+    { key: 'mount',    label: 'Mounted to timber',  blurb: 'Bonded to your chosen Australian hardwood.' },
+    { key: 'resin',    label: 'Resin pour',         blurb: 'Jewellery-grade epoxy poured in stages.' },
+    { key: 'cure',     label: 'Curing',             blurb: '48 hours under glass-clear resin.' },
+    { key: 'shipped',  label: 'Shipped',            blurb: 'Tracking number on the way to your inbox.' },
+    { key: 'delivered',label: 'Delivered',          blurb: 'On your wall.' },
+  ];
+
+  // For the mockup we accelerate the 4-6 wk schedule to 8 minutes so
+  // the demo is observable. Each stage = 1 minute. Real backend will
+  // replace this with actual progress events from D1.
+  const STAGE_MINS = 1;
+  const elapsedMin = (Date.now() - order.createdAt) / 60000;
+  const stageIdx = Math.min(STAGES.length - 1, Math.floor(elapsedMin / STAGE_MINS));
+
+  // Header
+  const created = new Date(order.createdAt);
+  const piecesCount = order.items.reduce((s, i) => s + i.qty, 0);
+  const stagePill = STAGES[stageIdx].label;
+  heroInner.innerHTML = `
+    <div class="order-hero-grid">
+      <div class="order-hero-meta">
+        <p class="eyebrow">Tracking your order</p>
+        <h1>${order.id}</h1>
+        <p class="order-hero-sub">
+          Placed ${created.toLocaleDateString(undefined, { day:'numeric', month:'short', year:'numeric' })}
+          · ${piecesCount} piece${piecesCount === 1 ? '' : 's'}
+          · $${order.total.toLocaleString()}
+        </p>
+        <span class="order-status-pill status-${STAGES[stageIdx].key}">${stagePill}</span>
+      </div>
+      <div class="order-hero-mark" aria-hidden="true">
+        <svg viewBox="0 0 200 200">
+          <circle cx="100" cy="100" r="92" fill="none" stroke="#d4b06a" stroke-width="1.2" opacity=".5"/>
+          <circle cx="100" cy="100" r="74" fill="none" stroke="#d4b06a" stroke-width=".5" opacity=".4"/>
+          <g transform="translate(100 90)" stroke="#d4b06a" stroke-linecap="round" fill="none">
+            <path d="M -22 -4 Q -11 -12 0 -4 Q 11 4 22 -4" stroke-width="2"/>
+            <path d="M -22 4 Q -11 -4 0 4 Q 11 12 22 4" stroke-width="1.7" opacity=".75"/>
+            <path d="M -22 12 Q -11 4 0 12 Q 11 20 22 12" stroke-width="1.4" opacity=".5"/>
+          </g>
+          <text x="100" y="130" text-anchor="middle" font-family="Cormorant Garamond, serif" font-style="italic" font-size="14" fill="#d4b06a">in progress</text>
+        </svg>
+      </div>
+    </div>`;
+
+  // Reveal the body section
+  const body = document.getElementById('orderBody');
+  body.hidden = false;
+
+  // Timeline
+  const tl = document.getElementById('orderTimeline');
+  tl.innerHTML = STAGES.map((s, i) => {
+    const isDone = i < stageIdx;
+    const isCurrent = i === stageIdx;
+    const cls = isDone ? 'is-done' : isCurrent ? 'is-current' : '';
+    const dotIcon = isDone
+      ? `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 5 5L20 7"/></svg>`
+      : isCurrent
+      ? `<span class="order-pulse"></span>`
+      : '';
+    return `
+      <li class="${cls}">
+        <span class="order-tl-dot">${dotIcon}</span>
+        <div>
+          <strong>${s.label}</strong>
+          <span>${s.blurb}</span>
+        </div>
+      </li>`;
+  }).join('');
+
+  // ETA estimate — 4-6 weeks from order date is the real schedule
+  const etaEl = document.getElementById('orderEta');
+  if (stageIdx >= STAGES.length - 1){
+    etaEl.textContent = '✓ Delivered. Hope it looks great on your wall.';
+  } else {
+    const start = new Date(order.createdAt + 28 * 24 * 60 * 60 * 1000);
+    const end   = new Date(order.createdAt + 42 * 24 * 60 * 60 * 1000);
+    const fmt = (d) => d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+    etaEl.textContent = `Expected delivery: ${fmt(start)} – ${fmt(end)}`;
+  }
+
+  // Items
+  const itemsEl = document.getElementById('orderItems');
+  itemsEl.innerHTML = order.items.map(i => {
+    const p = PRODUCTS.find(x => x.id === i.id);
+    const thumb = p?.image
+      ? `<img src="${p.image}" alt=""/>`
+      : `<span class="order-item-mark">${shortName(i.name)}</span>`;
+    return `
+      <div class="order-item">
+        <a class="order-item-thumb stage-${p?.cat || 'animals'}" href="product.html?id=${i.id}">${thumb}</a>
+        <div class="order-item-meta">
+          <a href="product.html?id=${i.id}">${i.name}</a>
+          <span>${p?.size || ''}${p?.size && p?.cat ? ' · ' : ''}${CAT_LABELS[p?.cat] || ''}</span>
+          <span class="order-item-qty">Qty ${i.qty}</span>
+        </div>
+        <div class="order-item-price">$${(i.price * i.qty).toLocaleString()}</div>
+      </div>`;
+  }).join('');
+
+  // Totals
+  document.getElementById('orderSubtotal').textContent = '$' + order.subtotal.toLocaleString();
+  document.getElementById('orderShipping').textContent = order.shipping === 0 ? 'Free' : '$' + order.shipping.toLocaleString();
+  document.getElementById('orderTotal').textContent    = '$' + order.total.toLocaleString();
+
+  // Customer
+  const ship = order.ship || {};
+  document.getElementById('orderShipBlock').innerHTML = `
+    <strong>${ship.name || ''}</strong><br/>
+    ${ship.address || ''}<br/>
+    ${ship.city || ''}${ship.city && ship.state ? ', ' : ''}${ship.state || ''} ${ship.postcode || ''}<br/>
+    ${ship.email ? `<a href="mailto:${ship.email}">${ship.email}</a>` : ''}
+    ${ship.phone ? ` · <a href="tel:${ship.phone}">${ship.phone}</a>` : ''}
+  `;
+  document.getElementById('orderPaymentLine').textContent =
+    order.payment?.last4 ? `Paid with card ending •••• ${order.payment.last4}` : '';
 })();
 
 /* ---------- PRODUCT DETAIL PAGE (product.html) ---------- */
