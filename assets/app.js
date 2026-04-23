@@ -310,16 +310,36 @@ document.getElementById('lightboxClose').addEventListener('click', closeLightbox
   const tabs = document.getElementById('catTabs');
   if (!tabs) return;
 
-  // Initial filter from URL hash (e.g. shop.html#cars)
-  const fromHash = (location.hash || '').replace(/^#/, '').toLowerCase();
   const validCats = ['all','saltwater','freshwater','cars','animals','birds'];
-  if (fromHash && validCats.includes(fromHash) && fromHash !== 'all'){
-    const target = tabs.querySelector(`[data-cat="${fromHash}"]`);
+
+  // Initial filter from URL: prefer ?cat= (search-result navigation),
+  // fall back to #hash (showcase-card deep links)
+  const params = new URLSearchParams(location.search);
+  const queryCat = (params.get('cat') || '').toLowerCase();
+  const hashCat  = (location.hash || '').replace(/^#/, '').toLowerCase();
+  const initialCat = validCats.includes(queryCat) ? queryCat
+                   : validCats.includes(hashCat) ? hashCat
+                   : 'all';
+  if (initialCat !== 'all'){
+    const target = tabs.querySelector(`[data-cat="${initialCat}"]`);
     if (target){
       tabs.querySelectorAll('.cat-tab').forEach(x => x.classList.remove('is-active'));
       target.classList.add('is-active');
-      renderGrid(fromHash, { flip: false });
+      renderGrid(initialCat, { flip: false });
     }
+  }
+
+  // ?p=<productId> → scroll to + pulse-highlight that card after the
+  // grid renders (used by the search overlay to deep-link to a product)
+  const highlightId = params.get('p');
+  if (highlightId){
+    requestAnimationFrame(() => {
+      const card = grid?.querySelector(`.product-card[data-id="${highlightId}"]`);
+      if (!card) return;
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      card.classList.add('is-highlight');
+      setTimeout(() => card.classList.remove('is-highlight'), 2400);
+    });
   }
 
   tabs.addEventListener('click', e=>{
@@ -333,6 +353,100 @@ document.getElementById('lightboxClose').addEventListener('click', closeLightbox
       history.replaceState(null, '', location.pathname);
     } else {
       history.replaceState(null, '', '#' + t.dataset.cat);
+    }
+  });
+})();
+
+/* ---------- SEARCH OVERLAY (any page) ---------- */
+(() => {
+  const overlay = document.getElementById('searchOverlay');
+  if (!overlay) return;
+  const btn      = document.getElementById('searchBtn');
+  const input    = document.getElementById('searchInput');
+  const results  = document.getElementById('searchResults');
+  const closeBtn = document.getElementById('searchClose');
+  if (!btn || !input || !results || !closeBtn) return;
+
+  const HINT_HTML = `<p class="search-hint">Try <button class="search-chip" data-q="barra">barra</button> · <button class="search-chip" data-q="monaro">monaro</button> · <button class="search-chip" data-q="lorikeet">lorikeet</button> · <button class="search-chip" data-q="reef">reef</button></p>`;
+
+  const escapeHtml = (s) => s.replace(/[<>&"']/g, c => (
+    {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]
+  ));
+
+  function open(){
+    overlay.hidden = false;
+    requestAnimationFrame(() => {
+      overlay.classList.add('is-open');
+      input.focus();
+      input.select();
+    });
+  }
+  function close(){
+    overlay.classList.remove('is-open');
+    setTimeout(() => {
+      overlay.hidden = true;
+      input.value = '';
+      results.innerHTML = HINT_HTML;
+      bindChips();
+    }, 220);
+  }
+
+  function render(q){
+    const query = q.trim().toLowerCase();
+    if (!query){ results.innerHTML = HINT_HTML; bindChips(); return; }
+    const matches = PRODUCTS.filter(p => {
+      const hay = (p.name + ' ' + (p.meta || '') + ' ' + (CAT_LABELS[p.cat] || '')).toLowerCase();
+      return hay.includes(query);
+    }).slice(0, 8);
+    if (!matches.length){
+      results.innerHTML = `
+        <p class="search-empty">
+          No matches for <em>"${escapeHtml(q)}"</em>.<br/>
+          <a href="index.html#custom">Get one made →</a>
+        </p>`;
+      return;
+    }
+    results.innerHTML = matches.map(p => `
+      <a class="search-result" href="shop.html?cat=${p.cat}&p=${p.id}">
+        <div class="search-result-thumb stage-${p.cat}">
+          ${p.image
+            ? `<img src="${p.image}" alt="" loading="lazy"/>`
+            : `<span class="search-result-mark">${shortName(p.name)}</span>`}
+        </div>
+        <div class="search-result-meta">
+          <span class="search-result-cat">${CAT_LABELS[p.cat]}</span>
+          <strong>${p.name}</strong>
+          <span class="search-result-sub">${p.size} · $${p.price.toLocaleString()}</span>
+        </div>
+        <span class="search-result-go" aria-hidden="true">→</span>
+      </a>
+    `).join('');
+  }
+
+  function bindChips(){
+    results.querySelectorAll('.search-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        input.value = chip.dataset.q;
+        render(input.value);
+      });
+    });
+  }
+  bindChips();
+
+  btn.addEventListener('click', open);
+  closeBtn.addEventListener('click', close);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  input.addEventListener('input', () => render(input.value));
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !overlay.hidden) close();
+    // "/" shortcut from anywhere except form fields
+    if (e.key === '/' && overlay.hidden){
+      const tag = (document.activeElement?.tagName || '').toLowerCase();
+      if (tag !== 'input' && tag !== 'textarea' && tag !== 'select') {
+        e.preventDefault();
+        open();
+      }
     }
   });
 })();
