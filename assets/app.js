@@ -804,6 +804,86 @@ document.addEventListener('keydown', e=>{
    *   uploaded image as-is (sample images are already transparent PNGs; user
    *   uploads will look "cut out" because the wood frame masks them).
    */
+  /**
+   * Client-side white-background removal (used as fallback when the
+   * backend AI service isn't reachable — e.g. static-mockup mode).
+   * Flood-fills from the image edges, marking connected near-white
+   * pixels as transparent, then softens anti-aliased borders.
+   * White spots INSIDE the subject (highlights, reflections) are
+   * preserved because the fill is bounded by the subject's silhouette.
+   */
+  function removeWhiteBackgroundClient(dataUrl){
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const MAX = 1400;
+          const scale = Math.min(1, MAX / Math.max(img.naturalWidth, img.naturalHeight));
+          const w = Math.round(img.naturalWidth * scale);
+          const h = Math.round(img.naturalHeight * scale);
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+
+          const id = ctx.getImageData(0, 0, w, h);
+          const d = id.data;
+          const w4 = w * 4;
+
+          // "near-white" test: bright + low channel spread (= neutral / not coloured)
+          const isNearWhite = (i) => {
+            const r = d[i], g = d[i+1], b = d[i+2];
+            const max = Math.max(r,g,b), min = Math.min(r,g,b);
+            return min > 228 && (max - min) < 22;
+          };
+
+          // Flood fill from all 4 edges
+          const visited = new Uint8Array(w * h);
+          const stack = [];
+          for (let x = 0; x < w; x++){ stack.push(x); stack.push((h-1)*w + x); }
+          for (let y = 0; y < h; y++){ stack.push(y*w); stack.push(y*w + (w-1)); }
+
+          while (stack.length){
+            const p = stack.pop();
+            if (visited[p]) continue;
+            visited[p] = 1;
+            const i = p * 4;
+            if (!isNearWhite(i)) continue;
+            d[i+3] = 0;
+            const x = p % w, y = (p / w) | 0;
+            if (x > 0)     stack.push(p - 1);
+            if (x < w - 1) stack.push(p + 1);
+            if (y > 0)     stack.push(p - w);
+            if (y < h - 1) stack.push(p + w);
+          }
+
+          // Edge softening: anti-alias the cut by easing alpha on near-white
+          // pixels that border a transparent neighbour
+          for (let y = 1; y < h - 1; y++){
+            for (let x = 1; x < w - 1; x++){
+              const i = (y * w + x) * 4;
+              if (d[i+3] === 0) continue;
+              const tNeigh = (d[i-4+3] === 0) || (d[i+4+3] === 0)
+                           || (d[i-w4+3] === 0) || (d[i+w4+3] === 0);
+              if (!tNeigh) continue;
+              const r = d[i], g = d[i+1], b = d[i+2];
+              const min = Math.min(r,g,b);
+              if (min > 210){
+                const t = Math.min(1, (min - 210) / 35);
+                d[i+3] = Math.round(255 * (1 - t * 0.9));
+              }
+            }
+          }
+
+          ctx.putImageData(id, 0, 0);
+          resolve(canvas.toDataURL('image/png'));
+        } catch (e) { reject(e); }
+      };
+      img.onerror = reject;
+      img.src = dataUrl;
+    });
+  }
+
   async function runAIPipeline(){
     goToStep(2);
     cutoutResult.hidden = true;
@@ -821,12 +901,20 @@ document.addEventListener('keydown', e=>{
       await new Promise(r => setTimeout(r, 550 + Math.random() * 350));
     }
 
-    // Try the real backend; fall back to the source image if not available
-    let resultUrl = state.photoDataUrl;
+    // Try the real backend first; fall back to client-side removal
+    let resultUrl = null;
     try {
       const res = await apiPost(API.upload, { image: state.photoDataUrl, op: 'remove-bg' });
       if (res?.cutoutUrl) resultUrl = res.cutoutUrl;
     } catch(_){}
+
+    if (!resultUrl){
+      try {
+        resultUrl = await removeWhiteBackgroundClient(state.photoDataUrl);
+      } catch(_){
+        resultUrl = state.photoDataUrl; // last-resort fallback
+      }
+    }
 
     state.cutoutDataUrl = resultUrl;
     originalImg.src = state.photoDataUrl;

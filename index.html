@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Great+Vibes&family=Dancing+Script:wght@500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/styles.css?v=20260423-3" />
+<link rel="stylesheet" href="assets/styles.css?v=20260423-6" />
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
 <link rel="apple-touch-icon" href="assets/icon-192.svg" />
 <link rel="manifest" href="manifest.webmanifest" />
@@ -55,6 +55,7 @@
       </span>
     </a>
     <nav class="nav-links" aria-label="Primary">
+      <a href="index.html" aria-current="page">Home</a>
       <a href="#shop">Shop</a>
       <a href="about.html">About Max</a>
       <a href="#custom">Custom</a>
@@ -445,9 +446,55 @@
         </div>
       </div>
 
-      <div class="about-stamp">
-        <span class="stamp-line-1">Handcrafted</span>
-        <span class="stamp-line-2">in QLD</span>
+      <div class="about-stamp" aria-label="Handcrafted in Gordonvale, Queensland — established 2019">
+        <svg class="stamp-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <radialGradient id="stamp-bg" cx="50%" cy="38%" r="68%">
+              <stop offset="0%" stop-color="#241c14"/>
+              <stop offset="65%" stop-color="#120c08"/>
+              <stop offset="100%" stop-color="#080503"/>
+            </radialGradient>
+            <path id="stamp-top-arc" d="M 28 100 A 72 72 0 0 1 172 100" fill="none"/>
+            <path id="stamp-bot-arc" d="M 28 100 A 72 72 0 0 0 172 100" fill="none"/>
+            <filter id="stamp-grain" x="0" y="0" width="100%" height="100%">
+              <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4"/>
+              <feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .14 0"/>
+              <feComposite in2="SourceGraphic" operator="in"/>
+            </filter>
+          </defs>
+
+          <!-- disc + grain -->
+          <circle cx="100" cy="100" r="98" fill="url(#stamp-bg)"/>
+          <circle cx="100" cy="100" r="98" filter="url(#stamp-grain)"/>
+
+          <!-- rings -->
+          <circle cx="100" cy="100" r="93" fill="none" stroke="#d4b06a" stroke-width="1.2" opacity=".95"/>
+          <circle cx="100" cy="100" r="89" fill="none" stroke="#d4b06a" stroke-width=".4" opacity=".5"/>
+          <circle cx="100" cy="100" r="58" fill="none" stroke="#d4b06a" stroke-width=".5" opacity=".55"/>
+
+          <!-- separator dots between top + bottom arcs -->
+          <circle cx="25" cy="100" r="2.2" fill="#d4b06a"/>
+          <circle cx="175" cy="100" r="2.2" fill="#d4b06a"/>
+
+          <!-- centre: brook ripple mark -->
+          <g transform="translate(100 86)" stroke="#d4b06a" stroke-linecap="round" fill="none">
+            <path d="M -18 -3 Q -9 -10 0 -3 Q 9 4 18 -3" stroke-width="1.7"/>
+            <path d="M -18 4 Q -9 -3 0 4 Q 9 11 18 4" stroke-width="1.5" opacity=".78"/>
+            <path d="M -18 11 Q -9 4 0 11 Q 9 18 18 11" stroke-width="1.3" opacity=".55"/>
+          </g>
+
+          <!-- centre script -->
+          <text x="100" y="128" text-anchor="middle" font-family="Cormorant Garamond, serif" font-style="italic" font-size="13" fill="#f6efe1" opacity=".92">est. 2019</text>
+
+          <!-- top curved text -->
+          <text font-family="Cinzel, serif" font-size="10.5" letter-spacing="3" fill="#f6efe1">
+            <textPath href="#stamp-top-arc" startOffset="50%" text-anchor="middle">CRYSTAL BROOK · HANDCRAFTED</textPath>
+          </text>
+          <!-- bottom curved text -->
+          <text font-family="Cinzel, serif" font-size="9" letter-spacing="4" fill="#d4b06a">
+            <textPath href="#stamp-bot-arc" startOffset="50%" text-anchor="middle">GORDONVALE · QLD</textPath>
+          </text>
+        </svg>
       </div>
     </div>
   </div>
@@ -1265,6 +1312,6 @@
 <!-- ============ TOAST ============ -->
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/app.js?v=20260423-3"></script>
+<script src="assets/app.js?v=20260423-6"></script>
 </body>
 </html>
