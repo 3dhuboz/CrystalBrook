@@ -261,32 +261,115 @@ section > .container { padding: 0; }
 
 @media (max-width: 980px) { .cat-showcase { grid-template-columns: repeat(2, 1fr); } }
 
-/* === ABOUT TEASER (homepage) =========================== */
-.about { padding: 80px 24px; }
+/* === ABOUT TEASER (homepage) — Mampara-clean layout ============= */
+.about {
+  padding: 100px 24px;
+  background: #fff;
+  border-top: 1px solid var(--line);
+}
+.about-grid,
 .about-inner {
-  max-width: var(--container);
+  max-width: 1100px;
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 60px;
+  gap: 80px;
   align-items: center;
 }
-.about-copy h2 { margin-bottom: 16px; }
-.about-copy p { margin-bottom: 14px; }
-.about-points { display: flex; flex-direction: column; gap: 8px; margin: 20px 0 24px; }
-.about-points li { font-size: .92rem; color: var(--ink-soft); padding-left: 18px; position: relative; }
-.about-points li::before { content: "—"; position: absolute; left: 0; color: var(--ink-mute); }
-.about-visual {
-  background: #f6f6f6;
-  aspect-ratio: 4 / 3;
-  border-radius: var(--r-sm);
-  overflow: hidden;
-  position: relative;
+.about-copy .eyebrow {
+  color: var(--ink-soft);
+  margin-bottom: 18px;
+  display: block;
 }
-.about-cards, .about-card, .about-stamp { display: none; }
-.about-photo, .about-visual img { width: 100%; height: 100%; object-fit: cover; }
-.about-cta-row { display: flex; gap: 12px; }
-@media (max-width: 880px) { .about-inner { grid-template-columns: 1fr; gap: 32px; } }
+.about-copy h2 {
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
+  font-weight: 400;
+  letter-spacing: -.01em;
+  line-height: 1.15;
+  margin: 0 0 24px;
+  color: var(--ink);
+}
+.about-copy p {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--ink-soft);
+  margin: 0 0 28px;
+  max-width: 460px;
+}
+
+/* Numbered process list */
+.about-bullets,
+.about-points {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border-top: 1px solid var(--line);
+  padding-top: 24px;
+}
+.about-bullets li,
+.about-points li {
+  font-size: .95rem;
+  color: var(--ink);
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 0;
+  position: static;
+}
+.about-bullets li::before,
+.about-points li::before { content: none; }
+.about-bullets li span {
+  font-size: .72rem;
+  letter-spacing: .15em;
+  color: var(--ink-mute);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  min-width: 24px;
+}
+
+/* CTA row */
+.about-cta,
+.about-cta-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Visual — single clean product photo, no grey box */
+.about-visual {
+  background: transparent;
+  aspect-ratio: 1 / 1;
+  position: relative;
+  overflow: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.about-cards, .about-card-2, .about-card-3, .about-stamp { display: none; }
+/* Show card 1 only — strip the timber frame, just float the cutout */
+.about-card-1 { display: block; width: 100%; }
+.about-card-1 .ac-frame,
+.about-card-1 .ac-pine { background: transparent; box-shadow: none; border: none; padding: 0; }
+.about-card-1 .ac-cutout {
+  width: 100%;
+  height: auto;
+  max-height: 480px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+}
+.about-photo,
+.about-visual img { width: 100%; height: auto; object-fit: contain; }
+
+@media (max-width: 880px) {
+  .about { padding: 60px 20px; }
+  .about-grid, .about-inner { grid-template-columns: 1fr; gap: 40px; }
+  .about-copy p { max-width: none; }
+  .about-visual { aspect-ratio: auto; }
+}
 
 /* === BUTTONS =========================================== */
 .btn {
