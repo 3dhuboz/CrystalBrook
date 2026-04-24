@@ -153,38 +153,27 @@ section > .container { padding: 0; }
 
 /* === HERO ============================================== */
 .hero {
-  padding: 80px 24px 80px;
+  padding: 60px 24px 60px;
   text-align: center;
-  background: #0F0B07;          /* warm near-black — matches the logo bg so it blends seamlessly */
-  color: #f4efe6;
+  background: #fff;
 }
 .hero-bg, .hero-grain, .hero-light, .hero-particles, .hero-hero-fish, .hero-mark, .hero-divider, .hero-fish, .hero-cta-row, .hero-tags, .hero-pills { display: none; }
-.hero-title { display: none; }  /* the logo IS the title — no redundant text */
 .hero-inner { max-width: 760px; margin: 0 auto; }
-.hero-logo {
-  display: block;
-  max-width: 560px;
-  width: 100%;
-  height: auto;
-  margin: 0 auto 28px;
+.hero-eyebrow { display: block; margin-bottom: 12px; }
+.hero-title {
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-weight: 300;
+  letter-spacing: -.02em;
+  margin: 0 0 18px;
+  color: var(--ink);
 }
-.hero-eyebrow {
-  display: block;
-  margin: 0;
-  color: #c8a35e;               /* gold accent — matches the emblem highlights */
-  letter-spacing: 4px;
-  font-size: 11px;
-  text-transform: uppercase;
-}
+.hero-title em { font-style: normal; font-weight: 500; }
+.hero-title .reveal-word { display: inline; opacity: 1; transform: none; }
 .hero-lede {
   font-size: 1.05rem;
-  color: rgba(244,239,230,0.75);
+  color: var(--ink-soft);
   max-width: 540px;
-  margin: 12px auto 0;
-}
-@media (max-width: 600px) {
-  .hero { padding: 56px 20px 56px; }
-  .hero-logo { max-width: 360px; }
+  margin: 0 auto;
 }
 
 /* === FEATURE STRIP ===================================== */
