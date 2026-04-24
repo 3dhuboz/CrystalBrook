@@ -258,10 +258,21 @@ section > .container { padding: 0; }
   border-radius: var(--r-sm);
   text-decoration: none;
   color: var(--ink);
-  transition: transform .25s var(--ease);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);   /* whisper-of-a-shadow at rest */
+  transition: transform .35s var(--ease), box-shadow .35s var(--ease);
+  will-change: transform;
 }
-.cat-show-card:hover { opacity: 1; }
-.cat-show-card:hover .cat-show-cutout { transform: scale(1.04); }
+.cat-show-card:hover,
+.cat-show-card:focus-visible {
+  opacity: 1;
+  transform: translateY(-6px);
+  box-shadow: 0 18px 40px -12px rgba(0,0,0,0.18),
+              0 4px  10px -4px  rgba(0,0,0,0.10);
+}
+.cat-show-card:hover .cat-show-cutout,
+.cat-show-card:focus-visible .cat-show-cutout {
+  transform: scale(1.06);
+}
 .cat-show-card.is-hero { aspect-ratio: auto; min-height: 100%; }
 .cat-show-bg { display: none; }
 .cat-show-cutouts {
