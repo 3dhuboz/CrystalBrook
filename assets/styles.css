@@ -382,8 +382,7 @@ section > .container { padding: 0; }
   align-items: center;
   justify-content: center;
 }
-.about-cards, .about-card-2, .about-card-3, .about-stamp { display: none; }
-/* Show card 1 only — strip the timber frame, just float the cutout */
+/* about-card-1 is the only visual — strip the timber frame, just float the cutout */
 .about-card-1 { display: block; width: 100%; }
 .about-card-1 .ac-frame,
 .about-card-1 .ac-pine { background: transparent; box-shadow: none; border: none; padding: 0; }
