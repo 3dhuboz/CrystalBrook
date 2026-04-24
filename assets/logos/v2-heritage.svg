@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 360" role="img" aria-label="Crystal Brook Wall Mounts — Heritage Premium variant">
+  <!-- V2 — HERITAGE PREMIUM
+       Inspired by Filson, Orvis, Drake Waterfowl.
+       Drops the hexagon frame for a refined two-line wordmark with hairline rules.
+       A clean iconic bass sits above the wordmark.
+       Maker's stamp at the bottom adds heritage credibility. -->
+
+  <defs>
+    <style>
+      .bg   { fill:#0F0B07; }
+      .gold { fill:#C8A35E; }
+      .gold-thin   { fill:none; stroke:#C8A35E; stroke-width:1; }
+      .gold-thinner{ fill:none; stroke:#C8A35E; stroke-width:0.6; }
+      .ink  { fill:#0F0B07; }
+      .ink-stroke { fill:none; stroke:#0F0B07; stroke-width:1.2; }
+      .serif { font-family: 'Cormorant Garamond', 'Times New Roman', serif; fill:#C8A35E; }
+      .sans  { font-family: 'Inter', 'Helvetica Neue', sans-serif; fill:#C8A35E; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="600" height="360"/>
+
+  <!-- ============ BASS ICON ============
+       Centered above wordmark, ~180px wide
+       Layer order: tail → fins → body (covers joins) → mouth → eye/gill -->
+  <g transform="translate(210,55)">
+
+    <!-- Tail (forked) -->
+    <path class="gold" d="M 150 50 L 188 22 L 174 50 L 188 78 Z"/>
+
+    <!-- Spiny dorsal fin -->
+    <path class="gold" d="
+      M 56 28
+      L 64  8
+      L 72 24
+      L 82 12
+      L 92 24
+      L 102 14
+      L 112 24
+      L 122 16
+      L 132 28
+      Z"/>
+
+    <!-- Pectoral fin -->
+    <path class="gold" d="M 38 56 L 26 80 L 52 66 Z"/>
+
+    <!-- Pelvic fin -->
+    <path class="gold" d="M 64 72 L 74 92 L 86 74 Z"/>
+
+    <!-- Anal fin -->
+    <path class="gold" d="M 112 76 L 122 94 L 132 76 Z"/>
+
+    <!-- Body (covers fin/tail junctions) -->
+    <path class="gold" d="
+      M 16 50
+      C 16 28, 56 22, 96 26
+      C 132 30, 156 38, 156 50
+      C 156 62, 132 70, 96 74
+      C 56 78, 16 72, 16 50
+      Z"/>
+
+    <!-- Mouth gape (cut wedge into front) -->
+    <path class="ink" d="M 16 50 L 0 42 L 0 58 Z"/>
+
+    <!-- Gill plate arc -->
+    <path class="ink-stroke" d="M 38 32 Q 46 50 38 68"/>
+
+    <!-- Eye -->
+    <circle cx="32" cy="42" r="3" fill="#0F0B07"/>
+    <circle cx="33" cy="41" r="0.9" fill="#C8A35E"/>
+
+    <!-- Lateral line -->
+    <path class="ink-stroke" d="M 50 50 Q 100 52 150 50" stroke-dasharray="2 3" opacity="0.6"/>
+  </g>
+
+  <!-- Top decorative rules + EST -->
+  <line class="gold-thinner" x1="80"  y1="172" x2="250" y2="172"/>
+  <line class="gold-thinner" x1="350" y1="172" x2="520" y2="172"/>
+  <text class="sans" x="300" y="176" font-size="11" letter-spacing="4" text-anchor="middle">EST. 2024</text>
+
+  <!-- Wordmark -->
+  <text class="serif" x="300" y="232" font-size="58" font-weight="600" text-anchor="middle" letter-spacing="2">CRYSTAL BROOK</text>
+
+  <!-- Subhead with side rules -->
+  <line class="gold-thin" x1="160" y1="262" x2="220" y2="262"/>
+  <text class="sans" x="300" y="266" font-size="16" letter-spacing="9" text-anchor="middle">WALL MOUNTS</text>
+  <line class="gold-thin" x1="380" y1="262" x2="440" y2="262"/>
+
+  <!-- Maker's stamp -->
+  <text class="sans" x="300" y="305" font-size="10" letter-spacing="5" text-anchor="middle" opacity="0.9">HANDCRAFTED IN QUEENSLAND</text>
+  <text class="sans" x="300" y="324" font-size="9"  letter-spacing="3" text-anchor="middle" opacity="0.6">MAX WHITE  ·  GORDONVALE  ·  AUSTRALIA</text>
+</svg>

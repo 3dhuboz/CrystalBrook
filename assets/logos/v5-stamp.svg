@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 360" role="img" aria-label="Crystal Brook Wall Mounts — Stamp Wordmark variant">
+  <!-- V5 — STAMP WORDMARK
+       Inspired by Aesop, Maker's Mark, classic apothecary brands.
+       Pure type — no icon. Maximum elegance, minimum visual noise.
+       Perfect for letterheads, business cards, packaging stickers,
+       and contexts where a fish illustration would compete with
+       Max's actual wall-mount product photography. -->
+
+  <defs>
+    <style>
+      .bg     { fill:#F4EFE6; }
+      .ink    { fill:#1A1410; }
+      .ink-stroke { fill:none; stroke:#1A1410; stroke-width:1; }
+      .ink-thin   { fill:none; stroke:#1A1410; stroke-width:0.6; }
+      .serif  { font-family: 'Cormorant Garamond', 'Times New Roman', serif; fill:#1A1410; }
+      .sans   { font-family: 'Inter', 'Helvetica Neue', sans-serif; fill:#1A1410; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="600" height="360"/>
+
+  <!-- Frame: thin outer rule, 28px inset -->
+  <rect x="28" y="28" width="544" height="304" class="ink-thin" fill="none"/>
+  <rect x="34" y="34" width="532" height="292" class="ink-thin" fill="none" opacity="0.4"/>
+
+  <!-- Top eyebrow -->
+  <text class="sans" x="300" y="92" font-size="11" letter-spacing="6" text-anchor="middle" font-weight="500">— PURVEYORS OF —</text>
+
+  <!-- Primary wordmark — large refined serif -->
+  <text class="serif" x="300" y="168" font-size="64" font-weight="500" text-anchor="middle" letter-spacing="3">Crystal Brook</text>
+
+  <!-- Secondary mark — letter-spaced caps -->
+  <text class="sans" x="300" y="208" font-size="14" font-weight="500" letter-spacing="14" text-anchor="middle">WALL MOUNTS</text>
+
+  <!-- Decorative ornament: simple curl -->
+  <g transform="translate(300 240)" class="ink-stroke">
+    <path d="M -40 0 L 40 0"/>
+    <path d="M -2 -4 L 2 0 L -2 4"/>
+    <path d="M 2 -4 L -2 0 L 2 4"/>
+  </g>
+
+  <!-- Foot legend -->
+  <text class="sans" x="300" y="282" font-size="10" letter-spacing="4" text-anchor="middle" opacity="0.85">FAR NORTH QUEENSLAND  ·  EST. 2024</text>
+  <text class="sans" x="300" y="302" font-size="9"  letter-spacing="3" text-anchor="middle" opacity="0.55">RESIN-SEALED HARDWOOD  ·  MADE TO ORDER</text>
+</svg>

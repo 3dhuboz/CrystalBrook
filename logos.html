@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Logo Design Loop · Crystal Brook Wall Mounts</title>
+<meta name="description" content="Five logo directions for Crystal Brook Wall Mounts — review and pick the one you want to roll out across the site, packaging and socials." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+<style>
+  :root {
+    --ink:    #1a1410;
+    --ink-2:  #4a4038;
+    --paper:  #ffffff;
+    --paper-2:#f7f3ec;
+    --rule:   #e6dfd2;
+    --gold:   #c8a35e;
+    --dark:   #0f0b07;
+    --good:   #2f7a4d;
+    --warn:   #a85a1a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--ink); }
+
+  /* ===== TOP BAR ===== */
+  .topbar {
+    background: var(--dark);
+    color: #f4efe6;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+  }
+  .topbar a { color: #f4efe6; text-decoration: none; opacity: 0.85; }
+  .topbar a:hover { opacity: 1; }
+  .topbar strong { color: var(--gold); letter-spacing: 1px; }
+
+  /* ===== HERO ===== */
+  .hero {
+    padding: 80px 24px 60px;
+    text-align: center;
+    border-bottom: 1px solid var(--rule);
+  }
+  .hero .eyebrow {
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--ink-2);
+    text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+  .hero h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(36px, 5vw, 56px);
+    font-weight: 500;
+    margin: 0 0 16px;
+    letter-spacing: -0.5px;
+  }
+  .hero p {
+    max-width: 640px;
+    margin: 0 auto;
+    color: var(--ink-2);
+    font-size: 16px;
+  }
+
+  /* ===== BRIEF ===== */
+  .brief {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 60px 24px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .brief h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0 0 18px;
+  }
+  .brief-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    font-size: 14px;
+  }
+  .brief-grid h3 {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    margin: 0 0 8px;
+  }
+  .brief-grid p { margin: 0 0 12px; color: var(--ink-2); }
+  .brief-grid strong { color: var(--ink); font-weight: 600; }
+  @media (max-width: 700px) {
+    .brief-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ===== VARIANT BLOCK ===== */
+  .variant {
+    border-bottom: 1px solid var(--rule);
+  }
+  .variant-head {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 56px 24px 28px;
+    display: flex;
+    align-items: baseline;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .variant-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 56px;
+    font-weight: 500;
+    color: var(--gold);
+    line-height: 1;
+    min-width: 70px;
+  }
+  .variant-name {
+    flex: 1;
+    min-width: 250px;
+  }
+  .variant-name h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    font-weight: 600;
+    margin: 0 0 4px;
+    letter-spacing: -0.3px;
+  }
+  .variant-name p {
+    margin: 0;
+    color: var(--ink-2);
+    font-size: 14px;
+  }
+  .variant-tag {
+    background: var(--paper-2);
+    color: var(--ink-2);
+    padding: 4px 12px;
+    border-radius: 99px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    align-self: center;
+  }
+
+  /* Showcase canvas */
+  .showcase {
+    background: var(--dark);
+    padding: 60px 24px;
+    text-align: center;
+  }
+  .showcase.is-light { background: var(--paper-2); }
+  .showcase img, .showcase object {
+    max-width: 100%;
+    width: 600px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+  }
+  .showcase-cap {
+    margin-top: 24px;
+    color: rgba(244,239,230,0.55);
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+  .showcase.is-light .showcase-cap { color: var(--ink-2); }
+
+  /* Rationale columns */
+  .rationale {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 40px 24px 56px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 32px;
+    font-size: 14px;
+  }
+  .rationale h3 {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    margin: 0 0 10px;
+  }
+  .rationale .col-good h3 { color: var(--good); }
+  .rationale .col-give  h3 { color: var(--warn); }
+  .rationale ul { margin: 0; padding-left: 18px; color: var(--ink-2); }
+  .rationale ul li { margin-bottom: 6px; }
+  .rationale p { margin: 0 0 8px; color: var(--ink-2); }
+  @media (max-width: 760px) {
+    .rationale { grid-template-columns: 1fr; }
+  }
+
+  /* ===== ADAPTIVE TEST ===== */
+  .adaptive {
+    background: var(--paper-2);
+    padding: 80px 24px;
+    text-align: center;
+    border-bottom: 1px solid var(--rule);
+  }
+  .adaptive h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    font-weight: 600;
+    margin: 0 0 8px;
+  }
+  .adaptive .lede {
+    max-width: 600px;
+    margin: 0 auto 48px;
+    color: var(--ink-2);
+    font-size: 14px;
+  }
+  .scale-row {
+    display: flex;
+    align-items: end;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+    margin-bottom: 56px;
+  }
+  .scale-cell {
+    text-align: center;
+  }
+  .scale-cell .frame {
+    background: var(--dark);
+    border-radius: 6px;
+    padding: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .scale-cell.is-light .frame { background: var(--paper); border: 1px solid var(--rule); }
+  .scale-cell .frame img { display: block; }
+  .scale-cell .label {
+    margin-top: 12px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+  .scale-row.set-2 .scale-cell:nth-child(1) .frame img { width: 32px; height: 32px; }
+  .scale-row.set-2 .scale-cell:nth-child(2) .frame img { width: 64px; height: 64px; }
+  .scale-row.set-2 .scale-cell:nth-child(3) .frame img { width: 128px; height: 128px; }
+  .scale-row.set-2 .scale-cell:nth-child(4) .frame img { width: 256px; height: 256px; }
+
+  /* ===== DECIDE ===== */
+  .decide {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 80px 24px;
+    text-align: center;
+  }
+  .decide h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    font-weight: 600;
+    margin: 0 0 12px;
+  }
+  .decide p {
+    color: var(--ink-2);
+    font-size: 15px;
+    margin: 0 0 32px;
+  }
+  .pick-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+  }
+  .pick {
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 16px 8px;
+    text-decoration: none;
+    color: var(--ink);
+    transition: all 0.15s ease;
+    cursor: pointer;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .pick:hover {
+    background: var(--dark);
+    color: #f4efe6;
+    border-color: var(--dark);
+    transform: translateY(-2px);
+  }
+  .pick strong {
+    display: block;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--gold);
+    margin-bottom: 6px;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .pick:hover strong { color: var(--gold); }
+  @media (max-width: 700px) {
+    .pick-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  .decide-note {
+    margin-top: 28px;
+    font-size: 12px;
+    color: var(--ink-2);
+    opacity: 0.75;
+  }
+
+  /* ===== FOOTER ===== */
+  footer {
+    border-top: 1px solid var(--rule);
+    padding: 32px 24px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--ink-2);
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ TOP BAR ============ -->
+<header class="topbar">
+  <a href="index.html"><strong>CRYSTAL BROOK</strong> &nbsp; · &nbsp; Wall Mounts</a>
+  <a href="index.html">← Back to site</a>
+</header>
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <div class="eyebrow">Design Loop · For Max</div>
+  <h1>Five directions for the logo</h1>
+  <p>You picked the top-left emblem. Here it is alongside four refined directions — each one solves a different problem the original can't quite cover. Pick the one you want to roll out, or mix-and-match.</p>
+</section>
+
+<!-- ============ BRIEF ============ -->
+<section class="brief">
+  <h2>What we're balancing</h2>
+  <div class="brief-grid">
+    <div>
+      <h3>The job the logo has to do</h3>
+      <p>Sit on the website header at <strong>32–180 px wide</strong>.</p>
+      <p>Print on a <strong>business card</strong> at the size of a thumbnail.</p>
+      <p>Work as your <strong>Instagram avatar</strong> (a circle, often viewed at 50×50).</p>
+      <p>Engrave or laser onto the <strong>back of every wall mount</strong> as a maker's stamp.</p>
+      <p>Look at home next to <strong>real photographs</strong> of your work — not compete with them.</p>
+    </div>
+    <div>
+      <h3>Brands we measured against</h3>
+      <p><strong>Filson</strong>, <strong>Orvis</strong>, <strong>Drake Waterfowl</strong> — the heritage outdoor benchmark.</p>
+      <p><strong>Patagonia</strong>, <strong>Mampara</strong> — clean modern minimalism that scales.</p>
+      <p><strong>Yeti</strong>, <strong>Sage Fly</strong> — premium roundels that own the avatar slot.</p>
+      <p><strong>Aesop</strong>, <strong>Maker's Mark</strong> — pure-typography brands where the wordmark IS the logo.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ V1 — SOURCE ============ -->
+<section class="variant" id="v1">
+  <div class="variant-head">
+    <div class="variant-num">01</div>
+    <div class="variant-name">
+      <h2>Original Emblem</h2>
+      <p>Your pick. Hexagon frame, detailed bass, full heritage stamp.</p>
+    </div>
+    <div class="variant-tag">Max's choice</div>
+  </div>
+  <div class="showcase">
+    <img src="assets/logos/source-original.jpg" alt="Original logo concepts" />
+    <div class="showcase-cap">Source · The four AI-generated concepts you sent through</div>
+  </div>
+  <div class="rationale">
+    <div class="col-good">
+      <h3>What it does well</h3>
+      <ul>
+        <li>Beautifully detailed — feels handcrafted</li>
+        <li>The hexagon + bass reads instantly as "fishing brand"</li>
+        <li>"EST 2024" + Queensland silhouette = built-in heritage</li>
+        <li>Strong on dark backgrounds and merchandise</li>
+      </ul>
+    </div>
+    <div class="col-give">
+      <h3>What it gives up</h3>
+      <ul>
+        <li>The fish detail disappears at favicon / app-icon size</li>
+        <li>Lots of small text in the badge — hard to print under 60mm</li>
+        <li>The hexagon is a "rustic-brand" trope (used by countless craft beer + leather brands)</li>
+        <li>Locked to one fish — doesn't represent cars / animals / birds</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Best used for</h3>
+      <p>Hero artwork on the homepage, packaging, and the back-of-mount maker's stamp where you have room for the full detail.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ V2 — HERITAGE PREMIUM ============ -->
+<section class="variant" id="v2">
+  <div class="variant-head">
+    <div class="variant-num">02</div>
+    <div class="variant-name">
+      <h2>Heritage Premium</h2>
+      <p>Filson / Orvis influence. Drops the hexagon, lets the typography do the heritage work.</p>
+    </div>
+    <div class="variant-tag">Refined</div>
+  </div>
+  <div class="showcase">
+    <img src="assets/logos/v2-heritage.svg" alt="Heritage Premium variant" />
+    <div class="showcase-cap">V2 · Heritage Premium · gold on warm black</div>
+  </div>
+  <div class="rationale">
+    <div class="col-good">
+      <h3>What it does well</h3>
+      <ul>
+        <li>Reads at every size — the wordmark is the anchor</li>
+        <li>Maker's stamp ("MAX WHITE · GORDONVALE") = real provenance</li>
+        <li>Same colour palette as your pick — feels like family</li>
+        <li>The bass is still there, just sized appropriately</li>
+      </ul>
+    </div>
+    <div class="col-give">
+      <h3>What it gives up</h3>
+      <ul>
+        <li>Less "punch" at first glance than the hexagon emblem</li>
+        <li>Needs both lines to work — can't crop down to icon-only</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Best used for</h3>
+      <p>Website header, email signature, business card front, framed certificate-of-authenticity that ships with each mount.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ V3 — MODERN MINIMAL ============ -->
+<section class="variant" id="v3">
+  <div class="variant-head">
+    <div class="variant-num">03</div>
+    <div class="variant-name">
+      <h2>Modern Minimalist</h2>
+      <p>Mampara / Patagonia influence. Single-stroke bass, geometric wordmark, no flourish.</p>
+    </div>
+    <div class="variant-tag">Clean</div>
+  </div>
+  <div class="showcase is-light">
+    <img src="assets/logos/v3-minimal.svg" alt="Modern Minimalist variant" />
+    <div class="showcase-cap">V3 · Modern Minimalist · ink on cream</div>
+  </div>
+  <div class="rationale">
+    <div class="col-good">
+      <h3>What it does well</h3>
+      <ul>
+        <li>Works in pure black on white — easy to print, photocopy, fax</li>
+        <li>The outline bass scales from 16px to 1600px without falling apart</li>
+        <li>Doesn't fight your real product photography</li>
+        <li>Direct match to Mampara's aesthetic (the brand Max referenced)</li>
+      </ul>
+    </div>
+    <div class="col-give">
+      <h3>What it gives up</h3>
+      <ul>
+        <li>Less "warm artisan" — more "studio brand"</li>
+        <li>The hand-crafted heritage cue isn't as obvious</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Best used for</h3>
+      <p>Website header in a minimalist layout, modern shopify-style storefront, monochrome merch (tees, caps, stickers).</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ V4 — ROUNDEL ============ -->
+<section class="variant" id="v4">
+  <div class="variant-head">
+    <div class="variant-num">04</div>
+    <div class="variant-name">
+      <h2>Roundel Mark</h2>
+      <p>Yeti / Sage Fly influence. Built specifically for circles — favicon, Instagram avatar, app icon.</p>
+    </div>
+    <div class="variant-tag">Avatar-ready</div>
+  </div>
+  <div class="showcase">
+    <img src="assets/logos/v4-roundel.svg" alt="Roundel Mark variant" style="width: 320px;" />
+    <div class="showcase-cap">V4 · Roundel · gold on warm black</div>
+  </div>
+  <div class="rationale">
+    <div class="col-good">
+      <h3>What it does well</h3>
+      <ul>
+        <li>Owns the Instagram avatar slot (where most people will first see you)</li>
+        <li>Curved type around the bass = unmistakable "stamp" feel</li>
+        <li>Reads as a single mark from across a room or at 32px</li>
+        <li>Looks great branded onto product packaging</li>
+      </ul>
+    </div>
+    <div class="col-give">
+      <h3>What it gives up</h3>
+      <ul>
+        <li>Curved type is hard to read at very small sizes — better as a stamp than primary header</li>
+        <li>Needs to be paired with a wordmark for context (V2 or V3 above)</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Best used for</h3>
+      <p>Favicon, app icon, social avatars (Insta / Facebook / TikTok), wax-seal stickers on packaging, the "stamp" on the back of every mount.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ V5 — STAMP WORDMARK ============ -->
+<section class="variant" id="v5">
+  <div class="variant-head">
+    <div class="variant-num">05</div>
+    <div class="variant-name">
+      <h2>Stamp Wordmark</h2>
+      <p>Aesop / Maker's Mark influence. Pure type — no fish at all. Maximum elegance.</p>
+    </div>
+    <div class="variant-tag">Typographic</div>
+  </div>
+  <div class="showcase is-light">
+    <img src="assets/logos/v5-stamp.svg" alt="Stamp Wordmark variant" />
+    <div class="showcase-cap">V5 · Stamp Wordmark · ink on cream</div>
+  </div>
+  <div class="rationale">
+    <div class="col-good">
+      <h3>What it does well</h3>
+      <ul>
+        <li>The fish you actually sell becomes the visual — not a fish in the logo</li>
+        <li>Works for ALL categories (cars, birds, animals don't fit a fish-based logo)</li>
+        <li>Premium-as-anything — apothecary / fine-art aesthetic</li>
+        <li>Tiniest filesize = fastest page load</li>
+      </ul>
+    </div>
+    <div class="col-give">
+      <h3>What it gives up</h3>
+      <ul>
+        <li>No icon — harder to "remember" at a glance</li>
+        <li>Loses the "fishing brand" cue some customers expect</li>
+        <li>Requires confident typography to feel premium not generic</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Best used for</h3>
+      <p>Letterhead, certificate-of-authenticity card that ships with each mount, the embossed "thank you" on the inside of packaging.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ADAPTIVE TEST ============ -->
+<section class="adaptive">
+  <h2>The scale test</h2>
+  <p class="lede">A logo only works if it works at every size it'll appear in. Here's the Roundel (V4) at the four sizes it'll actually live at on your site, packaging and socials.</p>
+
+  <div class="scale-row set-2">
+    <div class="scale-cell">
+      <div class="frame"><img src="assets/logos/v4-roundel.svg" alt="Roundel at favicon size" /></div>
+      <div class="label">32 px · Favicon</div>
+    </div>
+    <div class="scale-cell">
+      <div class="frame"><img src="assets/logos/v4-roundel.svg" alt="Roundel at mobile header size" /></div>
+      <div class="label">64 px · Mobile header</div>
+    </div>
+    <div class="scale-cell">
+      <div class="frame"><img src="assets/logos/v4-roundel.svg" alt="Roundel at avatar size" /></div>
+      <div class="label">128 px · Insta avatar</div>
+    </div>
+    <div class="scale-cell">
+      <div class="frame"><img src="assets/logos/v4-roundel.svg" alt="Roundel at hero size" /></div>
+      <div class="label">256 px · Packaging stamp</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DECIDE ============ -->
+<section class="decide">
+  <h2>Pick a direction</h2>
+  <p>Tell Steve which one you want and he'll wire it across the site, favicon, social profiles and packaging template. You can mix two — most brands do (e.g. V2 on the header, V4 as the favicon and avatar).</p>
+
+  <div class="pick-grid">
+    <a href="#v1" class="pick"><strong>01</strong>Original</a>
+    <a href="#v2" class="pick"><strong>02</strong>Heritage</a>
+    <a href="#v3" class="pick"><strong>03</strong>Minimal</a>
+    <a href="#v4" class="pick"><strong>04</strong>Roundel</a>
+    <a href="#v5" class="pick"><strong>05</strong>Stamp</a>
+  </div>
+
+  <p class="decide-note">Want any of these tweaked — different colour, different fish, different wording? Just say so and I'll iterate.</p>
+</section>
+
+<footer>
+  Crystal Brook Wall Mounts · Logo Design Loop · Prepared by Penny Wise I.T
+</footer>
+
+</body>
+</html>
