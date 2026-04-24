@@ -170,7 +170,8 @@ section > .container { padding: 0; }
   background-position: center;
   background-repeat: no-repeat;
   background-size: 760px auto;
-  opacity: 0.22;
+  opacity: 0.32;
+  filter: saturate(1.6) contrast(1.1);   /* push the gold richness up */
   pointer-events: none;
   z-index: 0;
   -webkit-mask-image: radial-gradient(ellipse 60% 70% at center, #000 35%, transparent 85%);
@@ -179,7 +180,7 @@ section > .container { padding: 0; }
 .hero-bg, .hero-grain, .hero-light, .hero-particles, .hero-hero-fish, .hero-mark, .hero-divider, .hero-fish, .hero-cta-row, .hero-tags, .hero-pills { display: none; }
 .hero-inner { max-width: 760px; margin: 0 auto; position: relative; z-index: 1; }
 @media (max-width: 600px) {
-  .hero::before { background-size: 460px auto; opacity: 0.18; }
+  .hero::before { background-size: 460px auto; opacity: 0.26; }
 }
 .hero-eyebrow { display: block; margin-bottom: 12px; }
 .hero-title {
