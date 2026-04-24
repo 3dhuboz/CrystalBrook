@@ -94,14 +94,14 @@ section > .container { padding: 0; }
 }
 .brand { display: flex; align-items: center; gap: 10px; }
 .brand-mark {
-  width: 32px; height: 32px;
+  width: 40px; height: 40px;
   display: grid; place-items: center;
-  background: var(--ink);
-  color: #fff;
-  border-radius: 50%;
+  border-radius: 6px;
   overflow: hidden;
+  background: #0F0B07;          /* matches the logo's own background */
 }
-.brand-mark svg { width: 100%; height: 100%; }
+.brand-mark img,
+.brand-mark svg { width: 100%; height: 100%; object-fit: cover; }
 .brand-text { display: flex; flex-direction: column; line-height: 1; }
 .brand-name { font-size: 1rem; font-weight: 600; letter-spacing: .02em; }
 .brand-sub { font-size: .58rem; letter-spacing: .25em; text-transform: uppercase; color: var(--ink-mute); margin-top: 3px; }
@@ -153,27 +153,38 @@ section > .container { padding: 0; }
 
 /* === HERO ============================================== */
 .hero {
-  padding: 60px 24px 60px;
+  padding: 80px 24px 80px;
   text-align: center;
-  background: #fff;
+  background: #0F0B07;          /* warm near-black — matches the logo bg so it blends seamlessly */
+  color: #f4efe6;
 }
 .hero-bg, .hero-grain, .hero-light, .hero-particles, .hero-hero-fish, .hero-mark, .hero-divider, .hero-fish, .hero-cta-row, .hero-tags, .hero-pills { display: none; }
+.hero-title { display: none; }  /* the logo IS the title — no redundant text */
 .hero-inner { max-width: 760px; margin: 0 auto; }
-.hero-eyebrow { display: block; margin-bottom: 12px; }
-.hero-title {
-  font-size: clamp(2rem, 4vw, 3.2rem);
-  font-weight: 300;
-  letter-spacing: -.02em;
-  margin: 0 0 18px;
-  color: var(--ink);
+.hero-logo {
+  display: block;
+  max-width: 560px;
+  width: 100%;
+  height: auto;
+  margin: 0 auto 28px;
 }
-.hero-title em { font-style: normal; font-weight: 500; }
-.hero-title .reveal-word { display: inline; opacity: 1; transform: none; }
+.hero-eyebrow {
+  display: block;
+  margin: 0;
+  color: #c8a35e;               /* gold accent — matches the emblem highlights */
+  letter-spacing: 4px;
+  font-size: 11px;
+  text-transform: uppercase;
+}
 .hero-lede {
   font-size: 1.05rem;
-  color: var(--ink-soft);
+  color: rgba(244,239,230,0.75);
   max-width: 540px;
-  margin: 0 auto;
+  margin: 12px auto 0;
+}
+@media (max-width: 600px) {
+  .hero { padding: 56px 20px 56px; }
+  .hero-logo { max-width: 360px; }
 }
 
 /* === FEATURE STRIP ===================================== */

@@ -6,7 +6,7 @@
  *   - Offline fallback to cached index.html for navigation
  */
 
-const VERSION = 'cbwm-2026-04-24-03';
+const VERSION = 'cbwm-2026-04-24-04';
 const SHELL_CACHE = `${VERSION}-shell`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
 
@@ -26,8 +26,13 @@ const SHELL = [
   '/assets/app.js',
   '/assets/admin.css',
   '/assets/favicon.svg',
-  '/assets/icon-192.svg',
-  '/assets/icon-512.svg',
+  '/assets/favicon-32.png',
+  '/assets/favicon-16.png',
+  '/assets/apple-touch-icon.png',
+  '/assets/icon-192.png',
+  '/assets/icon-512.png',
+  '/assets/logos/logo-primary.png',
+  '/assets/logos/logo-mark-96.png',
 ];
 
 self.addEventListener('install', (event) => {
