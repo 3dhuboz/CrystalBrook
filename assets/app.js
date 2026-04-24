@@ -100,26 +100,45 @@ function shortName(n){
 }
 
 const SHOWCASE = [
-  { cat: 'saltwater',  num: '01', title: 'Saltwater Fish',  tagline: 'From the reef to your wall.',          feature: 'p-coral',    noun: 'species', hero: true },
-  { cat: 'freshwater', num: '02', title: 'Freshwater Fish', tagline: 'River kings, immortalised in resin.',  feature: 'p-cod',      noun: 'species' },
-  { cat: 'cars',       num: '03', title: 'Cars',            tagline: 'Bathurst legends, sealed under glass.',feature: 'p-monaro',   noun: 'classics' },
-  { cat: 'animals',    num: '04', title: 'Animals & Pets',  tagline: 'Working dogs, wildlife, family.',      feature: 'p-frenchie', noun: 'portraits' },
-  { cat: 'birds',      num: '05', title: 'Birds',           tagline: 'Aussie skies, frozen mid-flight.',     feature: 'p-lorikeet', noun: 'species' },
+  { cat: 'saltwater',  num: '01', title: 'Saltwater Fish',  tagline: 'From the reef to your wall.',          noun: 'species' },
+  { cat: 'freshwater', num: '02', title: 'Freshwater Fish', tagline: 'River kings, immortalised in resin.',  noun: 'species' },
+  { cat: 'cars',       num: '03', title: 'Cars',            tagline: 'Bathurst legends, sealed under glass.',noun: 'classics' },
+  { cat: 'animals',    num: '04', title: 'Animals & Pets',  tagline: 'Working dogs, wildlife, family.',      noun: 'portraits' },
+  { cat: 'birds',      num: '05', title: 'Birds',           tagline: 'Aussie skies, frozen mid-flight.',     noun: 'species' },
 ];
+
+/**
+ * Pick up to N products from a category that have actual images,
+ * preferring distinct images so the montage doesn't show duplicates.
+ */
+function pickMontagePics(cat, n = 3){
+  const seen = new Set();
+  const out = [];
+  for (const p of PRODUCTS) {
+    if (p.cat !== cat) continue;
+    if (!p.image) continue;
+    if (seen.has(p.image)) continue;        // skip stand-in duplicates
+    seen.add(p.image);
+    out.push(p);
+    if (out.length >= n) break;
+  }
+  return out;
+}
 
 function renderCategoryShowcase(){
   const showcase = document.getElementById('catShowcase');
   if (!showcase) return;
   showcase.innerHTML = SHOWCASE.map(c => {
-    const p = PRODUCTS.find(x => x.id === c.feature);
-    const count = PRODUCTS.filter(x => x.cat === c.cat).length;
-    const cutout = p?.image
-      ? `<img src="${p.image}" class="cat-show-cutout" alt="" loading="lazy"/>`
-      : `<div class="cat-show-placeholder">${shortName(p?.name || c.title)}</div>`;
+    const inCat = PRODUCTS.filter(p => p.cat === c.cat);
+    const count = inCat.length;
+    const pics = pickMontagePics(c.cat, 3);
+    const montage = pics.length
+      ? pics.map((p, i) => `<img src="${p.image}" class="cat-show-pic cat-show-pic-${i+1}" alt="" loading="lazy"/>`).join('')
+      : `<div class="cat-show-placeholder">${shortName(c.title)}</div>`;
     return `
-      <a class="cat-show-card stage-${c.cat}${c.hero ? ' is-hero' : ''}" href="shop.html#${c.cat}" data-cat="${c.cat}">
+      <a class="cat-show-card stage-${c.cat}" href="shop.html#${c.cat}" data-cat="${c.cat}">
         <div class="cat-show-bg" aria-hidden="true"></div>
-        <div class="cat-show-cutouts">${cutout}</div>
+        <div class="cat-show-cutouts">${montage}</div>
         <div class="cat-show-meta">
           <span class="cat-show-num">${c.num}</span>
           <h3 class="cat-show-title">${c.title}</h3>
