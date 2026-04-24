@@ -6,7 +6,7 @@
  *   - Offline fallback to cached index.html for navigation
  */
 
-const VERSION = 'cbwm-2026-04-24-07';
+const VERSION = 'cbwm-2026-04-24-08';
 const SHELL_CACHE = `${VERSION}-shell`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
 
@@ -33,6 +33,7 @@ const SHELL = [
   '/assets/icon-512.png',
   '/assets/logos/logo-primary.png',
   '/assets/logos/logo-mark-96.png',
+  '/assets/logos/logo-watermark.png',
 ];
 
 self.addEventListener('install', (event) => {

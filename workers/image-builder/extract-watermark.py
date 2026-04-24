@@ -20,25 +20,21 @@ SRC = REPO / "assets" / "logos" / "logo-primary.png"
 OUT = REPO / "assets" / "logos" / "logo-watermark.png"
 
 def main():
-    im = Image.open(SRC).convert("RGB")
-    px = im.load()
-    w, h = im.size
+    rgb = Image.open(SRC).convert("RGB")
+    w, h = rgb.size
     print(f"Source: {SRC.name}  {w}x{h}")
 
-    # Build RGBA where alpha = perceived luminance of the source.
-    # Use Rec. 709 luma coefficients for natural-looking knockout.
-    out = Image.new("RGBA", (w, h), (0, 0, 0, 0))
-    op = out.load()
-    for y in range(h):
-        for x in range(w):
-            r, g, b = px[x, y]
-            # Luminance 0..255
-            lum = int(0.2126 * r + 0.7152 * g + 0.0722 * b)
-            # Boost slightly so faint shadows still show
-            alpha = min(255, int(lum * 1.15))
-            # Keep the gold colour (boost saturation slightly so it
-            # doesn't go grey when faded out at low opacity)
-            op[x, y] = (r, g, b, alpha)
+    # PIL's "L" conversion uses Rec. 601 (close enough to 709 for our purposes)
+    # and is implemented in C — much faster than Python pixel iteration.
+    luma = rgb.convert("L")
+
+    # Boost the alpha so mid-tones still register and the emblem reads
+    # cleanly when the watermark is later set to ~12-15% opacity in CSS.
+    alpha = luma.point(lambda x: min(255, int(x * 1.25)))
+
+    # Recombine the original RGB with luminance-as-alpha
+    r, g, b = rgb.split()
+    out = Image.merge("RGBA", (r, g, b, alpha))
 
     out.save(OUT, format="PNG", optimize=True)
     print(f"  -> {OUT.relative_to(REPO)}  {out.size}  (transparent bg)")
