@@ -3,674 +3,290 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="description" content="Meet Max White — the maker behind Crystal Brook Wall Mounts. Resin-coated archival prints on Australian hardwood, handcrafted in Gordonvale, Far North Queensland." />
-<title>About Max · Crystal Brook Wall Mounts</title>
+<meta name="description" content="Meet Max White — the maker behind Crystal Brook Wall Mounts. Handcrafted resin-coated archival prints from a Gordonvale workshop in Far North Queensland." />
+<title>Meet Max — Crystal Brook Wall Mounts</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Great+Vibes&family=Dancing+Script:wght@500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/styles.css?v=20260425-1" />
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260425-1" />
-<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260425-1" />
-<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260425-1" />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/styles.css?v=20260425-2" />
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260425-2" />
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260425-2" />
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260425-2" />
 <link rel="manifest" href="manifest.webmanifest" />
-<meta name="theme-color" content="#1c130a" />
+<meta name="theme-color" content="#ffffff" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="Crystal Brook" />
 <style>
-/* ===== ABOUT PAGE — page-specific styles ===== */
-.about-page-hero{
-  position: relative;
-  overflow: hidden;
-  background:
-    radial-gradient(ellipse at 18% 25%, rgba(180,130,80,.18) 0%, transparent 50%),
-    radial-gradient(ellipse at 82% 80%, rgba(58,138,174,.15) 0%, transparent 55%),
-    linear-gradient(180deg, #0c0a07 0%, #18120c 70%, #1c160e 100%);
-  color: #f4ecdc;
-  padding: clamp(8rem, 12vw, 11rem) clamp(1.2rem, 6vw, 6rem) clamp(5rem, 8vw, 8rem);
-}
-.about-page-hero::before{
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(circle at 20% 30%, rgba(212,176,106,.04) 0, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(212,176,106,.03) 0, transparent 50%);
-  pointer-events: none;
-}
-.about-hero-grid{
-  display: grid;
-  grid-template-columns: 1.05fr .95fr;
-  gap: clamp(2rem, 5vw, 5rem);
-  align-items: center;
-  max-width: 1280px;
-  margin: 0 auto;
-  position: relative;
-  z-index: 1;
-}
-.about-hero-copy .eyebrow{
-  color: #d4b06a;
-  letter-spacing: .26em;
-  font-size: .72rem;
-  margin-bottom: 1.2rem;
-  text-transform: uppercase;
-}
-.about-hero-copy h1{
-  font-family: 'Cinzel', serif;
-  font-weight: 600;
-  font-size: clamp(2.4rem, 5vw, 4.2rem);
-  line-height: 1.04;
-  letter-spacing: .015em;
-  margin: 0 0 1.2rem;
-  color: #f8efd7;
-}
-.about-hero-copy h1 em{
-  font-family: 'Cormorant Garamond', serif;
-  font-style: italic;
-  font-weight: 500;
-  background: linear-gradient(90deg, #b78a44, #d4b06a, #f3d99d);
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-}
-.about-hero-copy .lede{
-  font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(1.15rem, 1.6vw, 1.45rem);
-  line-height: 1.55;
-  color: rgba(244, 236, 220, .82);
-  font-style: italic;
-  margin: 0 0 2rem;
-  max-width: 38ch;
-}
-.about-hero-meta{
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.4rem 2rem;
-  margin-top: 2.4rem;
-  padding-top: 1.6rem;
-  border-top: 1px solid rgba(212, 176, 106, .25);
-}
-.about-hero-meta dt{
-  font-family: 'Inter', sans-serif;
-  font-size: .68rem;
-  letter-spacing: .25em;
-  text-transform: uppercase;
-  color: #d4b06a;
-  margin-bottom: .3rem;
-}
-.about-hero-meta dd{
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.1rem;
-  color: #f4ecdc;
-  margin: 0;
-}
+  /* ===== ABOUT PAGE — Mampara-clean white aesthetic ===== */
+  .about-page { background: #fff; color: var(--ink); }
 
-/* Portrait placeholder */
-.about-portrait{
-  position: relative;
-  aspect-ratio: 4 / 5;
-  border-radius: 10px;
-  overflow: visible; /* let the gold halo show beyond the frame */
-  background:
-    radial-gradient(ellipse at 50% 35%, #2c2014 0%, #14100a 70%, #0a0806 100%);
-  box-shadow:
-    0 0 0 12px #1c130a,                          /* dark wood-frame thickness */
-    0 0 0 14px rgba(212, 176, 106, .55),         /* thin gold inlay */
-    0 36px 70px -10px rgba(212, 176, 106, .35),  /* warm gold glow */
-    0 50px 100px -20px rgba(0, 0, 0, .65),       /* heavy drop shadow */
-    inset 0 0 0 1px rgba(212, 176, 106, .35);
-  transform: rotate(-1deg);
-  transition: transform .5s var(--ease);
-  z-index: 1;
-}
-.about-portrait:hover{ transform: rotate(0deg) scale(1.015); }
-/* Warm aurora wash behind the portrait */
-.about-portrait::after{
-  content: ""; position: absolute;
-  inset: -50px;
-  z-index: -1;
-  background:
-    radial-gradient(ellipse at 30% 20%, rgba(255, 200, 130, .32), transparent 55%),
-    radial-gradient(ellipse at 75% 80%, rgba(60, 150, 195, .22), transparent 50%);
-  filter: blur(24px);
-  border-radius: 30px;
-  pointer-events: none;
-}
-/* Wrap the img+placeholder in an inner clipping container so the photo
-   stays within the rounded frame, but the wax seal can spill outside */
-.about-portrait > .about-portrait-img,
-.about-portrait > .portrait-placeholder,
-.about-portrait > .about-portrait-frame,
-.about-portrait::before{
-  border-radius: 8px;
-}
-.about-portrait > .about-portrait-img,
-.about-portrait > .portrait-placeholder,
-.about-portrait::before{
-  clip-path: inset(0 0 0 0 round 8px);
-}
-/* Gold "Signed by the Maker" wax-seal stamp in the bottom-right corner */
-.about-signed{
-  position: absolute;
-  bottom: -22px; right: -22px;
-  width: 92px; height: 92px;
-  z-index: 4;
-  filter: drop-shadow(0 8px 18px rgba(0,0,0,.55));
-  transform: rotate(8deg);
-  transition: transform .35s var(--ease);
-}
-.about-portrait:hover .about-signed{ transform: rotate(2deg) scale(1.08); }
-.about-portrait-img{
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center 30%;
-  border-radius: 6px;
-  display: block;
-  filter: saturate(1.05) contrast(1.04);
-  z-index: 0;
-}
-.about-portrait::before{
-  /* film grain */
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(circle at 30% 30%, rgba(212,176,106,.08) 0, transparent 35%);
-  pointer-events: none;
-}
-.portrait-placeholder{
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  text-align: center;
-}
-.portrait-placeholder svg{
-  width: 38%;
-  opacity: .55;
-}
-.portrait-placeholder .ph-cap{
-  position: absolute;
-  bottom: 1.4rem;
-  left: 0;
-  right: 0;
-  font-family: 'Inter', sans-serif;
-  font-size: .68rem;
-  letter-spacing: .25em;
-  text-transform: uppercase;
-  color: rgba(212, 176, 106, .55);
-}
-.about-portrait-frame{
-  position: absolute;
-  inset: 12px;
-  border: 1px solid rgba(212, 176, 106, .35);
-  border-radius: 4px;
-  pointer-events: none;
-}
-.about-portrait-cap{
-  margin-top: 1rem;
-  font-family: 'Cormorant Garamond', serif;
-  font-style: italic;
-  font-size: .92rem;
-  color: rgba(244, 236, 220, .55);
-  text-align: center;
-}
-
-/* ===== Story section ===== */
-.about-story{
-  padding: clamp(5rem, 9vw, 8rem) clamp(1.2rem, 6vw, 6rem);
-  background: var(--bg);
-}
-.about-story-inner{
-  max-width: 880px;
-  margin: 0 auto;
-}
-.about-story h2{
-  font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(2rem, 3.8vw, 3rem);
-  font-weight: 600;
-  margin: 0 0 2rem;
-  letter-spacing: .005em;
-  color: var(--ink);
-}
-.about-story h2 em{
-  font-style: italic;
-  color: var(--oak);
-}
-.about-story p{
-  font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(1.1rem, 1.5vw, 1.25rem);
-  line-height: 1.75;
-  color: var(--ink-soft);
-  margin: 0 0 1.4rem;
-}
-.about-story p:first-of-type::first-letter{
-  font-family: 'Cinzel', serif;
-  font-size: 3.4rem;
-  float: left;
-  line-height: .9;
-  margin: .4rem .6rem 0 0;
-  color: var(--oak);
-  font-weight: 600;
-}
-.about-pull{
-  margin: 2.5rem 0 2.5rem -1rem;
-  padding: 1.4rem 0 1.4rem 1.6rem;
-  border-left: 3px solid var(--oak);
-  font-family: 'Cormorant Garamond', serif;
-  font-style: italic;
-  font-size: clamp(1.3rem, 2vw, 1.65rem);
-  color: var(--ink);
-  line-height: 1.4;
-}
-
-/* ===== Place — landscape strip ===== */
-.about-place{
-  position: relative;
-  padding: clamp(5rem, 8vw, 7rem) clamp(1.2rem, 6vw, 6rem);
-  background:
-    radial-gradient(ellipse at 50% 50%, rgba(110, 168, 130, .12) 0, transparent 70%),
-    linear-gradient(180deg, #0e2a1c 0%, #06170f 60%, #0a1c12 100%);
-  color: #f4ecdc;
-  overflow: hidden;
-}
-.about-place::before{
-  content: "";
-  position: absolute;
-  inset: 0;
-  opacity: .25;
-  background:
-    radial-gradient(circle at 18% 75%, rgba(58,138,174,.4) 0, transparent 35%),
-    radial-gradient(circle at 80% 30%, rgba(212,176,106,.2) 0, transparent 40%);
-  pointer-events: none;
-}
-.about-place-grid{
-  position: relative;
-  z-index: 1;
-  max-width: 1280px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4rem;
-  align-items: center;
-}
-.about-place-copy .eyebrow{
-  color: #d4b06a;
-  letter-spacing: .25em;
-  font-size: .72rem;
-  margin-bottom: 1rem;
-  text-transform: uppercase;
-}
-.about-place-copy h2{
-  font-family: 'Cinzel', serif;
-  font-weight: 600;
-  font-size: clamp(2rem, 3.6vw, 2.8rem);
-  line-height: 1.1;
-  margin: 0 0 1.2rem;
-  color: #f8efd7;
-  letter-spacing: .015em;
-}
-.about-place-copy h2 em{
-  font-family: 'Cormorant Garamond', serif;
-  font-style: italic;
-  font-weight: 500;
-}
-.about-place-copy p{
-  font-family: 'Inter', sans-serif;
-  font-size: 1.02rem;
-  line-height: 1.75;
-  color: rgba(244, 236, 220, .82);
-  margin: 0 0 1.2rem;
-}
-.about-place-stats{
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.4rem;
-  margin-top: 2rem;
-  padding-top: 1.6rem;
-  border-top: 1px solid rgba(212, 176, 106, .25);
-}
-.about-place-stats div{
-  font-family: 'Inter', sans-serif;
-}
-.about-place-stats strong{
-  display: block;
-  font-family: 'Cinzel', serif;
-  font-weight: 600;
-  font-size: 1.6rem;
-  color: #d4b06a;
-  margin-bottom: .15rem;
-  letter-spacing: .015em;
-}
-.about-place-stats span{
-  font-size: .82rem;
-  letter-spacing: .04em;
-  color: rgba(244, 236, 220, .65);
-}
-
-/* Stylised "map" of Gordonvale + Crystal Brook */
-.about-map{
-  position: relative;
-  aspect-ratio: 4 / 4;
-  border-radius: 12px;
-  overflow: hidden;
-  background:
-    radial-gradient(ellipse at 50% 60%, rgba(58, 138, 174, .25) 0, transparent 65%),
-    linear-gradient(180deg, #1a3024 0%, #0c1d14 100%);
-  box-shadow: 0 30px 70px rgba(0,0,0,.35), inset 0 0 0 1px rgba(212,176,106,.2);
-}
-.about-map svg{ width: 100%; height: 100%; display: block; }
-.about-map-cap{
-  position: absolute;
-  bottom: 1rem;
-  left: 1.2rem;
-  right: 1.2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  font-family: 'Inter', sans-serif;
-  color: rgba(244, 236, 220, .85);
-}
-.about-map-cap strong{
-  font-family: 'Cinzel', serif;
-  font-size: .85rem;
-  letter-spacing: .15em;
-  color: #d4b06a;
-  display: block;
-  margin-bottom: .2rem;
-}
-.about-map-cap small{
-  font-size: .72rem;
-  letter-spacing: .1em;
-  color: rgba(244, 236, 220, .55);
-}
-
-/* ===== Promise — 4 values ===== */
-.about-promise{
-  padding: clamp(5rem, 9vw, 8rem) clamp(1.2rem, 6vw, 6rem);
-  background: var(--paper);
-}
-.about-promise-head{
-  text-align: center;
-  max-width: 720px;
-  margin: 0 auto 3.5rem;
-}
-.about-promise-head .eyebrow{
-  color: var(--oak);
-  letter-spacing: .26em;
-  font-size: .7rem;
-  margin-bottom: .8rem;
-  text-transform: uppercase;
-}
-.about-promise-head h2{
-  font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(2rem, 3.6vw, 2.8rem);
-  font-weight: 600;
-  margin: 0 0 1rem;
-  color: var(--ink);
-}
-.about-promise-head p{
-  font-family: 'Cormorant Garamond', serif;
-  font-style: italic;
-  font-size: clamp(1.05rem, 1.4vw, 1.2rem);
-  line-height: 1.6;
-  color: var(--ink-soft);
-  margin: 0;
-}
-.about-promise-grid{
-  max-width: 1180px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.2rem;
-}
-.about-value{
-  position: relative;
-  background: var(--surface);
-  border-radius: 14px;
-  padding: 2rem 1.6rem;
-  border: 1px solid var(--line);
-  transition: transform .35s var(--ease), box-shadow .35s var(--ease), border-color .35s var(--ease);
-}
-.about-value:hover{
-  transform: translateY(-4px);
-  box-shadow: 0 18px 40px rgba(48, 30, 12, .14);
-  border-color: var(--line-2);
-}
-.about-value .v-icon{
-  width: 46px;
-  height: 46px;
-  display: grid;
-  place-items: center;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(212, 176, 106, .15), rgba(212, 176, 106, .05));
-  color: var(--oak);
-  margin-bottom: 1.2rem;
-}
-.about-value h3{
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.35rem;
-  font-weight: 600;
-  margin: 0 0 .55rem;
-  color: var(--ink);
-}
-.about-value p{
-  font-family: 'Inter', sans-serif;
-  font-size: .92rem;
-  line-height: 1.6;
-  color: var(--ink-mute);
-  margin: 0;
-}
-
-/* ===== Workshop strip — placeholder photo grid ===== */
-.about-workshop{
-  padding: clamp(5rem, 9vw, 8rem) clamp(1.2rem, 6vw, 6rem);
-  background: var(--bg);
-}
-.about-workshop-head{
-  text-align: center;
-  max-width: 720px;
-  margin: 0 auto 3rem;
-}
-.about-workshop-head .eyebrow{
-  color: var(--oak);
-  letter-spacing: .26em;
-  font-size: .7rem;
-  margin-bottom: .8rem;
-  text-transform: uppercase;
-}
-.about-workshop-head h2{
-  font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(2rem, 3.6vw, 2.8rem);
-  font-weight: 600;
-  margin: 0 0 1rem;
-  color: var(--ink);
-}
-.about-workshop-head p{
-  font-family: 'Cormorant Garamond', serif;
-  font-style: italic;
-  font-size: clamp(1.05rem, 1.4vw, 1.2rem);
-  line-height: 1.6;
-  color: var(--ink-soft);
-  margin: 0;
-}
-
-.about-workshop-grid{
-  max-width: 1280px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
-  grid-template-rows: 240px 240px;
-  gap: 1.2rem;
-}
-.about-shot{
-  position: relative;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #0d0805;
-  box-shadow:
-    inset 0 0 0 1px rgba(212, 176, 106, .25),
-    0 18px 40px -12px rgba(0, 0, 0, .55);
-  display: block;
-  transition: transform .35s var(--ease);
-  cursor: pointer;
-}
-.about-shot:hover{ transform: translateY(-4px); }
-.about-shot.hero{
-  grid-row: span 2;
-}
-.about-shot-art{
-  position: absolute; inset: 0;
-  width: 100%; height: 100%;
-  display: block;
-}
-/* Subtle scan-line texture over the illustrations */
-.about-shot::before{
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image:
-    repeating-linear-gradient(92deg, rgba(212,176,106,.04) 0 1px, transparent 1px 8px);
-  pointer-events: none;
-  z-index: 2;
-}
-/* Caption strip across the bottom */
-.about-shot-label{
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  z-index: 3;
-  padding: 14px 18px 12px;
-  font-family: 'Inter', sans-serif;
-  font-size: .68rem;
-  letter-spacing: .22em;
-  text-transform: uppercase;
-  color: #d4b06a;
-  background: linear-gradient(180deg, transparent, rgba(10, 8, 4, .85) 60%);
-  text-align: left;
-}
-.about-shot.hero .about-shot-label{
-  font-size: .78rem;
-  padding: 22px 24px 18px;
-}
-
-.about-workshop-cta{
-  margin-top: 3rem;
-  text-align: center;
-}
-
-/* ===== Final CTA ===== */
-.about-final{
-  position: relative;
-  padding: clamp(5rem, 9vw, 7rem) clamp(1.2rem, 6vw, 6rem);
-  background:
-    radial-gradient(ellipse at 50% 30%, rgba(180, 130, 80, .35) 0%, transparent 55%),
-    linear-gradient(180deg, #0c0a07 0%, #18120c 100%);
-  color: #f4ecdc;
-  text-align: center;
-  overflow: hidden;
-}
-.about-final::before{
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 30% 70%, rgba(58,138,174,.12) 0, transparent 50%);
-  pointer-events: none;
-}
-.about-final-inner{
-  position: relative;
-  z-index: 1;
-  max-width: 720px;
-  margin: 0 auto;
-}
-.about-final .eyebrow{
-  color: #d4b06a;
-  letter-spacing: .26em;
-  font-size: .7rem;
-  margin-bottom: 1rem;
-  text-transform: uppercase;
-}
-.about-final h2{
-  font-family: 'Cinzel', serif;
-  font-weight: 600;
-  font-size: clamp(2rem, 4vw, 3rem);
-  line-height: 1.1;
-  margin: 0 0 1.2rem;
-  color: #f8efd7;
-  letter-spacing: .015em;
-}
-.about-final h2 em{
-  font-family: 'Cormorant Garamond', serif;
-  font-style: italic;
-  font-weight: 500;
-  background: linear-gradient(90deg, #b78a44, #d4b06a, #f3d99d);
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-}
-.about-final p{
-  font-family: 'Cormorant Garamond', serif;
-  font-style: italic;
-  font-size: clamp(1.1rem, 1.6vw, 1.35rem);
-  line-height: 1.5;
-  color: rgba(244, 236, 220, .82);
-  margin: 0 0 2.4rem;
-}
-.about-final-ctas{
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  justify-content: center;
-}
-.about-contact-strip{
-  margin-top: 3rem;
-  padding-top: 2rem;
-  border-top: 1px solid rgba(212, 176, 106, .25);
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
-  text-align: center;
-}
-.about-contact-strip dt{
-  font-family: 'Inter', sans-serif;
-  font-size: .68rem;
-  letter-spacing: .25em;
-  text-transform: uppercase;
-  color: #d4b06a;
-  margin-bottom: .35rem;
-}
-.about-contact-strip dd{
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.05rem;
-  color: #f4ecdc;
-  margin: 0;
-}
-.about-contact-strip a{ color: inherit; }
-
-/* ===== Responsive ===== */
-@media (max-width: 900px){
-  .about-hero-grid,
-  .about-place-grid{ grid-template-columns: 1fr; }
-  .about-promise-grid{ grid-template-columns: repeat(2, 1fr); }
-  .about-workshop-grid{
-    grid-template-columns: 1fr;
-    grid-template-rows: repeat(5, 220px);
+  /* Hero */
+  .about-hero {
+    padding: clamp(60px, 8vw, 100px) 24px clamp(48px, 6vw, 80px);
+    border-bottom: 1px solid var(--line);
   }
-  .about-shot.hero{ grid-row: span 1; }
-  .about-contact-strip{ grid-template-columns: 1fr; gap: 1rem; }
-}
+  .about-hero-grid {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(40px, 6vw, 80px);
+    align-items: center;
+  }
+  .about-hero-copy .eyebrow { color: var(--ink-soft); margin-bottom: 18px; display: block; }
+  .about-hero-copy h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
+    font-size: clamp(2.4rem, 5vw, 3.6rem);
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    margin: 0 0 24px;
+    color: var(--ink);
+  }
+  .about-hero-copy h1 em { font-style: italic; font-weight: 400; color: var(--ink-soft); }
+  .about-hero-copy .lede {
+    font-size: 1.05rem;
+    line-height: 1.65;
+    color: var(--ink-soft);
+    margin: 0 0 28px;
+    max-width: 460px;
+  }
+  .about-hero-meta {
+    display: grid;
+    grid-template-columns: repeat(3, auto);
+    gap: 16px 36px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    margin: 0;
+  }
+  .about-hero-meta dt {
+    font-family: 'Inter', sans-serif;
+    font-size: .65rem; letter-spacing: .25em; text-transform: uppercase;
+    color: var(--ink-mute); margin-bottom: 4px;
+  }
+  .about-hero-meta dd { margin: 0; font-size: .95rem; color: var(--ink); }
+
+  /* Portrait */
+  .about-portrait {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #f6f6f6;
+  }
+  .about-portrait img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .about-portrait-cap {
+    margin: 14px 0 0;
+    font-size: .82rem;
+    color: var(--ink-mute);
+    text-align: center;
+    font-style: italic;
+  }
+
+  /* Story */
+  .about-story {
+    padding: clamp(60px, 8vw, 100px) 24px;
+    border-bottom: 1px solid var(--line);
+  }
+  .about-story-inner {
+    max-width: 720px;
+    margin: 0 auto;
+    text-align: left;
+  }
+  .about-story h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
+    font-size: clamp(1.8rem, 3vw, 2.4rem);
+    margin: 0 0 32px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+  }
+  .about-story h2 em { font-style: italic; }
+  .about-story p {
+    font-size: 1rem;
+    line-height: 1.75;
+    color: var(--ink-soft);
+    margin: 0 0 20px;
+  }
+  .about-story p strong { color: var(--ink); font-weight: 500; }
+  .about-pull {
+    margin: 32px 0;
+    padding: 20px 0 20px 24px;
+    border-left: 2px solid var(--ink);
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 1.25rem;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+
+  /* Place */
+  .about-place {
+    padding: clamp(60px, 8vw, 100px) 24px;
+    border-bottom: 1px solid var(--line);
+  }
+  .about-place-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .about-place .eyebrow { color: var(--ink-soft); margin-bottom: 14px; display: block; }
+  .about-place h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
+    font-size: clamp(1.8rem, 3vw, 2.4rem);
+    margin: 0 0 24px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .about-place h2 em { font-style: italic; }
+  .about-place p {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--ink-soft);
+    margin: 0 0 20px;
+    max-width: 720px;
+  }
+  .about-place-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    margin: 40px 0 0;
+    padding-top: 32px;
+    border-top: 1px solid var(--line);
+  }
+  .about-place-stats > div { text-align: left; }
+  .about-place-stats strong {
+    display: block;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .about-place-stats span {
+    display: block;
+    font-size: .72rem;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+
+  /* Promise */
+  .about-promise {
+    padding: clamp(60px, 8vw, 100px) 24px;
+    background: var(--paper-2, #f7f3ec);
+    border-bottom: 1px solid var(--line);
+  }
+  .about-promise-head {
+    max-width: 720px;
+    margin: 0 auto 48px;
+    text-align: center;
+  }
+  .about-promise-head .eyebrow { color: var(--ink-soft); margin-bottom: 14px; display: block; }
+  .about-promise-head h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
+    font-size: clamp(1.8rem, 3vw, 2.4rem);
+    margin: 0;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .about-promise-grid {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 32px;
+  }
+  .about-promise-item {
+    background: #fff;
+    padding: 28px 24px;
+    border-radius: 4px;
+    border: 1px solid var(--line);
+  }
+  .about-promise-item h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: 1.15rem;
+    margin: 0 0 10px;
+    color: var(--ink);
+  }
+  .about-promise-item p {
+    font-size: .9rem;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+
+  /* Final CTA / Contact */
+  .about-final {
+    padding: clamp(60px, 8vw, 100px) 24px;
+    text-align: center;
+  }
+  .about-final-inner { max-width: 720px; margin: 0 auto; }
+  .about-final .eyebrow { color: var(--ink-soft); margin-bottom: 14px; display: block; }
+  .about-final h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
+    font-size: clamp(1.8rem, 3vw, 2.4rem);
+    margin: 0 0 18px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .about-final h2 em { font-style: italic; }
+  .about-final p {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--ink-soft);
+    margin: 0 0 32px;
+  }
+  .about-contact-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+    padding-top: 32px;
+    border-top: 1px solid var(--line);
+    margin: 0;
+    text-align: left;
+  }
+  .about-contact-strip dt {
+    font-size: .65rem; letter-spacing: .25em; text-transform: uppercase;
+    color: var(--ink-mute); margin-bottom: 6px;
+  }
+  .about-contact-strip dd {
+    margin: 0;
+    font-size: .95rem;
+    color: var(--ink);
+    line-height: 1.5;
+  }
+  .about-contact-strip a {
+    color: inherit;
+    border-bottom: 1px solid var(--line);
+    transition: border-color 0.15s ease;
+  }
+  .about-contact-strip a:hover { border-color: var(--ink); }
+
+  @media (max-width: 880px) {
+    .about-hero-grid { grid-template-columns: 1fr; gap: 40px; }
+    .about-hero-meta { grid-template-columns: 1fr; gap: 16px; }
+    .about-place-stats { grid-template-columns: repeat(2, 1fr); }
+    .about-promise-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .about-contact-strip { grid-template-columns: 1fr; gap: 20px; }
+  }
+  @media (max-width: 560px) {
+    .about-promise-grid { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
-<body>
+<body class="about-page">
 
 <!-- ============ NAV (matches index.html) ============ -->
 <header class="site-nav" id="siteNav">
   <div class="nav-inner">
     <a href="index.html" class="brand">
-      <span class="brand-mark"><img src="assets/logos/logo-mark-96.png?v=20260425-1" alt="Crystal Brook Wall Mounts emblem" width="56" height="56" style="display:block;border-radius:6px;" /></span>
+      <span class="brand-mark"><img src="assets/logos/logo-mark-96.png?v=20260425-2" alt="Crystal Brook Wall Mounts emblem" width="56" height="56" style="display:block;border-radius:6px;" /></span>
       <span class="brand-text">
         <span class="brand-name">Crystal Brook</span>
         <span class="brand-sub">Wall Mounts</span>
@@ -695,7 +311,7 @@
 </header>
 
 <!-- ============ HERO ============ -->
-<section class="about-page-hero">
+<section class="about-hero">
   <div class="about-hero-grid">
     <div class="about-hero-copy">
       <p class="eyebrow">Meet the maker</p>
@@ -708,7 +324,7 @@
         </div>
         <div>
           <dt>Craft</dt>
-          <dd>Resin · Hardwood · Archival print</dd>
+          <dd>Resin · Hardwood · Print</dd>
         </div>
         <div>
           <dt>Run by</dt>
@@ -718,38 +334,9 @@
     </div>
     <div>
       <div class="about-portrait">
-        <img class="about-portrait-img" src="assets/images/max-portrait.jpg?v=20260425-1" alt="Max White on the FNQ coast holding one of his torched-wood shark mounts" />
-        <!-- Wax-seal style "Signed by the Maker" stamp, peeking off the frame -->
-        <svg class="about-signed" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <defs>
-            <radialGradient id="signedBg" cx="50%" cy="40%" r="65%">
-              <stop offset="0%" stop-color="#241c14"/>
-              <stop offset="100%" stop-color="#080503"/>
-            </radialGradient>
-            <path id="signedTop" d="M 16 50 A 34 34 0 0 1 84 50" fill="none"/>
-            <path id="signedBot" d="M 16 50 A 34 34 0 0 0 84 50" fill="none"/>
-          </defs>
-          <circle cx="50" cy="50" r="48" fill="url(#signedBg)"/>
-          <circle cx="50" cy="50" r="44" fill="none" stroke="#d4b06a" stroke-width=".7" opacity=".95"/>
-          <circle cx="50" cy="50" r="41" fill="none" stroke="#d4b06a" stroke-width=".3" opacity=".55"/>
-          <text font-family="Cinzel, serif" font-size="6" letter-spacing="2" fill="#f6efe1">
-            <textPath href="#signedTop" startOffset="50%" text-anchor="middle">· SIGNED ·</textPath>
-          </text>
-          <text font-family="Cinzel, serif" font-size="5.5" letter-spacing="3" fill="#d4b06a">
-            <textPath href="#signedBot" startOffset="50%" text-anchor="middle">BY THE MAKER</textPath>
-          </text>
-          <text x="50" y="58" text-anchor="middle" font-family="Great Vibes, cursive" font-size="22" fill="#d4b06a">Max</text>
-        </svg>
-        <div class="portrait-placeholder" hidden>
-          <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true">
-            <circle cx="50" cy="38" r="14" stroke="#d4b06a"/>
-            <path d="M22 82 Q22 60 50 60 Q78 60 78 82" stroke="#d4b06a"/>
-          </svg>
-          <span class="ph-cap">Portrait of Max — photo to come</span>
-        </div>
-        <div class="about-portrait-frame" aria-hidden="true"></div>
+        <img src="assets/images/max-portrait.jpg?v=20260425-2" alt="Max White on the FNQ coast holding one of his torched-wood shark mounts" />
       </div>
-      <p class="about-portrait-cap">— Max with one of his torched-shark pieces, on the coast just south of Gordonvale —</p>
+      <p class="about-portrait-cap">Max with one of his torched-shark pieces, on the coast just south of Gordonvale.</p>
     </div>
   </div>
 </section>
@@ -759,93 +346,38 @@
   <div class="about-story-inner">
     <h2>The story behind <em>Crystal Brook.</em></h2>
     <p>The brand takes its name from <strong>Crystal Brook</strong> — a freshwater creek that winds out of the Atherton Tableland and runs through the cane country south of Cairns. It's the same water that gave Max the original spark: a fish, a slab of timber, and the question of how to make one feel as permanent as the other.</p>
-
     <p>The studio sits on Dempsey Street in <strong>Gordonvale</strong>, half an hour's drive south of Cairns. It's a one-and-a-half-person operation — Max does the cutting, the mounting and the resin work, and his partner P. helps run the shop side. Workshop visits happen by appointment, and they're "always open" in the sense that if you're driving through and the front roller door is up, you'll usually find Max in there.</p>
-
     <blockquote class="about-pull">"Each one is its own piece. No two come out the same — which is the whole point."</blockquote>
-
     <p>The product range is deliberately narrow: resin-coated cut-out archival prints mounted on Australian hardwood. <strong>Five categories</strong>, no spillover into homewares or trinkets. Reef fish from the Great Barrier Reef. Freshwater natives from the rivers that feed it. Aussie-built classic cars. Working dogs, wildlife and family pets. Aussie birds, from lorikeets to wedge-tailed eagles.</p>
-
     <p>What unites them is the finish — every piece spends 48 hours under jewellery-grade epoxy that locks the print, the mount and the maker's mark under a single lens of glass-clear resin. It's the kind of thing that looks expensive because it <em>is</em> the kind of thing that lasts a lifetime. A hundred years, if the inks are anything to go by.</p>
   </div>
 </section>
 
-<!-- ============ PLACE — Gordonvale + Crystal Brook ============ -->
+<!-- ============ PLACE ============ -->
 <section class="about-place">
-  <div class="about-place-grid">
-    <div class="about-place-copy">
-      <p class="eyebrow">The workshop</p>
-      <h2>Made in <em>Far North Queensland.</em></h2>
-      <p>Gordonvale is a small cane town nestled at the foot of Walsh's Pyramid, on the Mulgrave River flats south of Cairns. The Bruce Highway runs straight through it. The Wet Tropics rainforest sits to the west; the Great Barrier Reef is forty minutes' drive east.</p>
-      <p>It's the kind of place where the subject matter is local and the timber's local too — Silky Oak, Spotted Gum, Blackwood and Ironbark, all sourced from QLD mills. The resin's mixed in the workshop. The prints are done in Cairns. Nothing on a Crystal Brook mount has travelled further than it had to.</p>
-      <dl class="about-place-stats">
-        <div>
-          <strong>4865</strong>
-          <span>Postcode · Gordonvale, QLD</span>
-        </div>
-        <div>
-          <strong>~25 km</strong>
-          <span>South of Cairns CBD</span>
-        </div>
-        <div>
-          <strong>5</strong>
-          <span>Categories in the catalogue</span>
-        </div>
-        <div>
-          <strong>48 hr</strong>
-          <span>Resin cure on every piece</span>
-        </div>
-      </dl>
-    </div>
-    <div class="about-map">
-      <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <defs>
-          <radialGradient id="mapWater" cx="60%" cy="80%" r="50%">
-            <stop offset="0%" stop-color="#3a8aae" stop-opacity="0.5"/>
-            <stop offset="100%" stop-color="#0a1f3a" stop-opacity="0"/>
-          </radialGradient>
-        </defs>
-        <!-- Coastline (right side — Coral Sea) -->
-        <path d="M 0 0 L 250 0 Q 245 80 290 130 Q 320 170 305 220 Q 295 280 320 340 Q 340 380 360 400 L 0 400 Z"
-              fill="rgba(110, 168, 130, .14)" stroke="rgba(110, 168, 130, .28)" stroke-width="1"/>
-        <!-- Coral Sea -->
-        <rect x="0" y="0" width="400" height="400" fill="url(#mapWater)"/>
-        <!-- Crystal Brook (winding line) -->
-        <path d="M 30 90 Q 80 110 130 130 Q 180 140 220 165 Q 260 180 290 220 Q 310 260 305 310"
-              fill="none" stroke="#3a8aae" stroke-width="2.4" stroke-linecap="round" opacity="0.85"/>
-        <path d="M 60 80 Q 100 100 140 120" fill="none" stroke="#3a8aae" stroke-width="1.4" stroke-linecap="round" opacity="0.5"/>
-        <!-- Walsh's Pyramid -->
-        <path d="M 130 220 L 165 145 L 200 220 Z" fill="rgba(180, 130, 80, .35)" stroke="rgba(212, 176, 106, .55)" stroke-width="1"/>
-        <text x="167" y="240" font-family="Inter, sans-serif" font-size="9" fill="#d4b06a" text-anchor="middle" opacity="0.7" letter-spacing="0.5">WALSH'S PYRAMID</text>
-        <!-- Cairns label (top right) -->
-        <circle cx="260" cy="60" r="3" fill="#d4b06a"/>
-        <text x="270" y="64" font-family="Inter, sans-serif" font-size="11" fill="#d4b06a" letter-spacing="1">CAIRNS</text>
-        <!-- Gordonvale marker (centre) -->
-        <g>
-          <circle cx="220" cy="195" r="14" fill="none" stroke="#d4b06a" stroke-width="1" opacity="0.5"/>
-          <circle cx="220" cy="195" r="22" fill="none" stroke="#d4b06a" stroke-width="0.7" opacity="0.3"/>
-          <circle cx="220" cy="195" r="6" fill="#d4b06a"/>
-          <text x="232" y="198" font-family="Cinzel, serif" font-size="13" fill="#f4ecdc" letter-spacing="2">GORDONVALE</text>
-          <text x="232" y="212" font-family="Inter, sans-serif" font-size="9" fill="#d4b06a" letter-spacing="1.5" opacity="0.7">THE WORKSHOP</text>
-        </g>
-        <!-- Compass rose -->
-        <g transform="translate(40 350)">
-          <circle r="14" fill="none" stroke="rgba(212,176,106,.35)" stroke-width="0.8"/>
-          <path d="M 0 -14 L 3 0 L 0 14 L -3 0 Z" fill="rgba(212,176,106,.55)"/>
-          <text y="-18" font-family="Cinzel, serif" font-size="9" fill="#d4b06a" text-anchor="middle">N</text>
-        </g>
-        <!-- "Coral Sea" label -->
-        <text x="345" y="200" font-family="Cormorant Garamond, serif" font-style="italic" font-size="13" fill="rgba(58,138,174,.7)" text-anchor="end" letter-spacing="0.5">— Coral Sea —</text>
-        <!-- "Crystal Brook" label along the line -->
-        <text x="80" y="105" font-family="Cormorant Garamond, serif" font-style="italic" font-size="11" fill="#d4b06a" opacity="0.85">Crystal Brook</text>
-      </svg>
-      <div class="about-map-cap">
-        <div>
-          <strong>Far North Queensland</strong>
-          <small>Gordonvale · Postcode 4865</small>
-        </div>
+  <div class="about-place-inner">
+    <p class="eyebrow">The workshop</p>
+    <h2>Made in <em>Far North Queensland.</em></h2>
+    <p>Gordonvale is a small cane town nestled at the foot of Walsh's Pyramid, on the Mulgrave River flats south of Cairns. The Bruce Highway runs straight through it. The Wet Tropics rainforest sits to the west; the Great Barrier Reef is forty minutes' drive east.</p>
+    <p>It's the kind of place where the subject matter is local and the timber's local too — Silky Oak, Spotted Gum, Blackwood and Ironbark, all sourced from QLD mills. The resin's mixed in the workshop. The prints are done in Cairns. Nothing on a Crystal Brook mount has travelled further than it had to.</p>
+    <dl class="about-place-stats">
+      <div>
+        <strong>4865</strong>
+        <span>Postcode · Gordonvale</span>
       </div>
-    </div>
+      <div>
+        <strong>~25 km</strong>
+        <span>South of Cairns</span>
+      </div>
+      <div>
+        <strong>5</strong>
+        <span>Categories</span>
+      </div>
+      <div>
+        <strong>48 hr</strong>
+        <span>Resin cure</span>
+      </div>
+    </dl>
   </div>
 </section>
 
@@ -854,280 +386,28 @@
   <div class="about-promise-head">
     <p class="eyebrow">The promise</p>
     <h2>Four things every mount is.</h2>
-    <p>No mass production. No outsourcing. No shortcuts. Every piece that leaves the workshop carries these four guarantees.</p>
   </div>
-
   <div class="about-promise-grid">
-    <div class="about-value">
-      <div class="v-icon">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L4 6v6c0 5 3.5 9 8 10 4.5-1 8-5 8-10V6l-8-4Z"/><path d="m9 12 2 2 4-4"/></svg>
-      </div>
+    <div class="about-promise-item">
       <h3>One-of-a-kind</h3>
-      <p>No two pieces identical. Each mount is hand-cut and hand-finished — fingerprint included.</p>
+      <p>Every piece is hand-cut to its own silhouette and individually mounted — no two come off the bench identical.</p>
     </div>
-    <div class="about-value">
-      <div class="v-icon">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-      </div>
-      <h3>Built to outlast us</h3>
-      <p>Archival pigment inks rated for 100+ years. Resin-sealed. Australian hardwood. Designed to be inherited.</p>
+    <div class="about-promise-item">
+      <h3>Built to last</h3>
+      <p>Archival pigment inks rated for 100+ years, sealed under jewellery-grade epoxy. A piece you'll pass down.</p>
     </div>
-    <div class="about-value">
-      <div class="v-icon">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12c3-4 7-4 9 0s6 4 9 0"/><path d="M3 18c3-4 7-4 9 0s6 4 9 0"/></svg>
-      </div>
+    <div class="about-promise-item">
       <h3>Made by hand</h3>
-      <p>Scalpel-cut to outline, mounted on routed timber, poured in three resin stages. No CNC, no production line.</p>
+      <p>Cut, mounted, sanded, sealed and finished by Max, in the Gordonvale workshop. No mass production, no contract work.</p>
     </div>
-    <div class="about-value">
-      <div class="v-icon">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 22h20L12 2Z"/><path d="M12 9v6"/><circle cx="12" cy="18" r=".8" fill="currentColor"/></svg>
-      </div>
+    <div class="about-promise-item">
       <h3>Signed &amp; numbered</h3>
-      <p>Every mount carries Max's signature on the back, plus the piece number — your record of authenticity.</p>
+      <p>Every mount carries Max's signature and a sequential number on the back. Yours is the only one with that number.</p>
     </div>
   </div>
 </section>
 
-<!-- ============ WORKSHOP STRIP ============ -->
-<section class="about-workshop">
-  <div class="about-workshop-head">
-    <p class="eyebrow">Inside the workshop</p>
-    <h2>Where the resin sets.</h2>
-    <p>Until Max sends real workshop photos through, these placeholders sit in their stead. The Craft Reel on the homepage walks through what each stage looks like.</p>
-  </div>
-  <div class="about-workshop-grid">
-
-    <!-- ===== Tile 1 (large): Workshop wide-shot ===== -->
-    <div class="about-shot hero">
-      <svg class="about-shot-art" viewBox="0 0 600 480" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-        <defs>
-          <linearGradient id="wsSky" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#3a2614"/>
-            <stop offset="100%" stop-color="#160c06"/>
-          </linearGradient>
-          <linearGradient id="wsLamp" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#fff5d8" stop-opacity=".55"/>
-            <stop offset="100%" stop-color="#fff5d8" stop-opacity="0"/>
-          </linearGradient>
-          <linearGradient id="wsBench" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#c89554"/>
-            <stop offset="100%" stop-color="#7a4f24"/>
-          </linearGradient>
-          <pattern id="wsBenchGrain" width="600" height="6" patternUnits="userSpaceOnUse">
-            <rect width="600" height="6" fill="url(#wsBench)"/>
-            <line x1="0" y1="3" x2="600" y2="3" stroke="rgba(40,20,8,.25)" stroke-width=".5"/>
-          </pattern>
-        </defs>
-        <!-- Wall + back -->
-        <rect width="600" height="320" fill="url(#wsSky)"/>
-        <!-- Pegboard with hanging tools (silhouettes) -->
-        <g opacity=".5" fill="none" stroke="#d4b06a" stroke-width="1.4" stroke-linecap="round">
-          <!-- Pegboard outline -->
-          <rect x="60" y="60" width="220" height="160" rx="4" stroke-opacity=".4"/>
-          <!-- Hanging tools: blade, brush, mallet, hand-saw silhouette -->
-          <line x1="100" y1="90" x2="100" y2="160"/><polygon points="92,160 108,160 100,180" fill="#d4b06a"/>
-          <line x1="140" y1="90" x2="140" y2="155"/><rect x="134" y="155" width="12" height="22" rx="2" fill="#d4b06a"/>
-          <line x1="180" y1="90" x2="180" y2="170"/><circle cx="180" cy="178" r="10" fill="#d4b06a"/>
-          <path d="M 220 90 L 220 170 L 260 165 L 220 170" stroke-width="1.2"/>
-        </g>
-        <!-- Pendant lamp -->
-        <line x1="430" y1="0" x2="430" y2="60" stroke="#1c130a" stroke-width="2"/>
-        <ellipse cx="430" cy="80" rx="40" ry="26" fill="#1c130a"/>
-        <ellipse cx="430" cy="80" rx="32" ry="18" fill="#fff5d8"/>
-        <!-- Warm light cone -->
-        <path d="M 380 90 L 480 90 L 530 320 L 330 320 Z" fill="url(#wsLamp)"/>
-        <!-- Workbench surface -->
-        <rect x="0" y="320" width="600" height="160" fill="url(#wsBenchGrain)"/>
-        <line x1="0" y1="320" x2="600" y2="320" stroke="rgba(40,20,8,.55)" stroke-width="2"/>
-        <!-- Mounted piece in progress (centred, lit) -->
-        <g transform="translate(360 220)">
-          <rect x="-70" y="0" width="140" height="100" rx="3" fill="#1c130a"/>
-          <rect x="-64" y="6" width="128" height="88" rx="2" fill="url(#wsBench)"/>
-          <!-- Aurora cutout silhouette -->
-          <path d="M -45 60 Q -25 35 0 50 Q 25 65 45 40" fill="none" stroke="#e45a3a" stroke-width="6" stroke-linecap="round" opacity=".85"/>
-          <circle cx="35" cy="42" r="3" fill="#0a0806"/>
-        </g>
-        <!-- Resin bottle on bench -->
-        <rect x="120" y="350" width="32" height="60" rx="3" fill="#0f4d72" opacity=".75"/>
-        <rect x="124" y="346" width="24" height="8" rx="2" fill="#1c130a"/>
-        <!-- Wood shavings -->
-        <g fill="#7a4f24" opacity=".7">
-          <ellipse cx="220" cy="450" rx="14" ry="3"/>
-          <ellipse cx="500" cy="445" rx="18" ry="2.5"/>
-          <ellipse cx="280" cy="460" rx="10" ry="2"/>
-        </g>
-        <!-- Stacked planks far right -->
-        <g transform="translate(530 280)">
-          <rect x="0" y="0" width="60" height="6" fill="#a87a3e" stroke="#1c130a" stroke-width=".5"/>
-          <rect x="0" y="8" width="60" height="6" fill="#c89554" stroke="#1c130a" stroke-width=".5"/>
-          <rect x="0" y="16" width="60" height="6" fill="#7a4f24" stroke="#1c130a" stroke-width=".5"/>
-          <rect x="0" y="24" width="60" height="6" fill="#a87a3e" stroke="#1c130a" stroke-width=".5"/>
-        </g>
-      </svg>
-      <div class="about-shot-label">Workshop wide-shot</div>
-    </div>
-
-    <!-- ===== Tile 2: Hand-cut detail ===== -->
-    <div class="about-shot">
-      <svg class="about-shot-art" viewBox="0 0 400 280" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-        <defs>
-          <linearGradient id="cutPaper" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#fbf6e9"/>
-            <stop offset="100%" stop-color="#ead9b8"/>
-          </linearGradient>
-          <linearGradient id="cutBlade" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#f6f6f6"/>
-            <stop offset="100%" stop-color="#7a7a7a"/>
-          </linearGradient>
-        </defs>
-        <!-- Dark mat backdrop -->
-        <rect width="400" height="280" fill="#160c06"/>
-        <!-- Cotton-rag paper sheet -->
-        <rect x="40" y="50" width="320" height="180" rx="2" fill="url(#cutPaper)" transform="rotate(-3 200 140)"/>
-        <!-- Fish printed on paper (red-orange coral trout silhouette) -->
-        <g transform="translate(200 140) rotate(-3)">
-          <ellipse cx="0" cy="0" rx="80" ry="28" fill="#e45a3a"/>
-          <path d="M -75 0 L -110 -22 L -100 0 L -110 22 Z" fill="#e45a3a"/>
-          <path d="M 60 -16 Q 75 -34 95 -28 Q 92 -16 86 -10 Z" fill="#e45a3a"/>
-          <circle cx="55" cy="-4" r="3.5" fill="#0a0806"/>
-          <!-- Dotted cut line tracing the silhouette -->
-          <path d="M -75 0 L -110 -22 L -100 0 L -110 22 L -75 0 Q -40 26 0 26 Q 40 26 60 16 Q 75 -34 95 -28 Q 92 -16 86 -10 Q 75 0 60 -16 Q 40 -26 0 -26 Q -40 -26 -75 0 Z" fill="none" stroke="#1c130a" stroke-width="1.2" stroke-dasharray="3 3"/>
-        </g>
-        <!-- X-acto blade slicing in from top-right -->
-        <g transform="translate(290 30) rotate(35)">
-          <rect x="-3" y="0" width="6" height="100" fill="#1c130a"/>
-          <polygon points="-9,90 9,90 0,170" fill="url(#cutBlade)" stroke="#1c130a" stroke-width="1"/>
-          <!-- Glint on blade -->
-          <line x1="0" y1="100" x2="0" y2="160" stroke="#fff" stroke-width="1" opacity=".7"/>
-        </g>
-        <!-- Tiny paper offcuts -->
-        <g fill="#fbf6e9" opacity=".7">
-          <polygon points="80,240 92,234 96,250 82,254"/>
-          <polygon points="320,250 332,244 336,260 322,264"/>
-        </g>
-      </svg>
-      <div class="about-shot-label">Hand-cut detail</div>
-    </div>
-
-    <!-- ===== Tile 3: Timber stockpile ===== -->
-    <div class="about-shot">
-      <svg class="about-shot-art" viewBox="0 0 400 280" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-        <defs>
-          <pattern id="silkyOak" width="400" height="6" patternUnits="userSpaceOnUse"><rect width="400" height="6" fill="#dab07a"/><line x1="0" y1="3" x2="400" y2="3" stroke="rgba(60,30,10,.18)"/></pattern>
-          <pattern id="spottedGum" width="400" height="6" patternUnits="userSpaceOnUse"><rect width="400" height="6" fill="#e6cf94"/><line x1="0" y1="3" x2="400" y2="3" stroke="rgba(80,50,18,.18)"/></pattern>
-          <pattern id="blackwoodPat" width="400" height="6" patternUnits="userSpaceOnUse"><rect width="400" height="6" fill="#4a2c14"/><line x1="0" y1="3" x2="400" y2="3" stroke="rgba(0,0,0,.32)"/></pattern>
-          <pattern id="ironbarkPat" width="400" height="6" patternUnits="userSpaceOnUse"><rect width="400" height="6" fill="#5c241a"/><line x1="0" y1="3" x2="400" y2="3" stroke="rgba(0,0,0,.4)"/></pattern>
-        </defs>
-        <rect width="400" height="280" fill="#1a1108"/>
-        <!-- Stacked planks in perspective from front-left to back-right -->
-        <g transform="translate(60 70)">
-          <rect x="0" y="0" width="280" height="22" fill="url(#silkyOak)" stroke="#1c130a" stroke-width="1"/>
-          <rect x="6" y="22" width="280" height="22" fill="url(#spottedGum)" stroke="#1c130a" stroke-width="1"/>
-          <rect x="0" y="44" width="280" height="22" fill="url(#blackwoodPat)" stroke="#1c130a" stroke-width="1"/>
-          <rect x="8" y="66" width="280" height="22" fill="url(#ironbarkPat)" stroke="#1c130a" stroke-width="1"/>
-          <rect x="2" y="88" width="280" height="22" fill="url(#silkyOak)" stroke="#1c130a" stroke-width="1"/>
-          <rect x="6" y="110" width="280" height="22" fill="url(#spottedGum)" stroke="#1c130a" stroke-width="1"/>
-        </g>
-        <!-- Hand-written timber tag -->
-        <g transform="translate(260 168) rotate(8)">
-          <rect x="0" y="0" width="80" height="36" rx="2" fill="#fbf6e9" stroke="#1c130a" stroke-width=".8"/>
-          <text x="40" y="14" text-anchor="middle" font-family="Cinzel, serif" font-size="6" letter-spacing="1" fill="#1c130a">QLD MILL</text>
-          <text x="40" y="26" text-anchor="middle" font-family="Cormorant Garamond, serif" font-style="italic" font-size="9" fill="#1c130a">Silky oak</text>
-          <line x1="0" y1="-8" x2="6" y2="0" stroke="#7a4f24" stroke-width="1.2"/>
-        </g>
-      </svg>
-      <div class="about-shot-label">Timber stockpile</div>
-    </div>
-
-    <!-- ===== Tile 4: Resin pour ===== -->
-    <div class="about-shot">
-      <svg class="about-shot-art" viewBox="0 0 400 280" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-        <defs>
-          <linearGradient id="resinFlow" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#fff" stop-opacity=".0"/>
-            <stop offset="50%" stop-color="#fff" stop-opacity=".55"/>
-            <stop offset="100%" stop-color="#fff" stop-opacity=".15"/>
-          </linearGradient>
-          <linearGradient id="rsBoard" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#c89554"/>
-            <stop offset="100%" stop-color="#7a4f24"/>
-          </linearGradient>
-        </defs>
-        <rect width="400" height="280" fill="#1c1308"/>
-        <!-- Mounted piece on bench, viewed top-down -->
-        <rect x="60" y="140" width="280" height="120" rx="3" fill="#1c130a"/>
-        <rect x="68" y="148" width="264" height="104" rx="2" fill="url(#rsBoard)"/>
-        <!-- Marlin silhouette in dark blue -->
-        <g transform="translate(200 200)">
-          <ellipse cx="0" cy="0" rx="100" ry="14" fill="#1a3f6c"/>
-          <path d="M -90 0 L -110 -14 L -104 0 L -110 14 Z" fill="#1a3f6c"/>
-          <line x1="60" y1="0" x2="100" y2="-26" stroke="#1a3f6c" stroke-width="3" stroke-linecap="round"/>
-          <circle cx="60" cy="-3" r="2" fill="#0a0806"/>
-        </g>
-        <!-- Resin sheen pooling on top -->
-        <rect x="68" y="148" width="264" height="104" rx="2" fill="url(#resinFlow)"/>
-        <!-- Tilted bottle pouring from top -->
-        <g transform="translate(200 30) rotate(35)">
-          <rect x="-22" y="0" width="44" height="80" rx="4" fill="#0f4d72" stroke="#1c130a" stroke-width="1"/>
-          <rect x="-12" y="-12" width="24" height="14" rx="2" fill="#1c130a"/>
-          <!-- Label -->
-          <rect x="-18" y="22" width="36" height="22" fill="#fbf6e9"/>
-          <text x="0" y="35" text-anchor="middle" font-family="Cinzel, serif" font-size="6" font-weight="700" fill="#1c130a">EPOXY</text>
-        </g>
-        <!-- Resin stream pouring down -->
-        <path d="M 220 100 Q 222 130 218 175 Q 215 195 210 215" fill="none" stroke="url(#resinFlow)" stroke-width="6" stroke-linecap="round"/>
-        <!-- Highlight droplet about to land -->
-        <ellipse cx="208" cy="218" rx="6" ry="9" fill="#fff" opacity=".6"/>
-      </svg>
-      <div class="about-shot-label">Resin pour</div>
-    </div>
-
-    <!-- ===== Tile 5: Signature on the back ===== -->
-    <div class="about-shot">
-      <svg class="about-shot-art" viewBox="0 0 400 280" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-        <defs>
-          <linearGradient id="sigBoard" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#a87a3e"/>
-            <stop offset="100%" stop-color="#5a3818"/>
-          </linearGradient>
-          <pattern id="sigGrain" width="400" height="8" patternUnits="userSpaceOnUse">
-            <rect width="400" height="8" fill="url(#sigBoard)"/>
-            <line x1="0" y1="4" x2="400" y2="4" stroke="rgba(0,0,0,.2)"/>
-          </pattern>
-        </defs>
-        <rect width="400" height="280" fill="#160c06"/>
-        <!-- Back of a wood plaque, slightly tilted -->
-        <g transform="translate(200 140) rotate(-4)">
-          <rect x="-150" y="-100" width="300" height="200" rx="3" fill="url(#sigGrain)" stroke="#1c130a" stroke-width="2"/>
-          <!-- Hanging hardware silhouette top -->
-          <rect x="-12" y="-90" width="24" height="14" rx="2" fill="#1c130a" opacity=".5"/>
-          <!-- Wax-seal style stamp burned-in -->
-          <circle cx="-90" cy="40" r="38" fill="none" stroke="#1c130a" stroke-width="2" opacity=".75"/>
-          <circle cx="-90" cy="40" r="32" fill="none" stroke="#1c130a" stroke-width=".7" opacity=".55"/>
-          <text x="-90" y="36" text-anchor="middle" font-family="Cinzel, serif" font-size="6" letter-spacing="1.5" fill="#1c130a" opacity=".75">CRYSTAL BROOK</text>
-          <text x="-90" y="48" text-anchor="middle" font-family="Cormorant Garamond, serif" font-style="italic" font-size="8" fill="#1c130a" opacity=".75">est. 2019</text>
-          <!-- Hand-written signature + edition number -->
-          <text x="20" y="20" font-family="Great Vibes, cursive" font-size="32" fill="#0a0806">Max W.</text>
-          <text x="20" y="60" font-family="Cormorant Garamond, serif" font-style="italic" font-size="14" fill="#0a0806">Coral Trout</text>
-          <text x="20" y="82" font-family="Cinzel, serif" font-size="9" letter-spacing="1.5" fill="#0a0806">№ 142 / 2026</text>
-        </g>
-        <!-- Marker pen -->
-        <g transform="translate(280 200) rotate(20)">
-          <rect x="-6" y="0" width="12" height="60" rx="2" fill="#1c130a"/>
-          <rect x="-4" y="-10" width="8" height="14" rx="1" fill="#d4b06a"/>
-          <polygon points="-4,60 4,60 0,72" fill="#3a2618"/>
-        </g>
-      </svg>
-      <div class="about-shot-label">Signed on the back</div>
-    </div>
-  </div>
-  <div class="about-workshop-cta">
-    <a href="index.html#about" class="btn btn-ghost">Watch the Craft Reel →</a>
-  </div>
-</section>
-
-<!-- ============ FINAL CTA ============ -->
+<!-- ============ FINAL CTA / CONTACT ============ -->
 <section class="about-final" id="contact">
   <div class="about-final-inner">
     <p class="eyebrow">Get in touch</p>
@@ -1174,7 +454,7 @@
     </div>
   </div>
   <div class="foot-bot">
-    <span>© <span id="year"></span> Crystal Brook Wall Mounts · ABN 00 000 000 000</span>
+    <span>&copy; <span id="year"></span> Crystal Brook Wall Mounts &middot; ABN 00 000 000 000</span>
     <span>Built by <a href="#">Penny Wise I.T.</a></span>
   </div>
 </footer>
@@ -1184,7 +464,7 @@
 <aside class="nav-drawer" id="navDrawer" aria-hidden="true" aria-label="Mobile navigation">
   <div class="nav-drawer-head">
     <span class="brand">
-      <span class="brand-mark"><img src="assets/logos/logo-mark-96.png?v=20260425-1" alt="Crystal Brook Wall Mounts emblem" width="56" height="56" style="display:block;border-radius:6px;" /></span>
+      <span class="brand-mark"><img src="assets/logos/logo-mark-96.png?v=20260425-2" alt="Crystal Brook Wall Mounts emblem" width="56" height="56" style="display:block;border-radius:6px;" /></span>
       <span class="brand-text">
         <span class="brand-name">Crystal Brook</span>
         <span class="brand-sub">Wall Mounts</span>
@@ -1205,13 +485,13 @@
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="9"/></svg>
       <span>Admin dashboard</span>
     </a>
-    <p class="nav-drawer-tagline">Handcrafted in Gordonvale, FNQ · est. 2019</p>
+    <p class="nav-drawer-tagline">Handcrafted in Gordonvale, FNQ &middot; est. 2019</p>
   </div>
 </aside>
 
 <!-- ============ TOAST ============ -->
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/app.js?v=20260425-1"></script>
+<script src="assets/app.js?v=20260425-2"></script>
 </body>
 </html>
