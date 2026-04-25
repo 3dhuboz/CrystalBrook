@@ -16,28 +16,28 @@ const IMG = 'assets/images/products/';
 const PRODUCTS = [
   /* ------- SALTWATER FISH ------- */
   { id:'p-coral',    name:'Coral Trout',          cat:'saltwater', price:485, size:'68 × 32 cm', pimg:'coral',     image:IMG+'coral-trout-vivid.png', badge:'Bestseller', meta:'Great Barrier Reef · Silky Oak mount', desc:'Iconic reef dweller rendered in vivid archival red with turquoise spot detail. ' + STD_DESC },
-  { id:'p-marlin',   name:'Blue Marlin',          cat:'saltwater', price:760, size:'120 × 40 cm',pimg:'marlin',    image:IMG+'mahi.png',      badge:'Signature',  meta:'Billfish · Ironbark mount',             desc:'Trophy-size blue marlin shown in full striking pose. ' + STD_DESC },
+  { id:'p-marlin',   name:'Blue Marlin',          cat:'saltwater', price:760, size:'120 × 40 cm',pimg:'marlin',    image:IMG+'mahi.png',      badge:'Signature',  meta:'Billfish · Ironbark mount',             desc:'Trophy-size blue marlin shown in full striking pose. ' + STD_DESC, draft:true  },
   { id:'p-mahi',     name:'Mahi Mahi (Dorado)',   cat:'saltwater', price:560, size:'90 × 34 cm', pimg:'mahi',      image:IMG+'mahi.png',      badge:null,         meta:'Pelagic · Blackwood mount',             desc:'Electric blue and gold dorado — the colour of a fresh catch. ' + STD_DESC },
   { id:'p-snapper',  name:'Red Emperor Snapper',  cat:'saltwater', price:425, size:'60 × 36 cm', pimg:'snapper',   image:IMG+'snapper.png',   badge:null,         meta:'Reef · Silky Oak mount',                desc:'Deep-reef red emperor with fin detail and subtle scale texture. ' + STD_DESC },
-  { id:'p-gt',       name:'Giant Trevally',       cat:'saltwater', price:510, size:'78 × 38 cm', pimg:'gt',        image:IMG+'snapper.png',   badge:null,         meta:'Tropical reef · Ironbark mount',        desc:'The bruiser of the flats — silver flank with dark dorsal, built to hang large. ' + STD_DESC },
+  { id:'p-gt',       name:'Giant Trevally',       cat:'saltwater', price:510, size:'78 × 38 cm', pimg:'gt',        image:IMG+'snapper.png',   badge:null,         meta:'Tropical reef · Ironbark mount',        desc:'The bruiser of the flats — silver flank with dark dorsal, built to hang large. ' + STD_DESC, draft:true  },
   { id:'p-mackerel', name:'Spanish Mackerel',     cat:'saltwater', price:535, size:'100 × 30 cm',pimg:'mackerel',  image:IMG+'bonus-mackerel.png', badge:'New',   meta:'Pelagic · Blackwood mount',             desc:'Silver-blue mackerel caught mid-cruise — a sleek pelagic predator. ' + STD_DESC },
-  { id:'p-mangrove', name:'Mangrove Jack',        cat:'saltwater', price:475, size:'62 × 30 cm', pimg:'mangrove',  image:IMG+'snapper.png',   badge:null,         meta:'NQ estuary · River Red Gum mount',      desc:'Crimson-red mangrove jack — hard-fighting estuary brawler. ' + STD_DESC },
+  { id:'p-mangrove', name:'Mangrove Jack',        cat:'saltwater', price:475, size:'62 × 30 cm', pimg:'mangrove',  image:IMG+'snapper.png',   badge:null,         meta:'NQ estuary · River Red Gum mount',      desc:'Crimson-red mangrove jack — hard-fighting estuary brawler. ' + STD_DESC, draft:true  },
   { id:'p-snap',     name:'Pink Snapper',         cat:'saltwater', price:455, size:'64 × 32 cm', pimg:'snap',      image:IMG+'pink-snapper.png',  badge:null,         meta:'Reef · Spotted Gum mount',              desc:'Classic pink snapper with iridescent blue scales and that proud humped forehead. ' + STD_DESC },
-  { id:'p-mulloway', name:'Mulloway (Jewfish)',   cat:'saltwater', price:540, size:'90 × 32 cm', pimg:'mulloway',  image:IMG+'mahi.png',      badge:null,         meta:'Surf · Blackwood mount',                desc:'Silver-flanked mulloway — the holy grail of Aussie surf and estuary fishers. ' + STD_DESC },
-  { id:'p-dhu',      name:'Dhufish',              cat:'saltwater', price:565, size:'76 × 36 cm', pimg:'dhu',       image:IMG+'snapper.png',   badge:null,         meta:'WA reef · Silky Oak mount',             desc:'West Australian dhufish — bold black stripe and trademark dorsal spike. ' + STD_DESC },
-  { id:'p-king',     name:'Yellowtail Kingfish',  cat:'saltwater', price:550, size:'92 × 32 cm', pimg:'king',      image:IMG+'mahi.png',      badge:null,         meta:'Pelagic · Blackwood mount',             desc:'Steel-blue back, golden lateral line — kingfish in attack mode. ' + STD_DESC },
-  { id:'p-bream',    name:'Yellowfin Bream',      cat:'saltwater', price:385, size:'46 × 26 cm', pimg:'bream',     image:IMG+'snapper.png',   badge:null,         meta:'Estuary · Spotted Gum mount',           desc:'Silver bream with classic yellow fins — the Aussie estuary staple. ' + STD_DESC },
+  { id:'p-mulloway', name:'Mulloway (Jewfish)',   cat:'saltwater', price:540, size:'90 × 32 cm', pimg:'mulloway',  image:IMG+'mahi.png',      badge:null,         meta:'Surf · Blackwood mount',                desc:'Silver-flanked mulloway — the holy grail of Aussie surf and estuary fishers. ' + STD_DESC, draft:true  },
+  { id:'p-dhu',      name:'Dhufish',              cat:'saltwater', price:565, size:'76 × 36 cm', pimg:'dhu',       image:IMG+'snapper.png',   badge:null,         meta:'WA reef · Silky Oak mount',             desc:'West Australian dhufish — bold black stripe and trademark dorsal spike. ' + STD_DESC, draft:true  },
+  { id:'p-king',     name:'Yellowtail Kingfish',  cat:'saltwater', price:550, size:'92 × 32 cm', pimg:'king',      image:IMG+'mahi.png',      badge:null,         meta:'Pelagic · Blackwood mount',             desc:'Steel-blue back, golden lateral line — kingfish in attack mode. ' + STD_DESC, draft:true  },
+  { id:'p-bream',    name:'Yellowfin Bream',      cat:'saltwater', price:385, size:'46 × 26 cm', pimg:'bream',     image:IMG+'snapper.png',   badge:null,         meta:'Estuary · Spotted Gum mount',           desc:'Silver bream with classic yellow fins — the Aussie estuary staple. ' + STD_DESC, draft:true  },
   { id:'p-sail',     name:'Sailfish',             cat:'saltwater', price:740, size:'130 × 38 cm',pimg:'sail',      image:IMG+'sailfish.png',  badge:'Signature',  meta:'Billfish · Ironbark mount',             desc:'Towering sail raised, electric-blue striping along the flank — the speedster of the blue water. ' + STD_DESC },
-  { id:'p-tusk',     name:'Black Spot Tusk Fish', cat:'saltwater', price:495, size:'62 × 30 cm', pimg:'tusk',      image:IMG+'coral.png',     badge:null,         meta:'Reef · Silky Oak mount',                desc:'Vibrant green tusk fish with iconic black flank spot — a reef showstopper. ' + STD_DESC },
-  { id:'p-permit',   name:'Permit',               cat:'saltwater', price:535, size:'66 × 38 cm', pimg:'permit',    image:IMG+'mahi.png',      badge:null,         meta:'Tropical flats · Blackwood mount',      desc:"Mirror-silver permit — every saltwater fly-fisher's holy grail. " + STD_DESC },
-  { id:'p-wahoo',    name:'Wahoo',                cat:'saltwater', price:580, size:'108 × 28 cm',pimg:'wahoo',     image:IMG+'bonus-mackerel.png', badge:null,    meta:'Pelagic · Spotted Gum mount',           desc:'Slate-blue wahoo with vivid tiger stripes — the speed-demon of the open ocean. ' + STD_DESC },
-  { id:'p-threadfin',name:'Threadfin Salmon',     cat:'saltwater', price:495, size:'76 × 30 cm', pimg:'threadfin', image:IMG+'mahi.png',      badge:null,         meta:'NQ flats · Spotted Gum mount',          desc:'Golden threadfin with trailing pectoral filaments — a NQ flats trophy. ' + STD_DESC },
-  { id:'p-finger',   name:'Fingermark',           cat:'saltwater', price:455, size:'58 × 30 cm', pimg:'finger',    image:IMG+'snapper.png',   badge:null,         meta:'Tropical reef · River Red Gum mount',   desc:'Coppery-pink fingermark with that telltale dark shoulder spot. ' + STD_DESC },
-  { id:'p-longtail', name:'Longtail Tuna',        cat:'saltwater', price:585, size:'94 × 32 cm', pimg:'longtail',  image:IMG+'mahi.png',      badge:null,         meta:'Pelagic · Blackwood mount',             desc:'Northern bluefin / longtail tuna — Aussie surface-feeder royalty. ' + STD_DESC },
+  { id:'p-tusk',     name:'Black Spot Tusk Fish', cat:'saltwater', price:495, size:'62 × 30 cm', pimg:'tusk',      image:IMG+'coral.png',     badge:null,         meta:'Reef · Silky Oak mount',                desc:'Vibrant green tusk fish with iconic black flank spot — a reef showstopper. ' + STD_DESC, draft:true  },
+  { id:'p-permit',   name:'Permit',               cat:'saltwater', price:535, size:'66 × 38 cm', pimg:'permit',    image:IMG+'mahi.png',      badge:null,         meta:'Tropical flats · Blackwood mount',      desc:"Mirror-silver permit — every saltwater fly-fisher's holy grail. " + STD_DESC, draft:true  },
+  { id:'p-wahoo',    name:'Wahoo',                cat:'saltwater', price:580, size:'108 × 28 cm',pimg:'wahoo',     image:IMG+'bonus-mackerel.png', badge:null,    meta:'Pelagic · Spotted Gum mount',           desc:'Slate-blue wahoo with vivid tiger stripes — the speed-demon of the open ocean. ' + STD_DESC, draft:true  },
+  { id:'p-threadfin',name:'Threadfin Salmon',     cat:'saltwater', price:495, size:'76 × 30 cm', pimg:'threadfin', image:IMG+'mahi.png',      badge:null,         meta:'NQ flats · Spotted Gum mount',          desc:'Golden threadfin with trailing pectoral filaments — a NQ flats trophy. ' + STD_DESC, draft:true  },
+  { id:'p-finger',   name:'Fingermark',           cat:'saltwater', price:455, size:'58 × 30 cm', pimg:'finger',    image:IMG+'snapper.png',   badge:null,         meta:'Tropical reef · River Red Gum mount',   desc:'Coppery-pink fingermark with that telltale dark shoulder spot. ' + STD_DESC, draft:true  },
+  { id:'p-longtail', name:'Longtail Tuna',        cat:'saltwater', price:585, size:'94 × 32 cm', pimg:'longtail',  image:IMG+'mahi.png',      badge:null,         meta:'Pelagic · Blackwood mount',             desc:'Northern bluefin / longtail tuna — Aussie surface-feeder royalty. ' + STD_DESC, draft:true  },
   { id:'p-yellowfin',name:'Yellowfin Tuna',       cat:'saltwater', price:660, size:'104 × 36 cm',pimg:'yellowfin', image:IMG+'yellowfin-tuna.png', badge:null,        meta:'Blue-water · Ironbark mount',           desc:'Electric blue stripe and golden lateral band — the offshore prize. ' + STD_DESC },
-  { id:'p-bluefin',  name:'Southern Bluefin Tuna',cat:'saltwater', price:720, size:'110 × 40 cm',pimg:'bluefin',   image:IMG+'mahi.png',      badge:'Signature',  meta:'Southern ocean · Ironbark mount',       desc:'Southern bluefin — the cold-water heavyweight of Aussie blue-water fishing. ' + STD_DESC },
-  { id:'p-ruby',     name:'Rubyfish',             cat:'saltwater', price:445, size:'56 × 28 cm', pimg:'ruby',      image:IMG+'snapper.png',   badge:'New',        meta:'Deep reef · River Red Gum mount',       desc:'Vivid ruby-red flank — a striking deep-water reef catch. ' + STD_DESC },
-  { id:'p-bone',     name:'Bonefish',             cat:'saltwater', price:495, size:'68 × 26 cm', pimg:'bone',      image:IMG+'mahi.png',          badge:null,         meta:'Tropical flats · Silky Oak mount',      desc:'Mirror-silver bonefish — the legendary ghost of the saltwater flats. ' + STD_DESC },
+  { id:'p-bluefin',  name:'Southern Bluefin Tuna',cat:'saltwater', price:720, size:'110 × 40 cm',pimg:'bluefin',   image:IMG+'mahi.png',      badge:'Signature',  meta:'Southern ocean · Ironbark mount',       desc:'Southern bluefin — the cold-water heavyweight of Aussie blue-water fishing. ' + STD_DESC, draft:true  },
+  { id:'p-ruby',     name:'Rubyfish',             cat:'saltwater', price:445, size:'56 × 28 cm', pimg:'ruby',      image:IMG+'snapper.png',   badge:'New',        meta:'Deep reef · River Red Gum mount',       desc:'Vivid ruby-red flank — a striking deep-water reef catch. ' + STD_DESC, draft:true  },
+  { id:'p-bone',     name:'Bonefish',             cat:'saltwater', price:495, size:'68 × 26 cm', pimg:'bone',      image:IMG+'mahi.png',          badge:null,         meta:'Tropical flats · Silky Oak mount',      desc:'Mirror-silver bonefish — the legendary ghost of the saltwater flats. ' + STD_DESC, draft:true  },
   /* ------- Saltwater additions from Max's photo set (Apr 2026) ------- */
   { id:'p-coral-hunter', name:'Coral Trout · Hunter',  cat:'saltwater', price:520, size:'70 × 34 cm', pimg:'coral-hunter', image:IMG+'coral-trout-hunter.png', badge:'New',        meta:'GBR · Spotted Gum mount',              desc:'Painted-style coral trout in attack pose — deeper crimson, dramatic dark fins. ' + STD_DESC },
   { id:'p-estuary',  name:'Estuary Cod',          cat:'saltwater', price:495, size:'80 × 38 cm', pimg:'estuary',   image:IMG+'estuary-cod.png',           badge:'New',        meta:'Mangrove + reef · River Red Gum mount', desc:'Mottled bronze cod speckled with cream — solid mangrove brawler. ' + STD_DESC },
@@ -53,28 +53,28 @@ const PRODUCTS = [
   { id:'p-barra',    name:'Barramundi',           cat:'freshwater',price:495, size:'72 × 30 cm', pimg:'barra',     image:IMG+'barra.png',     badge:null,         meta:'Top End river · Spotted Gum mount',     desc:'Classic Aussie barramundi, silver-green flank catching the light. ' + STD_DESC },
   { id:'p-cod',      name:'Murray Cod',           cat:'freshwater',price:540, size:'82 × 36 cm', pimg:'cod',       image:IMG+'cod-new.png',       badge:'Bestseller', meta:'Murray-Darling · River Red Gum mount',  desc:'The river king, captured in mottled green with its signature wide mouth. ' + STD_DESC },
   { id:'p-yellowb',  name:'Golden Perch · Yellowbelly', cat:'freshwater', price:445, size:'56 × 28 cm', pimg:'yellowbelly', image:IMG+'yellowbelly.png',    badge:null,         meta:'Inland rivers · Spotted Gum mount',     desc:'Warm copper and gold — a classic Murray-Darling target. ' + STD_DESC },
-  { id:'p-bass',     name:'Australian Bass',      cat:'freshwater',price:425, size:'50 × 26 cm', pimg:'bass',      image:IMG+'cod.png',       badge:null,         meta:'East-coast streams · Blackwood mount',  desc:'Dark-backed native bass in a compact vertical mount. ' + STD_DESC },
+  { id:'p-bass',     name:'Australian Bass',      cat:'freshwater',price:425, size:'50 × 26 cm', pimg:'bass',      image:IMG+'cod.png',       badge:null,         meta:'East-coast streams · Blackwood mount',  desc:'Dark-backed native bass in a compact vertical mount. ' + STD_DESC, draft:true  },
   { id:'p-toga',     name:'Saratoga',             cat:'freshwater',price:515, size:'70 × 28 cm', pimg:'toga',      image:IMG+'saratoga.png',  badge:'New',        meta:'NQ billabong · River Red Gum mount',    desc:'Prehistoric northern saratoga with iridescent gold-green scales and chin barbels. ' + STD_DESC },
-  { id:'p-trout',    name:'Brown Trout',          cat:'freshwater',price:445, size:'58 × 28 cm', pimg:'trout',     image:IMG+'cod.png',       badge:null,         meta:'High-country streams · Blackwood mount',  desc:'Olive-flanked brown trout speckled with red and black — the high-country classic. ' + STD_DESC },
-  { id:'p-rainbow',  name:'Rainbow Trout',        cat:'freshwater',price:445, size:'58 × 28 cm', pimg:'rainbow',   image:IMG+'cod.png',       badge:null,         meta:'Cold-water streams · Spotted Gum mount', desc:"Silver flank lit by a vivid pink lateral band — a fly-fisher's favourite. " + STD_DESC },
-  { id:'p-redfin',   name:'Redfin Perch',         cat:'freshwater',price:415, size:'52 × 26 cm', pimg:'redfin',    image:IMG+'barra.png',     badge:null,         meta:'Inland lakes · River Red Gum mount',     desc:'Olive-green flank with bold dark stripes and unmistakable red fins. ' + STD_DESC },
-  { id:'p-jungle',   name:'Jungle Perch',         cat:'freshwater',price:435, size:'54 × 26 cm', pimg:'jungle',    image:IMG+'coral-alt.png', badge:'New',        meta:'NQ forest streams · Silky Oak mount',    desc:'Silver-bodied jungle perch with red-tinged fins — a clear-water tropical native. ' + STD_DESC },
+  { id:'p-trout',    name:'Brown Trout',          cat:'freshwater',price:445, size:'58 × 28 cm', pimg:'trout',     image:IMG+'cod.png',       badge:null,         meta:'High-country streams · Blackwood mount',  desc:'Olive-flanked brown trout speckled with red and black — the high-country classic. ' + STD_DESC, draft:true  },
+  { id:'p-rainbow',  name:'Rainbow Trout',        cat:'freshwater',price:445, size:'58 × 28 cm', pimg:'rainbow',   image:IMG+'cod.png',       badge:null,         meta:'Cold-water streams · Spotted Gum mount', desc:"Silver flank lit by a vivid pink lateral band — a fly-fisher's favourite. " + STD_DESC, draft:true  },
+  { id:'p-redfin',   name:'Redfin Perch',         cat:'freshwater',price:415, size:'52 × 26 cm', pimg:'redfin',    image:IMG+'barra.png',     badge:null,         meta:'Inland lakes · River Red Gum mount',     desc:'Olive-green flank with bold dark stripes and unmistakable red fins. ' + STD_DESC, draft:true  },
+  { id:'p-jungle',   name:'Jungle Perch',         cat:'freshwater',price:435, size:'54 × 26 cm', pimg:'jungle',    image:IMG+'coral-alt.png', badge:'New',        meta:'NQ forest streams · Silky Oak mount',    desc:'Silver-bodied jungle perch with red-tinged fins — a clear-water tropical native. ' + STD_DESC, draft:true  },
   { id:'p-tilapia',  name:'Mozambique Tilapia',   cat:'freshwater',price:395, size:'50 × 26 cm', pimg:'tilapia',   image:IMG+'tilapia.png',       badge:null,         meta:'Tropical river · Blackwood mount',       desc:'Dark iridescent cichlid with rose-edged tail — a stand-out trophy from northern waters. ' + STD_DESC },
   { id:'p-sooty',    name:'Sooty Grunter',        cat:'freshwater',price:425, size:'52 × 26 cm', pimg:'sooty',     image:IMG+'sooty-grunter.png', badge:'New',        meta:'Tropical highland streams · Ironbark mount', desc:'Silvery sooty grunter with dark wedge tail tips — brawler of the tropical headwaters. ' + STD_DESC },
 
   /* ------- CARS ------- */
-  { id:'p-mustang',  name:'1971 Mach-1 Mustang',  cat:'cars',      price:625, size:'88 × 34 cm', pimg:'mustang',   image:IMG+'monaro.png',    badge:null,         meta:'Muscle · Blackwood mount',              desc:'Yellow Mach-1 in profile with Magnum 500 wheels and side stripe detail. ' + STD_DESC },
+  { id:'p-mustang',  name:'1971 Mach-1 Mustang',  cat:'cars',      price:625, size:'88 × 34 cm', pimg:'mustang',   image:IMG+'monaro.png',    badge:null,         meta:'Muscle · Blackwood mount',              desc:'Yellow Mach-1 in profile with Magnum 500 wheels and side stripe detail. ' + STD_DESC, draft:true  },
   { id:'p-monaro',   name:'HQ Monaro GTS',        cat:'cars',      price:640, size:'88 × 34 cm', pimg:'monaro',    image:IMG+'monaro.png',    badge:'Signature',  meta:'Aussie muscle · Blackwood mount',       desc:'Lime-green HQ GTS with black side stripes — peak Aussie muscle. ' + STD_DESC },
   { id:'p-torana',   name:'1971 Torana SLR 5000', cat:'cars',      price:650, size:'88 × 32 cm', pimg:'torana',    image:IMG+'torana.png',    badge:null,         meta:'Holden · Spotted Gum mount',            desc:'Jamaica-lime Torana SLR 5000 in its classic muscle-era livery. ' + STD_DESC },
-  { id:'p-fastback', name:'1967 Mustang Fastback',cat:'cars',      price:660, size:'88 × 32 cm', pimg:'fastback',  image:IMG+'torana.png',    badge:null,         meta:'American classic · Blackwood mount',    desc:'Iconic fastback silhouette with GT stripes. ' + STD_DESC },
+  { id:'p-fastback', name:'1967 Mustang Fastback',cat:'cars',      price:660, size:'88 × 32 cm', pimg:'fastback',  image:IMG+'torana.png',    badge:null,         meta:'American classic · Blackwood mount',    desc:'Iconic fastback silhouette with GT stripes. ' + STD_DESC, draft:true  },
   { id:'p-xygt',     name:'XY Falcon GT',         cat:'cars',      price:640, size:'88 × 32 cm', pimg:'xygt',      image:IMG+'xygt.png',      badge:null,         meta:'Ford Oz · Spotted Gum mount',           desc:'Vermillion XY Falcon GT — legendary Bathurst pedigree. ' + STD_DESC },
 
   /* ------- ANIMALS ------- */
   { id:'p-frenchie', name:'French Bulldog Puppy', cat:'animals',   price:425, size:'54 × 72 cm', pimg:'frenchie',  image:IMG+'frenchie.png',  badge:'Bestseller', meta:'Pet portrait · Spotted Gum mount',      desc:'Cream Frenchie puppy, wide-eyed and upright. ' + STD_DESC },
-  { id:'p-heeler',   name:'Blue Heeler',          cat:'animals',   price:465, size:'60 × 74 cm', pimg:'heeler',    image:IMG+'frenchie.png',  badge:null,         meta:'Working dog · Ironbark mount',          desc:'The quintessential Aussie working dog, blue-merle coat and alert eyes. ' + STD_DESC },
+  { id:'p-heeler',   name:'Blue Heeler',          cat:'animals',   price:465, size:'60 × 74 cm', pimg:'heeler',    image:IMG+'frenchie.png',  badge:null,         meta:'Working dog · Ironbark mount',          desc:'The quintessential Aussie working dog, blue-merle coat and alert eyes. ' + STD_DESC, draft:true  },
   { id:'p-kanga',    name:'Red Kangaroo',         cat:'animals',   price:520, size:'80 × 96 cm', pimg:'kanga',     image:IMG+'kanga.png',     badge:null,         meta:'Aussie icon · Spotted Gum mount',       desc:'Standing red kangaroo — capturing the powerful hind legs and alert ears. ' + STD_DESC },
   { id:'p-koala',    name:'Koala',                cat:'animals',   price:445, size:'56 × 70 cm', pimg:'koala',     image:IMG+'koala.png',     badge:null,         meta:'Marsupial · Blackwood mount',           desc:'Classic tree-cuddle koala pose, silver-grey fur clinging to a eucalyptus branch. ' + STD_DESC },
-  { id:'p-dingo',    name:'Dingo',                cat:'animals',   price:495, size:'72 × 54 cm', pimg:'dingo',     image:IMG+'frenchie.png',  badge:null,         meta:'Wild dog · Ironbark mount',             desc:'Golden-coated dingo in a watchful side profile. ' + STD_DESC },
+  { id:'p-dingo',    name:'Dingo',                cat:'animals',   price:495, size:'72 × 54 cm', pimg:'dingo',     image:IMG+'frenchie.png',  badge:null,         meta:'Wild dog · Ironbark mount',             desc:'Golden-coated dingo in a watchful side profile. ' + STD_DESC, draft:true  },
   { id:'p-turtle',   name:'Green Sea Turtle',     cat:'animals',   price:550, size:'72 × 56 cm', pimg:'turtle',    image:IMG+'bonus-sea-turtle.png', badge:'New',  meta:'Reef dweller · Silky Oak mount',        desc:'Green sea turtle in full glide — translucent fins, patterned shell. ' + STD_DESC },
   { id:'p-ulysses',  name:'Ulysses Butterfly',    cat:'animals',   price:305, size:'40 × 38 cm', pimg:'ulysses',   image:IMG+'bonus-ulysses-butterfly.png', badge:'New', meta:'Tropical Queensland · Silky Oak mount', desc:'Electric-blue Ulysses butterfly — a Far North Queensland icon. ' + STD_DESC },
   /* ------- Animals additions from Max's photo set (Apr 25) ------- */
@@ -121,6 +121,13 @@ const SHOWCASE = [
   { cat: 'birds',      num: '05', title: 'Birds',           tagline: 'Aussie skies, frozen mid-flight.',     noun: 'species' },
 ];
 
+/* SHOP = the customer-facing catalogue. Drops products tagged
+   draft:true (those that don't have their own real photo yet —
+   they'd otherwise show as duplicates of another product).
+   Use SHOP for everything customer-facing. PRODUCTS is still used
+   for cart/wishlist lookups so a draft can't break a saved item. */
+const SHOP = PRODUCTS.filter(p => !p.draft);
+
 /**
  * Pick up to N products from a category that have actual images,
  * preferring distinct images so the montage doesn't show duplicates.
@@ -128,10 +135,10 @@ const SHOWCASE = [
 function pickMontagePics(cat, n = 3){
   const seen = new Set();
   const out = [];
-  for (const p of PRODUCTS) {
+  for (const p of SHOP) {
     if (p.cat !== cat) continue;
     if (!p.image) continue;
-    if (seen.has(p.image)) continue;        // skip stand-in duplicates
+    if (seen.has(p.image)) continue;        // belt-and-braces dedup
     seen.add(p.image);
     out.push(p);
     if (out.length >= n) break;
@@ -143,7 +150,7 @@ function renderCategoryShowcase(){
   const showcase = document.getElementById('catShowcase');
   if (!showcase) return;
   showcase.innerHTML = SHOWCASE.map(c => {
-    const inCat = PRODUCTS.filter(p => p.cat === c.cat);
+    const inCat = SHOP.filter(p => p.cat === c.cat);
     const count = inCat.length;
     const pics = pickMontagePics(c.cat, 3);
     const montage = pics.length
@@ -244,8 +251,8 @@ function renderGrid(catOrList='all', { flip = false } = {}){
   // Accept either a category string OR a pre-filtered list (used by the
   // advanced filter panel on shop.html). Keeps catTabs handler unchanged.
   const list = Array.isArray(catOrList)
-    ? catOrList
-    : (catOrList === 'all' ? PRODUCTS : PRODUCTS.filter(p => p.cat === catOrList));
+    ? catOrList.filter(p => !p.draft)
+    : (catOrList === 'all' ? SHOP : SHOP.filter(p => p.cat === catOrList));
 
   // First render, no animation requested, or reduced motion → simple stagger reveal
   if (!flip || !grid.children.length || prefersReducedMotion()) {
@@ -402,6 +409,23 @@ document.getElementById('lightboxClose')?.addEventListener('click', closeLightbo
 
   const validCats = ['all','saltwater','freshwater','cars','animals','birds'];
 
+  // Update the count badges on each tab to reflect the live SHOP catalogue
+  // (so they always match what the user actually sees in the grid).
+  const tabCounts = { all: SHOP.length };
+  for (const cat of validCats) {
+    if (cat === 'all') continue;
+    tabCounts[cat] = SHOP.filter(p => p.cat === cat).length;
+  }
+  tabs.querySelectorAll('.cat-tab').forEach(tab => {
+    const cat = tab.dataset.cat;
+    const badge = tab.querySelector('.cat-tab-count');
+    if (badge && cat in tabCounts) badge.textContent = tabCounts[cat];
+  });
+  // Also patch the hero stat counters (#30 pieces) on shop.html if present
+  document.querySelectorAll('[data-shop-stat]').forEach(el => {
+    if (el.dataset.shopStat === 'total') el.textContent = SHOP.length;
+  });
+
   // Initial filter from URL: prefer ?cat= (search-result navigation),
   // fall back to #hash (showcase-card deep links)
   const params = new URLSearchParams(location.search);
@@ -518,7 +542,7 @@ document.getElementById('lightboxClose')?.addEventListener('click', closeLightbo
 
   function buildList(){
     const cat = getActiveCat();
-    let list = cat === 'all' ? PRODUCTS.slice() : PRODUCTS.filter(p => p.cat === cat);
+    let list = cat === 'all' ? SHOP.slice() : SHOP.filter(p => p.cat === cat);
     if (state.price){
       const [lo, hi] = state.price.split('-').map(Number);
       list = list.filter(p => p.price >= lo && p.price <= hi);
@@ -646,7 +670,7 @@ document.getElementById('lightboxClose')?.addEventListener('click', closeLightbo
   function render(q){
     const query = q.trim().toLowerCase();
     if (!query){ results.innerHTML = HINT_HTML; bindChips(); return; }
-    const matches = PRODUCTS.filter(p => {
+    const matches = SHOP.filter(p => {
       const hay = (p.name + ' ' + (p.meta || '') + ' ' + (CAT_LABELS[p.cat] || '')).toLowerCase();
       return hay.includes(query);
     }).slice(0, 8);
@@ -1175,7 +1199,7 @@ document.addEventListener('keydown', e=>{
   const gal = document.getElementById('gallery');
   if (!gal) return;
   // Pick 12 products with real images, prioritise a nice visual mix
-  const pool = PRODUCTS.filter(p => p.image);
+  const pool = SHOP.filter(p => p.image);
   const featured = [
     'p-coral','p-mahi','p-snapper','p-barra','p-cod',
     'p-monaro','p-torana','p-xygt',
@@ -2054,7 +2078,7 @@ document.addEventListener('keydown', e=>{
   // Related products from the same category
   const relatedGrid = document.getElementById('pdpRelatedGrid');
   if (relatedGrid){
-    const related = PRODUCTS.filter(p => p.cat === product.cat && p.id !== product.id).slice(0, 4);
+    const related = SHOP.filter(p => p.cat === product.cat && p.id !== product.id).slice(0, 4);
     if (!related.length){
       document.getElementById('pdpRelated').remove();
     } else {
