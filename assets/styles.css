@@ -203,6 +203,14 @@ section > .container { padding: 0; }
 }
 .hero-title em { font-style: normal; font-weight: 500; }
 .hero-title .reveal-word { display: inline; opacity: 1; transform: none; }
+.hero-tagline {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: clamp(1.15rem, 1.6vw, 1.45rem);
+  color: var(--ink-soft);
+  margin: 0 0 22px;
+  line-height: 1.4;
+}
 .hero-lede {
   font-size: 1.05rem;
   color: var(--ink-soft);
@@ -695,7 +703,16 @@ section > .container { padding: 0; }
 .site-footer { background: #fafafa; border-top: 1px solid var(--line); padding: 48px 24px 24px; }
 .foot-top { max-width: var(--container); margin: 0 auto; display: grid; grid-template-columns: 2fr 3fr; gap: 40px; }
 .foot-brand .brand-name { display: block; font-size: 1.05rem; font-weight: 500; }
-.foot-brand .brand-sub { display: block; font-size: .58rem; letter-spacing: .25em; text-transform: uppercase; color: var(--ink-mute); margin-top: 4px; }
+.foot-brand .brand-sub {
+  display: block;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 1rem;
+  letter-spacing: .01em;
+  text-transform: none;
+  color: var(--ink-soft);
+  margin-top: 6px;
+}
 .foot-brand p { margin-top: 14px; font-size: .85rem; color: var(--ink-soft); }
 .foot-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
 .foot-cols h5 { font-size: .68rem; letter-spacing: .15em; text-transform: uppercase; color: var(--ink); font-weight: 500; margin-bottom: 12px; }
@@ -981,7 +998,15 @@ section > .container { padding: 0; }
 .page-shop { background: #fff; }
 .shop-hero { padding: 60px 24px 40px; text-align: center; border-bottom: 1px solid var(--line); }
 .shop-hero-grain { display: none; }
-.shop-hero h1 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 300; margin-bottom: 14px; }
+.shop-hero h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(2.2rem, 4.5vw, 3.4rem);
+  font-weight: 500;
+  letter-spacing: -.01em;
+  line-height: 1.05;
+  margin-bottom: 14px;
+}
+.shop-hero h1 em { font-style: italic; font-weight: 400; color: var(--ink-soft); }
 .shop-hero-lede { font-size: 1rem; color: var(--ink-soft); max-width: 540px; margin: 0 auto 24px; }
 .shop-hero-stats { display: flex; justify-content: center; gap: 36px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid var(--line); margin-top: 24px; }
 .shop-hero-stats li { display: flex; flex-direction: column; gap: 2px; }
