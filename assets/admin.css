@@ -536,6 +536,47 @@ table{ border-collapse: collapse; width:100%; }
 .kcard-sub{ color: var(--ink-mute); font-size:.82rem; margin: 4px 0 10px; }
 .kcard-row{ display:flex; justify-content: space-between; align-items:center; font-size:.78rem; color: var(--ink-dim); }
 .kcard-tag{ padding: 2px 8px; border-radius: 999px; background: var(--bg); color: var(--ink-mute); font-size:.7rem; letter-spacing:.15em; text-transform:uppercase; }
+.kcard.is-request{ border-color: var(--gold-deep); border-left-width: 3px; }
+.kcard-pill{
+  display:inline-block; padding: 2px 8px; margin-bottom: 6px;
+  border-radius: 999px; background: var(--gold-deep); color: var(--ink-on-gold, #1a130a);
+  font-size:.62rem; letter-spacing:.18em; text-transform:uppercase; font-weight: 600;
+}
+
+/* === HOLIDAY MODE CARD =================================== */
+.holiday-card .card-head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.holiday-status {
+  font-size:.62rem; letter-spacing:.18em; text-transform:uppercase; font-weight:600;
+  padding: 3px 10px; border-radius: 999px;
+  background: var(--bg); color: var(--ink-mute); border: 1px solid var(--line);
+}
+.holiday-status[data-state="on"] {
+  background: var(--gold-deep); color: var(--ink-on-gold, #1a130a); border-color: var(--gold-deep);
+}
+.holiday-toggle {
+  display: flex; align-items: center; gap: 12px;
+  cursor: pointer; padding: 6px 0;
+  flex-direction: row !important;
+  text-transform: none !important; letter-spacing: 0 !important;
+  font-size: .9rem !important; color: var(--ink) !important;
+}
+.holiday-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+.holiday-toggle-track {
+  position: relative; flex: none; width: 38px; height: 22px;
+  background: var(--line); border-radius: 999px;
+  transition: background .2s var(--ease);
+}
+.holiday-toggle-track::after {
+  content: "";
+  position: absolute; top: 2px; left: 2px;
+  width: 18px; height: 18px;
+  background: #fff; border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,.18);
+  transition: transform .2s var(--ease);
+}
+.holiday-toggle input:checked + .holiday-toggle-track { background: var(--gold-deep); }
+.holiday-toggle input:checked + .holiday-toggle-track::after { transform: translateX(16px); }
+.holiday-toggle-label { line-height: 1.4; }
 
 /* =========================================================
    REVENUE bars
@@ -566,6 +607,7 @@ table{ border-collapse: collapse; width:100%; }
   text-transform: none; letter-spacing: 0;
 }
 .form textarea{ resize: vertical; min-height: 70px; }
+.form-note{ margin: 4px 0 0; font-size: .78rem; color: var(--ink-mute); line-height: 1.45; text-transform: none; letter-spacing: 0; }
 .row-2{ display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .mini-drop{
   padding: 20px 14px;

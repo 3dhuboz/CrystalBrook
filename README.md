@@ -82,9 +82,9 @@ Open http://localhost:8766 in your browser. The site is plain HTML/CSS/JS — no
 
 ---
 
-## Real contact details (from Max's Facebook page)
+## Real contact details
 
-- **Workshop:** 41–45 Dempsey Street, Gordonvale QLD 4865
+- **Workshop:** Gordonvale, FNQ — address kept off public site (visits by appointment)
 - **Phone:** (07) 4056 1887
 - **Email:** mandpwhite@optusnet.com.au
 - **Hours:** By appointment · 7 days

@@ -7,10 +7,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="../assets/admin.css?v=20260425-4" />
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260425-4" />
-<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260425-4" />
-<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260425-4" />
+<link rel="stylesheet" href="../assets/admin.css?v=20260427-1" />
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260427-1" />
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260427-1" />
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260427-1" />
 <link rel="manifest" href="../manifest.webmanifest" />
 <meta name="theme-color" content="#1c130a" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -502,8 +502,24 @@ Signed, numbered and wrapped for shipping</textarea></label>
 
   <!-- ========= SETTINGS ========= -->
   <section class="view" data-view="settings">
-    <div class="v-head"><div><h1>Settings</h1><p>Business, payments and shipping.</p></div></div>
+    <div class="v-head"><div><h1>Settings</h1><p>Business, payments, shipping and holiday mode.</p></div></div>
     <div class="dash-grid">
+      <div class="card holiday-card" id="holidayCard">
+        <div class="card-head">
+          <h3>Holiday mode</h3>
+          <span class="holiday-status" id="holidayStatusPill" data-state="off">Off</span>
+        </div>
+        <div class="form">
+          <label class="holiday-toggle">
+            <input type="checkbox" id="holidayActive"/>
+            <span class="holiday-toggle-track" aria-hidden="true"></span>
+            <span class="holiday-toggle-label">Pause new orders while we're travelling</span>
+          </label>
+          <label><span>Back on</span><input type="date" class="inp" id="holidayUntil"/></label>
+          <label><span>Message to show on the storefront</span><textarea class="inp" id="holidayMsg" rows="2" placeholder="e.g. We're away until early May — drop a message and Max will reply on return.">We're away from the workshop and orders resume the moment we're back. Drop a message anytime — Max will reply on return.</textarea></label>
+          <p class="form-note">When On, a banner shows on every page and the Checkout button is disabled. Customers can still browse, save to wishlist, and send "request a piece" enquiries — those land in Custom Orders for when you're back.</p>
+        </div>
+      </div>
       <div class="card"><div class="card-head"><h3>Business</h3></div>
         <div class="form">
           <label><span>Business name</span><input class="inp" value="Crystal Brook Wall Mounts"/></label>
@@ -520,9 +536,9 @@ Signed, numbered and wrapped for shipping</textarea></label>
       </div>
       <div class="card"><div class="card-head"><h3>Shipping</h3></div>
         <div class="form">
-          <label><span>Australia — flat rate</span><input class="inp" value="$25"/></label>
-          <label><span>Free shipping threshold</span><input class="inp" value="$500"/></label>
+          <label><span>Australia</span><input class="inp" value="Free — every order" readonly/></label>
           <label><span>International</span><input class="inp" value="Quote on request"/></label>
+          <p class="form-note">Shipping costs are baked into your prices. If you need to flip back to a flat-rate or threshold model later, drop Steve a line.</p>
         </div>
       </div>
     </div>
@@ -563,6 +579,6 @@ Signed, numbered and wrapped for shipping</textarea></label>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="../assets/admin.js?v=20260425-4"></script>
+<script src="../assets/admin.js?v=20260427-1"></script>
 </body>
 </html>

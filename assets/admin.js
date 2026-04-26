@@ -326,11 +326,30 @@ renderOrders();
 /* ---------- CUSTOM ORDERS KANBAN ---------- */
 function renderKanban(){
   const kb = document.getElementById('kanban'); if(!kb) return;
-  kb.innerHTML = Object.entries(CUSTOM_ORDERS).map(([title, cards])=>`
+
+  // Pull any "Request a piece" submissions from the storefront's localStorage
+  // and prepend them to the New column. They have no photo or quote — just a
+  // text brief — so we render a lightweight variant with a "Request" tag.
+  let live = [];
+  try { live = JSON.parse(localStorage.getItem('cbwm_requests') || '[]'); } catch(_) {}
+  const liveCards = live.map(r => ({
+    name: r.name || 'Anonymous',
+    subject: r.subject || '(no subject)',
+    size: r.size ? r.size.toUpperCase() : '—',
+    budget: 'Awaiting quote',
+    due: 'Just in',
+    isRequest: true,
+    category: r.category || '',
+  }));
+
+  const merged = { ...CUSTOM_ORDERS, New: [...liveCards, ...CUSTOM_ORDERS.New] };
+
+  kb.innerHTML = Object.entries(merged).map(([title, cards])=>`
     <div class="kcol">
       <div class="kcol-head"><strong>${title}</strong><span>${cards.length}</span></div>
       ${cards.map(c=>`
-        <div class="kcard" draggable="true">
+        <div class="kcard${c.isRequest ? ' is-request' : ''}" draggable="true">
+          ${c.isRequest ? '<span class="kcard-pill">Request</span>' : ''}
           <div class="kcard-name">${c.name}</div>
           <div class="kcard-sub">${c.subject}</div>
           <div class="kcard-row">
@@ -375,6 +394,52 @@ function renderFeatured(){
   });
 }
 renderFeatured();
+
+/* ---------- HOLIDAY MODE ---------- */
+(() => {
+  const KEY = 'cbwm_holiday';
+  const activeEl = document.getElementById('holidayActive');
+  const untilEl  = document.getElementById('holidayUntil');
+  const msgEl    = document.getElementById('holidayMsg');
+  const pill     = document.getElementById('holidayStatusPill');
+  if (!activeEl || !untilEl || !msgEl) return;
+
+  function load(){
+    try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; }
+    catch (_) { return {}; }
+  }
+  function save(state){
+    localStorage.setItem(KEY, JSON.stringify(state));
+  }
+  function updatePill(state){
+    if (!pill) return;
+    const on = !!state.active;
+    pill.dataset.state = on ? 'on' : 'off';
+    pill.textContent = on ? 'On' : 'Off';
+  }
+  function read(){
+    return {
+      active: !!activeEl.checked,
+      until: untilEl.value || '',
+      message: msgEl.value || '',
+    };
+  }
+  function commit(){
+    const state = read();
+    save(state);
+    updatePill(state);
+  }
+
+  const initial = load();
+  activeEl.checked = !!initial.active;
+  untilEl.value    = initial.until || '';
+  msgEl.value      = initial.message || msgEl.value;
+  updatePill(initial);
+
+  activeEl.addEventListener('change', commit);
+  untilEl.addEventListener('change', commit);
+  msgEl.addEventListener('input', commit);
+})();
 
 /* ---------- PUBLISH BUTTON ---------- */
 document.getElementById('publishBtn')?.addEventListener('click', ()=>{
@@ -1167,7 +1232,7 @@ const INLINE_TIPS = [
   { sel: '[data-view="settings"] .dash-grid .card:nth-child(2) .card-head h3',
     text: 'Stripe handles all card payments. Already connected — money lands in your bank account every business day.' },
   { sel: '[data-view="settings"] .dash-grid .card:nth-child(3) .card-head h3',
-    text: 'How much you charge to post pieces. Free shipping above the threshold helps push customers to bigger orders.' },
+    text: 'Postage rules. Right now every Australian order ships free — the cost is baked into your piece prices.' },
 ];
 
 (() => {

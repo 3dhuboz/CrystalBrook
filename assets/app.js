@@ -810,28 +810,20 @@ function renderCart(){
 
   cartFoot.hidden = false;
   const subtotal = items.reduce((s,i)=>s+i.price*i.qty, 0);
-  const FREE_SHIP = 500;
-  const remaining = Math.max(0, FREE_SHIP - subtotal);
-  const progress = Math.min(100, (subtotal / FREE_SHIP) * 100);
 
   // Update the existing #cartTotal in place (don't rebuild innerHTML, that
   // would orphan the checkout button's click handler from the modal IIFE)
   if (cartTotal) cartTotal.textContent = '$' + subtotal.toLocaleString();
 
-  // Inject the shipping-progress bar as the cart-foot's first child if it
-  // doesn't exist yet, otherwise update it in place
+  // Free-shipping reassurance badge (shipping is free Australia-wide on
+  // every order — there's no threshold to chase, just a permanent tick)
   let progressEl = cartFoot.querySelector('.cart-ship-progress');
   if (!progressEl){
     progressEl = document.createElement('div');
-    progressEl.className = 'cart-ship-progress';
+    progressEl.className = 'cart-ship-progress is-met';
     cartFoot.insertBefore(progressEl, cartFoot.firstChild);
   }
-  progressEl.classList.toggle('is-met', remaining === 0);
-  progressEl.innerHTML = `
-    ${remaining === 0
-      ? `<p><span class="cart-ship-tick">✓</span> You qualify for <strong>free shipping</strong></p>`
-      : `<p>Add <strong>$${remaining.toLocaleString()}</strong> more for free shipping</p>`}
-    <div class="cart-ship-bar"><div class="cart-ship-fill" style="width: ${progress}%"></div></div>`;
+  progressEl.innerHTML = `<p><span class="cart-ship-tick">✓</span> <strong>Free shipping</strong> Australia-wide</p>`;
 
   // Update the checkout button's label to include the running total
   const checkoutBtn = cartFoot.querySelector('#checkoutBtn');
@@ -1307,7 +1299,7 @@ document.addEventListener('keydown', e=>{
     sizeLabel: 'Medium',
     sizeDims: '60 × 40 cm',
     basePrice: 445,
-    shipping: 25,
+    shipping: 0,
   };
 
   // ----- Step navigation -----
@@ -1546,7 +1538,7 @@ document.addEventListener('keydown', e=>{
     let price = state.basePrice;
     if (state.isPremium) price = Math.round(price * 1.15);
     const subtotal = price;
-    const shipping = subtotal >= 500 ? 0 : state.shipping;
+    const shipping = 0;
     const total = subtotal + shipping;
 
     if (previewTimber) previewTimber.textContent = state.timberLabel;
@@ -1701,11 +1693,10 @@ document.addEventListener('keydown', e=>{
   const successItems = document.getElementById('coSuccessItems');
   const successEmail = document.getElementById('coSuccessEmail');
 
-  const SHIP_FREE_THRESHOLD = 500;
-  const SHIP_COST = 25;
-
+  // Shipping is free Australia-wide on every order — kept as a function so
+  // any future regional or weight-based logic has an obvious place to land.
   const subtotal = () => items.reduce((s, i) => s + i.price * i.qty, 0);
-  const shipping = () => subtotal() >= SHIP_FREE_THRESHOLD ? 0 : SHIP_COST;
+  const shipping = () => 0;
   const total    = () => subtotal() + shipping();
 
   let currentStep = 0;
@@ -2272,4 +2263,145 @@ document.addEventListener('keydown', e=>{
     }, { root: track, threshold: [0.4, 0.55, 0.7] });
     frames.forEach(f => io.observe(f));
   }
+})();
+
+/* ---------- HOLIDAY MODE BANNER (all storefront pages) ---------- */
+(() => {
+  if (!document.body) return;
+  let state;
+  try { state = JSON.parse(localStorage.getItem('cbwm_holiday') || '{}') || {}; }
+  catch(_) { state = {}; }
+  if (!state.active) return;
+
+  // Past the "back on" date? Treat as inactive.
+  if (state.until) {
+    const back = new Date(state.until + 'T00:00:00');
+    if (!isNaN(back) && back < new Date()) return;
+  }
+
+  // Format the "back on" date in a friendly way (e.g. "12 May")
+  let backLabel = '';
+  if (state.until) {
+    const d = new Date(state.until + 'T00:00:00');
+    if (!isNaN(d)) {
+      backLabel = d.toLocaleDateString('en-AU', { day: 'numeric', month: 'long' });
+    }
+  }
+
+  const banner = document.createElement('div');
+  banner.className = 'holiday-banner';
+  banner.setAttribute('role', 'status');
+  const msg = (state.message || '').trim() || 'We\'re away from the workshop for a short break — orders resume the moment we\'re back.';
+  banner.innerHTML = `
+    <span class="holiday-banner-mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2 4 7v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V7l-8-5z"/></svg>
+    </span>
+    <span class="holiday-banner-copy">
+      <strong>Workshop on holiday${backLabel ? ` — back ${backLabel}` : ''}.</strong>
+      <span>${msg}</span>
+    </span>
+  `;
+  document.body.insertBefore(banner, document.body.firstChild);
+
+  // Disable the cart checkout button and any in-flow checkout-next buttons
+  function lockCheckout(){
+    const checkoutBtn = document.getElementById('checkoutBtn');
+    if (checkoutBtn) {
+      checkoutBtn.disabled = true;
+      checkoutBtn.classList.add('is-locked');
+      checkoutBtn.textContent = backLabel ? `Orders paused — back ${backLabel}` : 'Orders paused';
+    }
+    document.querySelectorAll('[data-co-next]').forEach(b => {
+      b.disabled = true;
+      b.classList.add('is-locked');
+    });
+  }
+  // Run now and again on each cart re-render (other code calls renderCart)
+  lockCheckout();
+  const obs = new MutationObserver(lockCheckout);
+  const cartFoot = document.getElementById('cartFoot');
+  if (cartFoot) obs.observe(cartFoot, { childList: true, subtree: true });
+})();
+
+/* ---------- REQUEST-A-PIECE CTA (shop.html) ---------- */
+(() => {
+  const cta      = document.getElementById('requestCta');
+  const ctaBtn   = document.getElementById('requestCtaBtn');
+  const ctaTitle = document.getElementById('requestCtaTitle');
+  const ctaSub   = document.getElementById('requestCtaSub');
+  const modal    = document.getElementById('requestModal');
+  const closeBtn = document.getElementById('requestClose');
+  const cancelBtn= document.getElementById('requestCancel');
+  const form     = document.getElementById('requestForm');
+  const subjEl   = document.getElementById('requestSubject');
+  const catEl    = document.getElementById('requestCategory');
+  if (!cta || !modal || !form) return;
+
+  const COPY = {
+    all:        { t: "Don't see what you're after?",     s: 'Tell Max which fish, car or critter and he\'ll come back with a quote.', subjPh: 'e.g. a Murray Cod from the Macquarie River' },
+    saltwater:  { t: "Don't see your fish?",             s: 'Request a saltwater piece — name the species and Max will reply with a quote.',   subjPh: 'e.g. a 1.4 m Spanish Mackerel taken off Cairns' },
+    freshwater: { t: "Don't see your fish?",             s: 'Request a freshwater piece — name the species and Max will reply with a quote.',  subjPh: 'e.g. a Murray Cod from the Macquarie River' },
+    cars:       { t: "Don't see your car?",              s: 'Request a custom car piece — make, model, year, and Max will quote it for you.',  subjPh: 'e.g. a 1971 Holden Torana SLR 5000 in Jamaica Lime' },
+    animals:    { t: "Don't see your animal?",           s: 'Request a custom animal or pet piece — Max will quote off your description.',     subjPh: 'e.g. a working Blue Heeler, side profile' },
+    birds:      { t: "Don't see your bird?",             s: 'Request a custom bird piece — Max will quote off your description.',              subjPh: 'e.g. a wedge-tailed eagle in flight' },
+  };
+
+  function activeCat(){
+    return document.querySelector('#catTabs .cat-tab.is-active')?.dataset.cat || 'all';
+  }
+  function refreshCta(){
+    const cat = activeCat();
+    const copy = COPY[cat] || COPY.all;
+    if (ctaTitle) ctaTitle.textContent = copy.t;
+    if (ctaSub)   ctaSub.textContent   = copy.s;
+    if (subjEl)   subjEl.placeholder   = copy.subjPh;
+    if (catEl && ['saltwater','freshwater','cars','animals','birds'].includes(cat)) {
+      catEl.value = cat;
+    }
+  }
+  refreshCta();
+  // Re-run when the category changes (tab click) or when hash navigation
+  // swaps the active tab via the hashchange listener in the catTabs IIFE.
+  document.getElementById('catTabs')?.addEventListener('click', () => setTimeout(refreshCta, 0));
+  window.addEventListener('hashchange', () => setTimeout(refreshCta, 0));
+
+  function openModal(){
+    refreshCta();
+    modal.hidden = false;
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => subjEl?.focus(), 50);
+  }
+  function closeModal(){
+    modal.hidden = true;
+    document.body.style.overflow = '';
+  }
+  ctaBtn?.addEventListener('click', openModal);
+  closeBtn?.addEventListener('click', closeModal);
+  cancelBtn?.addEventListener('click', closeModal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.hidden) closeModal(); });
+
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(form).entries());
+    const missing = ['subject','name','email'].filter(k => !data[k]?.trim());
+    if (missing.length){
+      toast(`Please add your ${missing.join(', ')}.`);
+      return;
+    }
+    const entry = {
+      id: 'REQ-' + Date.now().toString(36).toUpperCase(),
+      ...data,
+      source: 'request',
+      submittedAt: new Date().toISOString(),
+    };
+    try {
+      const list = JSON.parse(localStorage.getItem('cbwm_requests') || '[]');
+      list.unshift(entry);
+      localStorage.setItem('cbwm_requests', JSON.stringify(list));
+    } catch (_) {}
+    form.reset();
+    closeModal();
+    toast('Request sent — Max will reply within a business day.');
+  });
 })();
