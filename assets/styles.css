@@ -1295,6 +1295,50 @@ section > .container { padding: 0; }
   display: grid; place-items: center;
 }
 .pdp-product-stage img { width: 90%; height: 90%; object-fit: contain; }
+.pdp-stage-video { width: 100%; height: 100%; object-fit: cover; }
+
+/* Multi-image gallery — main stage + thumbnail strip */
+.pdp-gallery { display: grid; grid-template-columns: 88px 1fr; gap: 16px; align-items: start; }
+.pdp-gallery .pdp-product-stage { grid-column: 2; }
+.pdp-gallery-thumbs {
+  grid-column: 1; grid-row: 1;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.pdp-gallery-thumb {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  background: #f6f6f6;
+  border: 1.5px solid transparent;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  cursor: pointer;
+  display: grid; place-items: center;
+  transition: border-color .15s ease, transform .15s ease;
+}
+.pdp-gallery-thumb:hover { border-color: var(--ink-mute); }
+.pdp-gallery-thumb.is-active { border-color: var(--ink); }
+.pdp-gallery-thumb img { width: 80%; height: 80%; object-fit: contain; }
+.pdp-gallery-thumb-video {
+  font-size: 1.1rem; color: var(--ink); background: #fff;
+  width: 32px; height: 32px; border-radius: 50%;
+  display: grid; place-items: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,.12);
+}
+.pdp-gallery-thumb-label {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  padding: 4px 6px;
+  font-size: .58rem; letter-spacing: .15em; text-transform: uppercase;
+  color: var(--ink); background: rgba(255,255,255,.92);
+  text-align: center;
+  border-top: 1px solid var(--line);
+}
+@media (max-width: 720px) {
+  .pdp-gallery { grid-template-columns: 1fr; gap: 12px; }
+  .pdp-gallery .pdp-product-stage { grid-column: 1; grid-row: 1; }
+  .pdp-gallery-thumbs { grid-column: 1; grid-row: 2; flex-direction: row; flex-wrap: wrap; }
+  .pdp-gallery-thumb { width: 72px; height: 72px; }
+}
+
 .pdp-info { display: flex; flex-direction: column; gap: 0; }
 .pdp-info-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
 .pdp-eyebrow { font-size: .62rem; letter-spacing: .2em; text-transform: uppercase; color: var(--ink-mute); }

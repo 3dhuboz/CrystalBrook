@@ -15,7 +15,13 @@ const IMG = 'assets/images/products/';
  * product added without an image: field. */
 const PRODUCTS = [
   /* ------- SALTWATER FISH ------- */
-  { id:'p-coral',    name:'Coral Trout',          cat:'saltwater', price:485, size:'68 × 32 cm', pimg:'coral',     image:IMG+'coral-trout-vivid.png', badge:'Bestseller', meta:'Great Barrier Reef · Silky Oak mount', desc:'Iconic reef dweller rendered in vivid archival red with turquoise spot detail. ' + STD_DESC },
+  { id:'p-coral',    name:'Coral Trout',          cat:'saltwater', price:485, size:'68 × 32 cm', pimg:'coral',     image:IMG+'coral-trout-vivid.png', badge:'Bestseller', meta:'Great Barrier Reef · Silky Oak mount', desc:'Iconic reef dweller rendered in vivid archival red with turquoise spot detail. ' + STD_DESC,
+    gallery: [
+      { src: IMG+'coral-trout-vivid.png', alt:'Coral Trout — vivid edition (front)', label:'Front' },
+      { src: IMG+'coral.png',             alt:'Coral Trout — softer rendering',      label:'Variant' },
+      { src: IMG+'coral-trout-hunter.png',alt:'Coral Trout in hunter pose',          label:'Hunter pose' },
+    ]
+  },
   { id:'p-marlin',   name:'Blue Marlin',          cat:'saltwater', price:760, size:'120 × 40 cm',pimg:'marlin',    image:IMG+'mahi.png',      badge:'Signature',  meta:'Billfish · Ironbark mount',             desc:'Trophy-size blue marlin shown in full striking pose. ' + STD_DESC, draft:true  },
   { id:'p-mahi',     name:'Mahi Mahi (Dorado)',   cat:'saltwater', price:560, size:'90 × 34 cm', pimg:'mahi',      image:IMG+'mahi.png',      badge:null,         meta:'Pelagic · Blackwood mount',             desc:'Electric blue and gold dorado — the colour of a fresh catch. ' + STD_DESC },
   { id:'p-snapper',  name:'Red Emperor Snapper',  cat:'saltwater', price:425, size:'60 × 36 cm', pimg:'snapper',   image:IMG+'snapper.png',   badge:null,         meta:'Reef · Silky Oak mount',                desc:'Deep-reef red emperor with fin detail and subtle scale texture. ' + STD_DESC },
@@ -2023,18 +2029,68 @@ document.addEventListener('keydown', e=>{
   }
   document.getElementById('pdpCrumbName').textContent = product.name;
 
-  // Hero stage
+  // Hero stage — single image or gallery (main + thumbnails)
+  // Each gallery item: { src, alt, label, type? = 'image' | 'video' }
+  // Falls back to a single-image stage when product.gallery is unset.
   const stage = document.getElementById('pdpStage');
-  stage.innerHTML = product.image
-    ? `<div class="product-stage stage-${product.cat} pdp-product-stage">
-         <img src="${product.image}" alt="${product.name}"/>
-       </div>`
-    : `<div class="product-stage stage-${product.cat} pdp-product-stage">
-         <div class="product-placeholder">
-           <span class="ph-mark">${shortName(product.name)}</span>
-           <span class="ph-sub">Photo coming soon</span>
-         </div>
+  const gallery = Array.isArray(product.gallery) && product.gallery.length
+    ? product.gallery
+    : (product.image
+        ? [{ src: product.image, alt: product.name, label: 'Main' }]
+        : []);
+
+  function stageHTML(item){
+    if (!item) {
+      return `<div class="product-placeholder">
+         <span class="ph-mark">${shortName(product.name)}</span>
+         <span class="ph-sub">Photo coming soon</span>
        </div>`;
+    }
+    if (item.type === 'video') {
+      return `<video class="pdp-stage-video" src="${item.src}" controls preload="metadata" playsinline></video>`;
+    }
+    return `<img src="${item.src}" alt="${item.alt || product.name}"/>`;
+  }
+
+  stage.innerHTML = `
+    <div class="pdp-gallery">
+      <div class="product-stage stage-${product.cat} pdp-product-stage" id="pdpGalleryStage">
+        ${stageHTML(gallery[0])}
+      </div>
+      ${gallery.length > 1 ? `
+        <div class="pdp-gallery-thumbs" role="tablist" aria-label="${product.name} — image gallery">
+          ${gallery.map((item, i) => `
+            <button class="pdp-gallery-thumb${i === 0 ? ' is-active' : ''}"
+                    role="tab" aria-selected="${i === 0}"
+                    data-idx="${i}" type="button"
+                    title="${item.label || ('View ' + (i + 1))}">
+              ${item.type === 'video'
+                ? `<span class="pdp-gallery-thumb-video">▶</span>`
+                : `<img src="${item.src}" alt=""/>`}
+              ${item.label ? `<span class="pdp-gallery-thumb-label">${item.label}</span>` : ''}
+            </button>
+          `).join('')}
+        </div>
+      ` : ''}
+    </div>
+  `;
+
+  if (gallery.length > 1) {
+    const stageEl = document.getElementById('pdpGalleryStage');
+    const thumbs = stage.querySelectorAll('.pdp-gallery-thumb');
+    thumbs.forEach(t => {
+      t.addEventListener('click', () => {
+        const idx = +t.dataset.idx;
+        const item = gallery[idx];
+        if (!item || !stageEl) return;
+        stageEl.innerHTML = stageHTML(item);
+        thumbs.forEach(x => {
+          x.classList.toggle('is-active', x === t);
+          x.setAttribute('aria-selected', x === t ? 'true' : 'false');
+        });
+      });
+    });
+  }
 
   // Info
   document.getElementById('pdpEyebrow').textContent = CAT_LABELS[product.cat];
