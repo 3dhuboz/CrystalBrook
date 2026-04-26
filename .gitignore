@@ -40,6 +40,8 @@ venv/
 scripts/source/
 scripts/raw/
 scripts/output/
+assets/images/incoming/
+assets/images/*.zip
 
 # Local previews / temp
 .claude/
