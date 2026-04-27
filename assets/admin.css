@@ -777,7 +777,7 @@ table{ border-collapse: collapse; width:100%; }
   font-family: 'Cormorant Garamond', Georgia, serif;
   font-size: 1.5rem;
   font-weight: 600;
-  color: #ffffff;
+  color: #1c130a;
   margin: 0;
   line-height: 1.15;
 }
@@ -788,8 +788,8 @@ table{ border-collapse: collapse; width:100%; }
   place-items: center;
   border-radius: 50%;
   background: transparent;
-  border: 1px solid rgba(200, 163, 94, .35);
-  color: #ffffff;
+  border: 1px solid rgba(200, 163, 94, .55);
+  color: #1c130a;
   cursor: pointer;
   transition: background .25s ease, transform .25s ease;
   flex-shrink: 0;
@@ -813,7 +813,7 @@ table{ border-collapse: collapse; width:100%; }
   font-family: 'Cormorant Garamond', Georgia, serif;
   font-size: 1.1rem;
   font-weight: 600;
-  color: #ffffff;
+  color: #1c130a;
   margin: 0 0 .5rem;
 }
 .help-section p{
@@ -890,12 +890,12 @@ table{ border-collapse: collapse; width:100%; }
 }
 .help-drawer-tip kbd{
   background: #fff;
-  border: 1px solid rgba(200, 163, 94, .4);
+  border: 1px solid rgba(200, 163, 94, .55);
   border-radius: 4px;
   padding: 1px 6px;
   font-family: inherit;
   font-size: .75rem;
-  color: #ffffff;
+  color: #1c130a;
 }
 
 /* =========================================================

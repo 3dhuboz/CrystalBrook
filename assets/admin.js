@@ -417,7 +417,9 @@ function renderProducts(filter='all', q=''){
     });
   });
 
-  // Wire each row: enable Save when an input differs from its starting value
+  // Wire each row: inline price/size autosaves on blur or Enter, and the
+  // green tick is also a manual fallback. Whatever Max does — click out,
+  // press Enter, or hit the tick — the change persists.
   body.querySelectorAll('tr[data-id]').forEach(tr => {
     const id = tr.dataset.id;
     const inputs = tr.querySelectorAll('[data-edit-field]');
@@ -434,10 +436,8 @@ function renderProducts(filter='all', q=''){
       saveBtn.disabled = !changed;
       saveBtn.classList.toggle('is-dirty', changed);
     }
-    inputs.forEach(inp => inp.addEventListener('input', dirty));
 
-    saveBtn.addEventListener('click', async () => {
-      saveBtn.disabled = true;
+    async function flush() {
       const patch = {};
       inputs.forEach(inp => {
         const f = inp.dataset.editField;
@@ -445,9 +445,9 @@ function renderProducts(filter='all', q=''){
         patch[f] = f === 'price' ? Number(inp.value) : inp.value;
       });
       if (!Object.keys(patch).length) return;
+      saveBtn.disabled = true;
       try {
         await saveProductChanges(id, patch);
-        // Update the local PRODUCTS row so re-renders pick up the change
         const local = PRODUCTS.find(x => x.id === id);
         if (local) {
           if ('price' in patch) local.price = patch.price;
@@ -456,13 +456,36 @@ function renderProducts(filter='all', q=''){
         inputs.forEach(inp => { initial[inp.dataset.editField] = inp.value; });
         saveBtn.classList.remove('is-dirty');
         saveBtn.classList.add('is-saved');
+        toast(`Saved · ${(local && local.name) || id}`);
         setTimeout(() => saveBtn.classList.remove('is-saved'), 1500);
       } catch (err) {
         console.error('save failed', err);
-        alert('Save failed: ' + err.message);
+        toast(`Save failed: ${err.message || 'try again'}`);
         saveBtn.disabled = false;
       }
+    }
+
+    inputs.forEach(inp => {
+      inp.addEventListener('input', dirty);
+      // Autosave on blur (click away) — the most common case where Max
+      // would expect "I changed it, it should save."
+      inp.addEventListener('blur', () => {
+        if (saveBtn.disabled) return;
+        flush();
+      });
+      // Pressing Enter inside the field also commits the save
+      inp.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); flush(); inp.blur(); }
+        if (e.key === 'Escape') {
+          // Revert the value
+          inp.value = initial[inp.dataset.editField];
+          dirty();
+          inp.blur();
+        }
+      });
     });
+
+    saveBtn.addEventListener('click', flush);
   });
 
   const counts = {
@@ -1832,6 +1855,20 @@ function confirmDeleteProduct(product, opts = {}) {
   // The button text in the markup is "+ New product"
   btn.addEventListener('click', () => {
     openProductDrawer(null, { mode: 'new' });
+  });
+})();
+
+/* ---------- Sign out (sidebar) ----------
+ * Drops the cached admin password and pops the login modal back up.
+ * Useful when Max wants to hand the screen to someone else, or when
+ * a stale localStorage password is causing 401s on every save.
+ * --------------------------------------- */
+(() => {
+  const btn = document.getElementById('signOutBtn');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    localStorage.removeItem(ADMIN_AUTH_KEY);
+    showAdminLogin('Signed out — sign in again to keep editing.');
   });
 })();
 
