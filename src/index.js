@@ -72,16 +72,52 @@ function rowToProduct(row) {
   };
 }
 
-function isAuthorised(request, env) {
-  const sent = request.headers.get('x-admin-password');
-  const expected = env.ADMIN_PASSWORD;
-  if (!expected) return false;          // misconfigured worker → deny by default
-  if (!sent) return false;
-  // constant-time compare to avoid timing leaks (small but good habit)
-  if (sent.length !== expected.length) return false;
+function constantTimeEqualString(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  if (a.length !== b.length) return false;
   let diff = 0;
-  for (let i = 0; i < sent.length; i++) diff |= sent.charCodeAt(i) ^ expected.charCodeAt(i);
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
   return diff === 0;
+}
+
+function bytesToHex(bytes) {
+  return [...bytes].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function pbkdf2Hash(password, salt) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(password),
+    { name: 'PBKDF2' },
+    false,
+    ['deriveBits'],
+  );
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt: enc.encode(salt), iterations: 100000, hash: 'SHA-256' },
+    keyMaterial,
+    256,
+  );
+  return bytesToHex(new Uint8Array(bits));
+}
+
+async function isAuthorised(request, env) {
+  const sent = request.headers.get('x-admin-password');
+  if (!sent) return false;
+
+  // Once Max has rotated, the D1 hash is the source of truth.
+  const row = await env.DB.prepare(
+    'SELECT hash, salt FROM admin_password WHERE id = 1'
+  ).first();
+  if (row && row.hash && row.salt) {
+    const computed = await pbkdf2Hash(sent, row.salt);
+    return constantTimeEqualString(computed, row.hash);
+  }
+
+  // Bootstrap mode (D1 row absent): fall through to the Worker secret.
+  const expected = env.ADMIN_PASSWORD;
+  if (!expected) return false;
+  return constantTimeEqualString(sent, expected);
 }
 
 function validateProductPatch(patch) {
@@ -130,7 +166,7 @@ async function handleGetProduct(request, env, id) {
 }
 
 async function handleUpdateProduct(request, env, id) {
-  if (!isAuthorised(request, env)) return errorResponse('unauthorised', 401);
+  if (!await isAuthorised(request, env)) return errorResponse('unauthorised', 401);
 
   let body;
   try { body = await request.json(); }
@@ -171,7 +207,7 @@ async function handleUpdateProduct(request, env, id) {
 }
 
 async function handleCreateProduct(request, env) {
-  if (!isAuthorised(request, env)) return errorResponse('unauthorised', 401);
+  if (!await isAuthorised(request, env)) return errorResponse('unauthorised', 401);
 
   let body;
   try { body = await request.json(); }
@@ -214,7 +250,7 @@ async function handleCreateProduct(request, env) {
 }
 
 async function handleDeleteProduct(request, env, id) {
-  if (!isAuthorised(request, env)) return errorResponse('unauthorised', 401);
+  if (!await isAuthorised(request, env)) return errorResponse('unauthorised', 401);
   const result = await env.DB.prepare('DELETE FROM products WHERE id = ?').bind(id).run();
   if (!result.meta.changes) return errorResponse('not found', 404);
   return jsonResponse({ deleted: id });
@@ -223,9 +259,36 @@ async function handleDeleteProduct(request, env, id) {
 async function handleAdminCheck(request, env) {
   // Admin sends the password as a header and we just say yes/no — used by
   // the admin login screen so we can confirm before storing in localStorage.
-  return isAuthorised(request, env)
+  return (await isAuthorised(request, env))
     ? jsonResponse({ ok: true })
     : errorResponse('unauthorised', 401);
+}
+
+async function handleChangePassword(request, env) {
+  if (!await isAuthorised(request, env)) return errorResponse('unauthorised', 401);
+
+  let body;
+  try { body = await request.json(); }
+  catch (_) { return errorResponse('invalid JSON body'); }
+  const newPw = body && typeof body.newPassword === 'string' ? body.newPassword : '';
+  if (newPw.length < 8)  return errorResponse('newPassword must be at least 8 characters');
+  if (newPw.length > 200) return errorResponse('newPassword too long');
+
+  // Fresh 16-byte salt per rotation
+  const saltBytes = crypto.getRandomValues(new Uint8Array(16));
+  const salt = bytesToHex(saltBytes);
+  const hash = await pbkdf2Hash(newPw, salt);
+
+  await env.DB.prepare(`
+    INSERT INTO admin_password (id, hash, salt, updated_at)
+    VALUES (1, ?, ?, datetime('now'))
+    ON CONFLICT(id) DO UPDATE SET
+      hash = excluded.hash,
+      salt = excluded.salt,
+      updated_at = excluded.updated_at
+  `).bind(hash, salt).run();
+
+  return jsonResponse({ ok: true });
 }
 
 
@@ -239,7 +302,7 @@ async function handleGetContent(request, env) {
 }
 
 async function handlePutContent(request, env, key) {
-  if (!isAuthorised(request, env)) return errorResponse('unauthorised', 401);
+  if (!await isAuthorised(request, env)) return errorResponse('unauthorised', 401);
   if (!/^[a-z][a-z0-9_]*$/.test(key)) return errorResponse('invalid key');
 
   let body;
@@ -288,6 +351,9 @@ export default {
         }
         if (path === '/api/admin/check' && request.method === 'POST') {
           return await handleAdminCheck(request, env);
+        }
+        if (path === '/api/admin/password' && request.method === 'POST') {
+          return await handleChangePassword(request, env);
         }
         if (path === '/api/content' && request.method === 'GET') {
           return await handleGetContent(request, env);

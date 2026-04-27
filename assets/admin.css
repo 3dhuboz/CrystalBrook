@@ -1576,3 +1576,19 @@ body.admin-locked { overflow: hidden; }
 }
 .about-save-status[hidden] { display: none; }
 
+/* ===== ADMIN PASSWORD CHANGE CARD ===== */
+.adminpw-actions { display: flex; justify-content: flex-end; padding-top: 4px; }
+.adminpw-err {
+  margin: 4px 0 0; color: #d9534f; font-size: .85rem; line-height: 1.4;
+  background: rgba(217, 83, 79, 0.08);
+  border-left: 3px solid #d9534f;
+  padding: 8px 12px; border-radius: var(--r-sm);
+}
+.adminpw-err[hidden] { display: none; }
+.pw-status {
+  font-size: .68rem; letter-spacing: .15em; text-transform: uppercase; font-weight: 600;
+  padding: 3px 10px; border-radius: 999px;
+  background: rgba(106, 191, 106, 0.18); color: #6abf6a; border: 1px solid rgba(106,191,106,0.35);
+}
+.pw-status[hidden] { display: none; }
+

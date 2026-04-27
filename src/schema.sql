@@ -31,3 +31,17 @@ CREATE TABLE IF NOT EXISTS site_content (
   value      TEXT NOT NULL,            -- the actual copy (plain text)
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+
+-- Admin password (rotated by Max from inside the admin UI).
+-- One row, id = 1. PBKDF2/SHA-256 hash with a per-rotation salt.
+-- Until a row exists, the Worker falls back to env.ADMIN_PASSWORD as a
+-- bootstrap; once Max rotates, that fallback is no longer accepted.
+-- Recovery: `wrangler d1 execute crystalbrook --remote --command='DELETE FROM admin_password'`
+-- restores the env-secret bootstrap.
+CREATE TABLE IF NOT EXISTS admin_password (
+  id         INTEGER PRIMARY KEY,
+  hash       TEXT NOT NULL,
+  salt       TEXT NOT NULL,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);

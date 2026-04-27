@@ -1939,3 +1939,80 @@ async function loadAboutEditor() {
     if (link) loadAboutEditor();
   });
 })();
+
+
+/* ---------- CHANGE ADMIN PASSWORD (Settings card) ---------- *
+ * Posts {newPassword} to /api/admin/password — the Worker uses the
+ * existing X-Admin-Password header for auth (so the user must
+ * already be signed in with the *current* password). On success the
+ * cached password in localStorage is updated so the user stays
+ * signed in seamlessly.
+ * ----------------------------------------------------- */
+(() => {
+  const saveBtn = document.getElementById('adminPwSave');
+  if (!saveBtn) return;
+  const curEl     = document.getElementById('adminPwCurrent');
+  const newEl     = document.getElementById('adminPwNew');
+  const confirmEl = document.getElementById('adminPwConfirm');
+  const errEl     = document.getElementById('adminPwErr');
+  const statusEl  = document.getElementById('adminPwStatus');
+
+  function showErr(msg) {
+    if (!errEl) return;
+    errEl.textContent = msg;
+    errEl.hidden = false;
+  }
+  function clearErr() { if (errEl) errEl.hidden = true; }
+  function flashStatus(msg = 'Updated ✓') {
+    if (!statusEl) return;
+    statusEl.textContent = msg;
+    statusEl.hidden = false;
+    clearTimeout(statusEl._timer);
+    statusEl._timer = setTimeout(() => { statusEl.hidden = true; }, 3000);
+  }
+
+  saveBtn.addEventListener('click', async () => {
+    clearErr();
+    const cur = curEl.value;
+    const newPw = newEl.value;
+    const conf = confirmEl.value;
+
+    if (!cur || !newPw || !conf) { showErr('All three fields are required.'); return; }
+    if (newPw.length < 8) { showErr('New password must be at least 8 characters.'); return; }
+    if (newPw !== conf)   { showErr("New password and confirmation don't match."); return; }
+    if (cur === newPw)    { showErr('New password is the same as the current one.'); return; }
+    if (cur !== adminPassword()) { showErr("That doesn't match the password you used to sign in. Try again."); return; }
+
+    saveBtn.disabled = true;
+    const original = saveBtn.textContent;
+    saveBtn.textContent = 'Updating…';
+    try {
+      const res = await fetch('/api/admin/password', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', ...adminAuthHeaders() },
+        body: JSON.stringify({ newPassword: newPw }),
+      });
+      if (res.status === 401) {
+        // Current password apparently no longer matches what's live — kick to login
+        localStorage.removeItem(ADMIN_AUTH_KEY);
+        showAdminLogin('Your saved password is no longer recognised — please sign in.');
+        return;
+      }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'failed');
+      }
+      // Update cached password so the user stays signed in seamlessly
+      localStorage.setItem(ADMIN_AUTH_KEY, newPw);
+      curEl.value = '';
+      newEl.value = '';
+      confirmEl.value = '';
+      flashStatus();
+    } catch (err) {
+      showErr('Update failed: ' + err.message);
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = original;
+    }
+  });
+})();

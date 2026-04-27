@@ -7,10 +7,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="../assets/admin.css?v=20260427-14" />
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260427-14" />
-<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260427-14" />
-<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260427-14" />
+<link rel="stylesheet" href="../assets/admin.css?v=20260427-15" />
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260427-15" />
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260427-15" />
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260427-15" />
 <link rel="manifest" href="../manifest.webmanifest" />
 <meta name="theme-color" content="#1c130a" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -572,6 +572,33 @@ Signed, numbered and wrapped for shipping</textarea></label>
           <p class="form-note">When On, a banner shows on every page and the Checkout button is disabled. Customers can still browse, save to wishlist, and send "request a piece" enquiries — those land in Custom Orders for when you're back.</p>
         </div>
       </div>
+      <div class="card" id="adminPwCard">
+        <div class="card-head">
+          <h3>Admin password</h3>
+          <span class="pw-status" id="adminPwStatus" hidden>Updated ✓</span>
+        </div>
+        <div class="form" id="adminPwForm">
+          <label>
+            <span>Current password</span>
+            <input class="inp" type="password" name="currentPassword" id="adminPwCurrent" autocomplete="current-password"/>
+          </label>
+          <div class="row-2">
+            <label>
+              <span>New password</span>
+              <input class="inp" type="password" name="newPassword" id="adminPwNew" minlength="8" autocomplete="new-password" placeholder="8+ characters"/>
+            </label>
+            <label>
+              <span>Confirm new password</span>
+              <input class="inp" type="password" name="confirmPassword" id="adminPwConfirm" minlength="8" autocomplete="new-password"/>
+            </label>
+          </div>
+          <p class="adminpw-err" id="adminPwErr" hidden></p>
+          <div class="adminpw-actions">
+            <button class="btn btn-gold" type="button" id="adminPwSave">Update password</button>
+          </div>
+          <p class="form-note">After saving, you'll stay signed in. The change applies immediately for any new admin sessions. <strong>Forgot it?</strong> Drop Steve a line and he'll reset it from the back end.</p>
+        </div>
+      </div>
       <div class="card"><div class="card-head"><h3>Business</h3></div>
         <div class="form">
           <label><span>Business name</span><input class="inp" value="Crystal Brook Wall Mounts"/></label>
@@ -725,6 +752,6 @@ Signed, numbered and wrapped for shipping</textarea></label>
   </div>
 </div>
 
-<script src="../assets/admin.js?v=20260427-14"></script>
+<script src="../assets/admin.js?v=20260427-15"></script>
 </body>
 </html>
