@@ -2136,11 +2136,28 @@ document.addEventListener('keydown', e=>{
   // Each gallery item: { src, alt, label, type? = 'image' | 'video' }
   // Falls back to a single-image stage when product.gallery is unset.
   const stage = document.getElementById('pdpStage');
-  const gallery = Array.isArray(product.gallery) && product.gallery.length
-    ? product.gallery
+
+  // Auto-derive an "on the wall" mockup path from the main image, e.g.
+  // `coral-trout-vivid.png` -> `coral-trout-vivid-wall.jpg`. The script
+  // scripts/wall-mockup-batch.py generates these for every product; if a
+  // particular file is missing the thumbnail just 404s.
+  function wallMockupSrc(image){
+    if (!image) return null;
+    return image.replace(/\.(png|jpe?g)$/i, '-wall.jpg');
+  }
+  const wallSrc = wallMockupSrc(product.image);
+
+  let gallery = Array.isArray(product.gallery) && product.gallery.length
+    ? product.gallery.slice()
     : (product.image
-        ? [{ src: product.image, alt: product.name, label: 'Main' }]
+        ? [{ src: product.image, alt: product.name, label: 'Cutout' }]
         : []);
+
+  // Append the on-the-wall mockup as a final gallery item (unless it's
+  // already in the explicit gallery list).
+  if (wallSrc && !gallery.some(g => g.src === wallSrc)) {
+    gallery.push({ src: wallSrc, alt: `${product.name} — on the wall`, label: 'On the wall' });
+  }
 
   function stageHTML(item){
     if (!item) {
