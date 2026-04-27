@@ -6,7 +6,7 @@
  *   - Offline fallback to cached index.html for navigation
  */
 
-const VERSION = 'cbwm-2026-04-28-01';
+const VERSION = 'cbwm-2026-04-28-02';
 const SHELL_CACHE = `${VERSION}-shell`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
 
@@ -70,6 +70,11 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
   // Skip cross-origin (Google Fonts etc.) — let the network handle them
   if (url.origin !== self.location.origin) return;
+
+  // Live API responses (catalogue + content) must never be cached by the SW
+  // — Max edits a price in admin and customers expect to see the new value
+  // on the next page load, not whatever was first cached at install time.
+  if (url.pathname.startsWith('/api/')) return;
 
   // Navigation requests → network-first with offline fallback
   if (req.mode === 'navigate') {

@@ -1788,15 +1788,17 @@ function validateDrawerData(data, mode) {
       let saved;
       if (_drawerMode === 'new') {
         saved = await createProduct(data);
+        toast(`Added · ${saved.name}`);
       } else {
         const { id, ...patch } = data;
         saved = await saveProductChanges(_drawerCurrentProduct.id, patch);
+        toast(`Saved · ${saved.name}`);
       }
       // Refresh local catalogue from API and re-render
       await refreshCatalogueAndRerender();
       closeProductDrawer();
     } catch (err) {
-      alert('Save failed: ' + err.message);
+      toast(`Save failed: ${err.message || 'try again'}`);
     } finally {
       saveBtn.disabled = false;
       saveBtn.textContent = 'Save';
