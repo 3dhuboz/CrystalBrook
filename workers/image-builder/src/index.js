@@ -96,7 +96,7 @@ const CATEGORY_HINTS = {
   saltwater:  'Australian saltwater fish (Great Barrier Reef, Coral Sea). Always specify scientific name, exact colour patterns, fin shapes. Use "side profile" pose unless specified.',
   freshwater: 'Australian freshwater fish (Murray-Darling, FNQ rivers, NT billabongs). Specify scientific name, scale colours, distinctive markings. Use "side profile" pose.',
   cars:       'Australian or American classic muscle cars (1960s–1980s). Specify exact year + model + period-correct paint colour. Always "side profile, no background reflections, glossy paintwork".',
-  animals:    'Australian wildlife or pet portrait. Specify breed/species, exact coat colour, distinctive features. Three-quarter or side pose. Soft studio lighting, hyperrealistic fur.',
+  animals:    'Australian wildlife or pet portrait. Specify breed/species, exact coat colour, distinctive features. CRITICAL: state the body shape explicitly so FLUX doesn\'t blend species — for canines (dingoes, dogs) say "four-legged canine standing on all four paws, dog-shaped body, NOT a kangaroo, NOT a marsupial". For macropods (kangaroos, wallabies) say "marsupial standing on two hind legs". Use side profile or three-quarter pose. Hyperrealistic fur, soft studio lighting.',
   birds:      'Australian native bird species. Specify exact species (scientific name), plumage colours, perched or in-flight pose, distinctive features (e.g. lorikeet rainbow gradient).',
   other:      'A standalone subject for an artist\'s wall-mounted resin-coated print. Be specific about colour, material, pose, era.',
 };
@@ -124,7 +124,13 @@ USER: a 1971 monaro
 YOU: 1971 Holden HQ Monaro GTS, side profile, lime-green body with black side stripes and bonnet decals, period-correct chrome bumpers and Magnum 500 wheels, ${FLUX_SUFFIX}
 
 USER: a barra jumping
-YOU: Barramundi (Lates calcarifer) leaping out of water mid-strike, silver-green flank catching light, mouth open showing white interior, water droplets frozen mid-air, ${FLUX_SUFFIX}`;
+YOU: Barramundi (Lates calcarifer) leaping out of water mid-strike, silver-green flank catching light, mouth open showing white interior, water droplets frozen mid-air, ${FLUX_SUFFIX}
+
+USER: a dingo
+YOU: Australian Dingo (Canis lupus dingo), four-legged wild canine standing on all four paws in side profile, dog-shaped body with long muzzle and pointed upright ears, sandy ginger coat with white chest and white paws, bushy tail held low, NOT a kangaroo, NOT a marsupial, ${FLUX_SUFFIX}
+
+USER: a kangaroo
+YOU: Eastern Grey Kangaroo (Macropus giganteus), marsupial standing upright on two muscular hind legs with thick tail braced behind, soft grey-brown fur, small forearms held in front, alert ears and dark eyes, ${FLUX_SUFFIX}`;
 
   try {
     const result = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
@@ -162,7 +168,7 @@ async function generateImages(env, prompt, count) {
     try {
       const result = await env.AI.run('@cf/black-forest-labs/flux-1-schnell', {
         prompt,
-        num_steps: 4,
+        num_steps: 8,
         seed,
       });
       const url = toDataUrl(result.image || result);
