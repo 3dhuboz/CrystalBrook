@@ -229,6 +229,40 @@ async function handleAdminCheck(request, env) {
 }
 
 
+// -------- /api/content (site copy: about page bio, etc) --------
+
+async function handleGetContent(request, env) {
+  const result = await env.DB.prepare('SELECT key, value FROM site_content').all();
+  const content = {};
+  for (const row of result.results) content[row.key] = row.value;
+  return jsonResponse({ content });
+}
+
+async function handlePutContent(request, env, key) {
+  if (!isAuthorised(request, env)) return errorResponse('unauthorised', 401);
+  if (!/^[a-z][a-z0-9_]*$/.test(key)) return errorResponse('invalid key');
+
+  let body;
+  try { body = await request.json(); }
+  catch (_) { return errorResponse('invalid JSON body'); }
+  if (!body || typeof body.value !== 'string') {
+    return errorResponse('expected { value: string }');
+  }
+  if (body.value.length > 8000) {
+    return errorResponse('value too long (max 8000 chars)');
+  }
+
+  // Upsert — common case is editing existing content, but allow new keys
+  await env.DB.prepare(`
+    INSERT INTO site_content (key, value, updated_at)
+    VALUES (?, ?, datetime('now'))
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')
+  `).bind(key, body.value).run();
+
+  return jsonResponse({ key, value: body.value });
+}
+
+
 // -------- main fetch handler --------
 
 export default {
@@ -254,6 +288,13 @@ export default {
         }
         if (path === '/api/admin/check' && request.method === 'POST') {
           return await handleAdminCheck(request, env);
+        }
+        if (path === '/api/content' && request.method === 'GET') {
+          return await handleGetContent(request, env);
+        }
+        const contentMatch = path.match(/^\/api\/content\/([a-z][a-z0-9_]*)$/);
+        if (contentMatch && request.method === 'PUT') {
+          return await handlePutContent(request, env, contentMatch[1]);
         }
         return errorResponse('not found', 404);
       } catch (err) {

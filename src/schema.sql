@@ -22,3 +22,12 @@ CREATE TABLE IF NOT EXISTS products (
 CREATE INDEX IF NOT EXISTS idx_products_cat       ON products(cat);
 CREATE INDEX IF NOT EXISTS idx_products_draft     ON products(draft);
 CREATE INDEX IF NOT EXISTS idx_products_sort      ON products(cat, sort_order);
+
+
+-- Site content (About page bio, contact text, anything else Max needs to
+-- self-edit without a redeploy). Key/value pairs — keep it boring.
+CREATE TABLE IF NOT EXISTS site_content (
+  key        TEXT PRIMARY KEY,         -- e.g. 'about_lede', 'about_story_p1'
+  value      TEXT NOT NULL,            -- the actual copy (plain text)
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);

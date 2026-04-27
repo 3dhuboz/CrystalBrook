@@ -2636,3 +2636,35 @@ document.addEventListener('keydown', e=>{
   }
   refreshCatalogueFromAPI();
 })();
+
+
+/* ---------- LIVE SITE CONTENT (About page bio etc) ---------------- *
+ * Any element with data-content-key="some_key" gets its text content
+ * replaced from /api/content. Add data-content-html on the element if
+ * the value is rich text (e.g. story paragraphs that contain <em> /
+ * <strong>). Falls through to the embedded HTML if the API is quiet.
+ * ------------------------------------------------------------------- */
+(() => {
+  const targets = document.querySelectorAll('[data-content-key]');
+  if (!targets.length) return;
+  (async () => {
+    try {
+      const res = await fetch('/api/content', { cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      const content = data && data.content;
+      if (!content || typeof content !== 'object') return;
+      targets.forEach(el => {
+        const key = el.dataset.contentKey;
+        if (!(key in content)) return;
+        if ('contentHtml' in el.dataset) {
+          el.innerHTML = content[key];
+        } else {
+          el.textContent = content[key];
+        }
+      });
+    } catch (err) {
+      console.warn('[content] fetch failed; using embedded fallback', err);
+    }
+  })();
+})();

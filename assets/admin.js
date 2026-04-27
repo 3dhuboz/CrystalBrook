@@ -42,6 +42,40 @@ async function saveProductChanges(id, patch) {
   return data.product;
 }
 
+async function createProduct(payload) {
+  const res = await fetch('/api/products', {
+    method: 'POST',
+    cache: 'no-store',
+    headers: { 'content-type': 'application/json', ...adminAuthHeaders() },
+    body: JSON.stringify(payload),
+  });
+  if (res.status === 401) {
+    localStorage.removeItem(ADMIN_AUTH_KEY);
+    showAdminLogin('Your session expired — please sign in again.');
+    throw new Error('unauthorised');
+  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'create failed: ' + res.status);
+  return data.product;
+}
+
+async function deleteProduct(id) {
+  const res = await fetch('/api/products/' + encodeURIComponent(id), {
+    method: 'DELETE',
+    headers: { ...adminAuthHeaders() },
+  });
+  if (res.status === 401) {
+    localStorage.removeItem(ADMIN_AUTH_KEY);
+    showAdminLogin('Your session expired — please sign in again.');
+    throw new Error('unauthorised');
+  }
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || 'delete failed: ' + res.status);
+  }
+  return true;
+}
+
 async function verifyAdminPassword(pw) {
   const res = await fetch('/api/admin/check', {
     method: 'POST',
@@ -149,7 +183,7 @@ const crumb = document.getElementById('crumb');
 const VIEW_LABELS = {
   dashboard:'Dashboard', products:'Stocktake', orders:'Orders',
   custom:'Custom Orders', revenue:'Revenue',
-  homepage:'Homepage Editor', settings:'Settings'
+  homepage:'Homepage Editor', about:'About Page', settings:'Settings'
 };
 function switchView(key){
   document.querySelectorAll('.view').forEach(v=>v.classList.toggle('is-active', v.dataset.view===key));
@@ -355,13 +389,33 @@ function renderProducts(filter='all', q=''){
         <td><span class="status ${p.draft?'warn':'ok'}">${p.draft?'Draft':'Live'}</span></td>
         <td>
           <div class="row-act">
-            <button class="iact iact-save" title="Save changes" data-save="${p.id}" disabled>
+            <button class="iact iact-save" title="Save price/size" data-save="${p.id}" disabled>
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5 5L20 6"/></svg>
+            </button>
+            <button class="iact iact-edit" title="Edit all fields" data-edit="${p.id}">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+            </button>
+            <button class="iact iact-delete" title="Delete this piece" data-delete="${p.id}">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
             </button>
           </div>
         </td>
       </tr>`;
   }).join('');
+
+  // Wire Edit + Delete buttons
+  body.querySelectorAll('[data-edit]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const p = PRODUCTS.find(x => x.id === btn.dataset.edit);
+      if (p) openProductDrawer(p, { mode: 'edit' });
+    });
+  });
+  body.querySelectorAll('[data-delete]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const p = PRODUCTS.find(x => x.id === btn.dataset.delete);
+      if (p) confirmDeleteProduct(p);
+    });
+  });
 
   // Wire each row: enable Save when an input differs from its starting value
   body.querySelectorAll('tr[data-id]').forEach(tr => {
@@ -1590,4 +1644,298 @@ async function refreshCatalogueAndRerender() {
   }
 
   await refreshCatalogueAndRerender();
+})();
+
+
+/* ---------- PRODUCT EDIT DRAWER (full-fields) ---------- *
+ * Used for:
+ *   - Edit any field on an existing product (mode: 'edit')
+ *   - Create a brand new product (mode: 'new')
+ * Save → PUT or POST. Delete (edit mode only) → confirm + DELETE.
+ * ----------------------------------------------------- */
+
+const _drawer = {
+  el:    () => document.getElementById('prodDrawer'),
+  scrim: () => document.getElementById('prodDrawerScrim'),
+  form:  () => document.getElementById('prodDrawerForm'),
+  title: () => document.getElementById('prodDrawerTitle'),
+  eyebrow: () => document.getElementById('prodDrawerEyebrow'),
+  saveBtn:   () => document.getElementById('prodDrawerSave'),
+  deleteBtn: () => document.getElementById('prodDrawerDelete'),
+  closeBtn:  () => document.getElementById('prodDrawerClose'),
+  cancelBtn: () => document.getElementById('prodDrawerCancel'),
+};
+
+let _drawerCurrentProduct = null;
+let _drawerMode = 'edit';
+
+function openProductDrawer(product, opts = {}) {
+  const mode = opts.mode || 'edit';
+  _drawerMode = mode;
+  _drawerCurrentProduct = product;
+
+  const drawer = _drawer.el();
+  const form = _drawer.form();
+  if (!drawer || !form) return;
+
+  drawer.classList.toggle('is-new', mode === 'new');
+  _drawer.title().textContent = mode === 'new' ? 'New product' : (product?.name || 'Edit product');
+  _drawer.eyebrow().textContent = mode === 'new' ? 'Adding' : 'Editing';
+
+  form.querySelector('[name="id"]').readOnly = (mode !== 'new');
+  form.querySelector('[name="id"]').value = mode === 'new' ? 'p-' : (product?.id || '');
+  form.querySelector('[name="name"]').value = product?.name || '';
+  form.querySelector('[name="cat"]').value = product?.catKey || product?.cat || 'saltwater';
+  form.querySelector('[name="badge"]').value = product?.badge || '';
+  form.querySelector('[name="price"]').value = product?.price ?? '';
+  form.querySelector('[name="size"]').value = product?.size || '';
+  form.querySelector('[name="image"]').value = product?.image || 'assets/images/products/';
+  form.querySelector('[name="meta"]').value = product?.meta || '';
+  form.querySelector('[name="description"]').value = product?.desc || product?.description || '';
+  form.querySelector('[name="draft"]').checked = !!product?.draft;
+
+  drawer.hidden = false;
+  drawer.setAttribute('aria-hidden', 'false');
+  _drawer.scrim().hidden = false;
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => form.querySelector('[name="name"]')?.focus(), 50);
+}
+
+function closeProductDrawer() {
+  const drawer = _drawer.el();
+  if (!drawer) return;
+  drawer.hidden = true;
+  drawer.setAttribute('aria-hidden', 'true');
+  _drawer.scrim().hidden = true;
+  document.body.style.overflow = '';
+  _drawerCurrentProduct = null;
+}
+
+function readDrawerForm() {
+  const form = _drawer.form();
+  const fd = new FormData(form);
+  const out = {
+    id: (fd.get('id') || '').trim(),
+    name: (fd.get('name') || '').trim(),
+    cat: fd.get('cat'),
+    badge: (fd.get('badge') || '').trim() || null,
+    price: Number(fd.get('price')),
+    size: (fd.get('size') || '').trim(),
+    image: (fd.get('image') || '').trim(),
+    meta: (fd.get('meta') || '').trim() || null,
+    description: (fd.get('description') || '').trim(),
+    draft: !!fd.get('draft'),
+  };
+  return out;
+}
+
+function validateDrawerData(data, mode) {
+  const errors = [];
+  if (mode === 'new') {
+    if (!/^p-[a-z0-9-]+$/.test(data.id)) errors.push('ID must start with "p-" and use lowercase letters, digits, or dashes');
+  }
+  if (!data.name) errors.push('Name is required');
+  if (!data.cat) errors.push('Category is required');
+  if (!Number.isFinite(data.price) || data.price < 0) errors.push('Price must be a non-negative number');
+  if (!data.size) errors.push('Size is required');
+  if (!data.image) errors.push('Image path is required');
+  if (!data.description) errors.push('Description is required');
+  return errors;
+}
+
+(() => {
+  // Wire drawer once on script load
+  const form = _drawer.form(); if (!form) return;
+  _drawer.closeBtn()?.addEventListener('click', closeProductDrawer);
+  _drawer.cancelBtn()?.addEventListener('click', closeProductDrawer);
+  _drawer.scrim()?.addEventListener('click', closeProductDrawer);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !_drawer.el()?.hidden) closeProductDrawer();
+  });
+
+  _drawer.saveBtn()?.addEventListener('click', async () => {
+    const data = readDrawerForm();
+    const errors = validateDrawerData(data, _drawerMode);
+    if (errors.length) { alert(errors.join('\n')); return; }
+
+    const saveBtn = _drawer.saveBtn();
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving…';
+    try {
+      let saved;
+      if (_drawerMode === 'new') {
+        saved = await createProduct(data);
+      } else {
+        const { id, ...patch } = data;
+        saved = await saveProductChanges(_drawerCurrentProduct.id, patch);
+      }
+      // Refresh local catalogue from API and re-render
+      await refreshCatalogueAndRerender();
+      closeProductDrawer();
+    } catch (err) {
+      alert('Save failed: ' + err.message);
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save';
+    }
+  });
+
+  _drawer.deleteBtn()?.addEventListener('click', () => {
+    if (!_drawerCurrentProduct) return;
+    confirmDeleteProduct(_drawerCurrentProduct, { fromDrawer: true });
+  });
+})();
+
+
+/* ---------- DELETE CONFIRM DIALOG ---------- */
+function confirmDeleteProduct(product, opts = {}) {
+  const modal = document.getElementById('confirmModal');
+  const title = document.getElementById('confirmTitle');
+  const body  = document.getElementById('confirmBody');
+  const ok    = document.getElementById('confirmOk');
+  const cancel= document.getElementById('confirmCancel');
+  if (!modal) return;
+
+  title.textContent = `Delete "${product.name}"?`;
+  body.textContent  = `This removes "${product.name}" from the storefront permanently. Customers will no longer see or order it. This can't be undone — but you can always add it back later from "+ New product".`;
+  modal.hidden = false;
+
+  function close() {
+    modal.hidden = true;
+    ok.replaceWith(ok.cloneNode(true));
+    cancel.replaceWith(cancel.cloneNode(true));
+  }
+
+  document.getElementById('confirmCancel').addEventListener('click', close, { once: true });
+  document.getElementById('confirmOk').addEventListener('click', async () => {
+    const okBtn = document.getElementById('confirmOk');
+    okBtn.disabled = true;
+    okBtn.textContent = 'Deleting…';
+    try {
+      await deleteProduct(product.id);
+      close();
+      if (opts.fromDrawer) closeProductDrawer();
+      await refreshCatalogueAndRerender();
+    } catch (err) {
+      okBtn.disabled = false;
+      okBtn.textContent = 'Yes, delete';
+      alert('Delete failed: ' + err.message);
+    }
+  }, { once: true });
+}
+
+
+/* ---------- "+ New product" button ---------- */
+(() => {
+  const btn = document.querySelector('[data-view="products"] .v-head-actions .btn-gold');
+  if (!btn) return;
+  // The button text in the markup is "+ New product"
+  btn.addEventListener('click', () => {
+    openProductDrawer(null, { mode: 'new' });
+  });
+})();
+
+
+/* ---------- ABOUT PAGE EDITOR -------------------------- *
+ * Each label tagged with data-content-edit="<key>" holds an input or
+ * textarea bound to that key in site_content. Values load on first
+ * view, auto-save on blur (with a tiny debounce while typing).
+ * ----------------------------------------------------- */
+async function saveContent(key, value) {
+  const res = await fetch('/api/content/' + encodeURIComponent(key), {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json', ...adminAuthHeaders() },
+    body: JSON.stringify({ value }),
+  });
+  if (res.status === 401) {
+    localStorage.removeItem(ADMIN_AUTH_KEY);
+    showAdminLogin('Your session expired — please sign in again.');
+    throw new Error('unauthorised');
+  }
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || 'save failed: ' + res.status);
+  }
+}
+
+async function loadAboutEditor() {
+  const view = document.querySelector('[data-view="about"]');
+  if (!view) return;
+  const labels = view.querySelectorAll('[data-content-edit]');
+  if (!labels.length) return;
+  try {
+    const res = await fetch('/api/content', { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const { content } = await res.json();
+    if (!content) return;
+    labels.forEach(label => {
+      const key = label.dataset.contentEdit;
+      const field = label.querySelector('input, textarea');
+      if (field && key in content) field.value = content[key];
+    });
+  } catch (err) {
+    console.warn('about editor: load failed', err);
+  }
+}
+
+(() => {
+  const view = document.querySelector('[data-view="about"]');
+  if (!view) return;
+
+  const labels = view.querySelectorAll('[data-content-edit]');
+  const statusEl = document.getElementById('aboutSaveStatus');
+
+  function showSaved(msg = 'Saved ✓') {
+    if (!statusEl) return;
+    statusEl.textContent = msg;
+    statusEl.hidden = false;
+    clearTimeout(statusEl._timer);
+    statusEl._timer = setTimeout(() => { statusEl.hidden = true; }, 2200);
+  }
+
+  labels.forEach(label => {
+    const key = label.dataset.contentEdit;
+    const field = label.querySelector('input, textarea');
+    if (!field) return;
+    let initial = field.value;
+    let pending = null;
+
+    async function flush() {
+      if (field.value === initial) return;
+      label.classList.remove('is-error', 'is-saved');
+      label.classList.add('is-saving');
+      try {
+        await saveContent(key, field.value);
+        initial = field.value;
+        label.classList.remove('is-saving');
+        label.classList.add('is-saved');
+        showSaved();
+        setTimeout(() => label.classList.remove('is-saved'), 1500);
+      } catch (err) {
+        label.classList.remove('is-saving');
+        label.classList.add('is-error');
+        showSaved('Save failed — try again');
+      }
+    }
+
+    // Auto-save on blur (or 1.5s after last keystroke, whichever first)
+    field.addEventListener('blur', flush);
+    field.addEventListener('input', () => {
+      clearTimeout(pending);
+      pending = setTimeout(flush, 1500);
+    });
+    // Stash initial value once loadAboutEditor() populates the field
+    field.addEventListener('focus', () => { initial = field.value; }, { once: true });
+  });
+
+  // Load values when admin first lands on /admin (we may not be on the
+  // About view yet, but populating ahead of time keeps switching snappy)
+  loadAboutEditor();
+
+  // If the admin navigates to the About view later, refresh values then too
+  const sideNav = document.getElementById('sideNav');
+  sideNav?.addEventListener('click', e => {
+    const link = e.target.closest('[data-view="about"]');
+    if (link) loadAboutEditor();
+  });
 })();

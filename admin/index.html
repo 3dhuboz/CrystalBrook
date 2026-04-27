@@ -7,10 +7,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="../assets/admin.css?v=20260427-12" />
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260427-12" />
-<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260427-12" />
-<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260427-12" />
+<link rel="stylesheet" href="../assets/admin.css?v=20260427-14" />
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260427-14" />
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260427-14" />
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260427-14" />
 <link rel="manifest" href="../manifest.webmanifest" />
 <meta name="theme-color" content="#1c130a" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -58,6 +58,7 @@
     <a class="s-link" data-view="studio"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l1.8 4.6 4.7.4-3.6 3.1 1.1 4.6L12 13.3 8 15.7l1.1-4.6L5.5 8l4.7-.4z"/><circle cx="18" cy="18" r="3"/><path d="m20 20 2 2"/></svg> Image Builder <span class="s-link-pill">NEW</span></a>
     <a class="s-link" data-view="revenue"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 20V4M3 20h18"/><path d="M7 16l4-5 3 3 6-8"/></svg> Revenue</a>
     <a class="s-link" data-view="homepage"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10 12 3l9 7v11H3z"/><path d="M9 21v-8h6v8"/></svg> Homepage Editor</a>
+    <a class="s-link" data-view="about"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg> About Page</a>
     <a class="s-link" data-view="settings"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.4.9a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-.9-2 3.4 2 1.5A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.5 2 3.4 2.4-.9a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4.9 2-3.4-2-1.5c.1-.4.1-.8.1-1.2Z"/></svg> Settings</a>
   </nav>
 
@@ -500,6 +501,57 @@ Signed, numbered and wrapped for shipping</textarea></label>
     </div>
   </section>
 
+  <!-- ========= ABOUT PAGE ========= -->
+  <section class="view" data-view="about">
+    <div class="v-head">
+      <div>
+        <h1>About Page</h1>
+        <p>The bio, story and meta-info shown on <a href="../about.html" target="_blank" rel="noopener">about.html</a>. Edits save instantly — visit the page to see the result.</p>
+      </div>
+      <div class="v-head-actions">
+        <span class="about-save-status" id="aboutSaveStatus" hidden>Saved ✓</span>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Page header</h3></div>
+      <div class="form">
+        <label data-content-edit="about_eyebrow"><span>Eyebrow</span><input class="inp" placeholder="Meet the maker"/></label>
+        <div class="row-2">
+          <label data-content-edit="about_h1_main"><span>Headline (line 1)</span><input class="inp" placeholder="Max White,"/></label>
+          <label data-content-edit="about_h1_em"><span>Headline (line 2 — italic)</span><input class="inp" placeholder="in his element."/></label>
+        </div>
+        <label data-content-edit="about_tagline"><span>Tagline</span><input class="inp" placeholder="Bring the world to your walls."/></label>
+        <label data-content-edit="about_lede"><span>Hero paragraph</span><textarea class="inp" rows="3" placeholder="A small workshop in Gordonvale…"></textarea></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Workshop strip</h3></div>
+      <div class="form">
+        <div class="row-2">
+          <label data-content-edit="about_meta_workshop"><span>Workshop</span><input class="inp" placeholder="Gordonvale, FNQ"/></label>
+          <label data-content-edit="about_meta_craft"><span>Craft</span><input class="inp" placeholder="Resin · Hardwood · Print"/></label>
+        </div>
+        <label data-content-edit="about_meta_runby"><span>Run by</span><input class="inp" placeholder="Max & P. White"/></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>The story</h3></div>
+      <div class="form">
+        <label data-content-edit="about_story_h2" data-content-html><span>Section heading (HTML allowed)</span><input class="inp" placeholder="The story behind &lt;em&gt;Crystal Brook.&lt;/em&gt;"/></label>
+        <label data-content-edit="about_story_p1" data-content-html><span>Paragraph 1 (HTML allowed)</span><textarea class="inp" rows="4" placeholder="The brand takes its name from…"></textarea></label>
+        <label data-content-edit="about_story_p2" data-content-html><span>Paragraph 2 (HTML allowed)</span><textarea class="inp" rows="4" placeholder="The studio sits in Gordonvale…"></textarea></label>
+        <label data-content-edit="about_story_pull"><span>Pull-quote</span><input class="inp" placeholder="&quot;Each one is its own piece…&quot;"/></label>
+        <label data-content-edit="about_story_p3" data-content-html><span>Paragraph 3 (HTML allowed)</span><textarea class="inp" rows="4" placeholder="The product range is deliberately narrow…"></textarea></label>
+        <label data-content-edit="about_story_p4" data-content-html><span>Paragraph 4 (HTML allowed)</span><textarea class="inp" rows="4" placeholder="What unites them is the finish…"></textarea></label>
+      </div>
+    </div>
+
+    <p class="about-edit-hint">Tip: each field saves on its own when you click out of it. The <strong>Eyebrow</strong> is the small label above the headline. <strong>Pull-quote</strong> is the indented italic line in the middle of the story.</p>
+  </section>
+
   <!-- ========= SETTINGS ========= -->
   <section class="view" data-view="settings">
     <div class="v-head"><div><h1>Settings</h1><p>Business, payments, shipping and holiday mode.</p></div></div>
@@ -579,6 +631,100 @@ Signed, numbered and wrapped for shipping</textarea></label>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="../assets/admin.js?v=20260427-12"></script>
+<!-- ========= PRODUCT EDIT DRAWER ========= -->
+<aside class="prod-drawer" id="prodDrawer" hidden aria-hidden="true" aria-labelledby="prodDrawerTitle">
+  <div class="prod-drawer-head">
+    <div>
+      <span class="prod-drawer-eyebrow" id="prodDrawerEyebrow">Editing</span>
+      <h2 id="prodDrawerTitle">Product</h2>
+    </div>
+    <button class="iact" id="prodDrawerClose" type="button" aria-label="Close drawer">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m6 6 12 12M18 6 6 18"/></svg>
+    </button>
+  </div>
+  <form class="prod-drawer-body" id="prodDrawerForm" autocomplete="off">
+    <label class="pdf-row">
+      <span>Product ID</span>
+      <input class="inp" name="id" required pattern="p-[a-z0-9-]+" placeholder="p-coral-trout"/>
+      <small id="pdfIdHint">Lowercase, dash-separated, starts with <code>p-</code>. Cannot be changed once saved.</small>
+    </label>
+    <label class="pdf-row">
+      <span>Name *</span>
+      <input class="inp" name="name" required placeholder="Coral Trout"/>
+    </label>
+    <div class="pdf-grid-2">
+      <label>
+        <span>Category *</span>
+        <select class="inp" name="cat" required>
+          <option value="saltwater">Saltwater Fish</option>
+          <option value="freshwater">Freshwater Fish</option>
+          <option value="cars">Cars</option>
+          <option value="animals">Animals</option>
+          <option value="birds">Birds</option>
+          <option value="montages">Montages</option>
+        </select>
+      </label>
+      <label>
+        <span>Badge</span>
+        <select class="inp" name="badge">
+          <option value="">None</option>
+          <option value="New">New</option>
+          <option value="Bestseller">Bestseller</option>
+          <option value="Signature">Signature</option>
+          <option value="Popular">Popular</option>
+        </select>
+      </label>
+    </div>
+    <div class="pdf-grid-2">
+      <label>
+        <span>Price ($AUD) *</span>
+        <input class="inp" name="price" type="number" min="0" step="1" required placeholder="485"/>
+      </label>
+      <label>
+        <span>Size *</span>
+        <input class="inp" name="size" required placeholder="68 × 32 cm"/>
+      </label>
+    </div>
+    <label class="pdf-row">
+      <span>Image path *</span>
+      <input class="inp" name="image" required placeholder="assets/images/products/coral-trout-vivid.png"/>
+      <small>Relative path from the site root. Wall mockups are auto-discovered as <code>&lt;name&gt;-wall.jpg</code>.</small>
+    </label>
+    <label class="pdf-row">
+      <span>Meta line</span>
+      <input class="inp" name="meta" placeholder="Great Barrier Reef · Silky Oak mount"/>
+      <small>The small line under the description. Optional.</small>
+    </label>
+    <label class="pdf-row">
+      <span>Description *</span>
+      <textarea class="inp" name="description" rows="4" required placeholder="Iconic reef dweller rendered in vivid archival red…"></textarea>
+    </label>
+    <label class="pdf-checkbox">
+      <input type="checkbox" name="draft"/>
+      <span><strong>Hide from storefront</strong> — flag as Draft (sold out, photo missing, not yet ready)</span>
+    </label>
+  </form>
+  <div class="prod-drawer-foot">
+    <button class="btn btn-danger" id="prodDrawerDelete" type="button">Delete</button>
+    <span class="prod-drawer-spacer"></span>
+    <button class="btn btn-ghost" id="prodDrawerCancel" type="button">Cancel</button>
+    <button class="btn btn-gold" id="prodDrawerSave" type="button">Save</button>
+  </div>
+</aside>
+<div class="prod-drawer-scrim" id="prodDrawerScrim" hidden></div>
+
+<!-- ========= CONFIRM DIALOG (used for Delete) ========= -->
+<div class="confirm-modal" id="confirmModal" hidden>
+  <div class="confirm-card">
+    <h3 id="confirmTitle">Delete this piece?</h3>
+    <p id="confirmBody">This can't be undone — customers will no longer be able to see or order this piece.</p>
+    <div class="confirm-actions">
+      <button class="btn btn-ghost" id="confirmCancel" type="button">Cancel</button>
+      <button class="btn btn-danger" id="confirmOk" type="button">Yes, delete</button>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/admin.js?v=20260427-14"></script>
 </body>
 </html>
