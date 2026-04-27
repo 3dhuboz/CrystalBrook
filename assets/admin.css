@@ -1028,7 +1028,7 @@ table{ border-collapse: collapse; width:100%; }
   background: #fff;
   border: 2px solid var(--line);
   border-radius: 12px;
-  color: #ffffff !important;
+  color: #1c130a;
   transition: border-color .15s ease, box-shadow .15s ease;
 }
 .ib-input::placeholder{

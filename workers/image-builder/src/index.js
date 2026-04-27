@@ -27,6 +27,9 @@ const STUDIO_VERSION = 'cb-image-builder-2.0';
 
 const ALLOWED_ORIGINS = new Set([
   'https://3dhuboz.github.io',
+  'https://crystalbrook.steve-700.workers.dev',
+  'https://crystalbrook.com.au',
+  'https://www.crystalbrook.com.au',
   'http://localhost:8766',
   'http://127.0.0.1:8766',
   'http://localhost:5173',
