@@ -1562,6 +1562,7 @@ function showAdminLogin(message = '') {
     modal.className = 'admin-login';
     modal.innerHTML = `
       <div class="admin-login-card">
+        <button type="button" class="admin-login-close" id="adminLoginClose" aria-label="Close and return to the website">&times;</button>
         <div class="admin-login-mark" aria-hidden="true">
           <img src="/assets/logos/logo-mark-96.png" alt="" width="56" height="56" style="border-radius:6px;display:block;"/>
         </div>
@@ -1586,6 +1587,12 @@ function showAdminLogin(message = '') {
   }
   modal.hidden = false;
   document.body.classList.add('admin-locked');
+
+  const closeBtn = modal.querySelector('#adminLoginClose');
+  if (closeBtn && !closeBtn.dataset.wired) {
+    closeBtn.dataset.wired = '1';
+    closeBtn.addEventListener('click', () => { window.location.href = '/'; });
+  }
 
   const form = modal.querySelector('#adminLoginForm');
   const pwInput = modal.querySelector('#adminLoginPw');

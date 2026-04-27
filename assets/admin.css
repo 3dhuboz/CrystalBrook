@@ -1336,6 +1336,7 @@ table{ border-collapse: collapse; width:100%; }
 .admin-login[hidden]{ display: none; }
 body.admin-locked { overflow: hidden; }
 .admin-login-card {
+  position: relative;
   width: 100%; max-width: 420px;
   background: var(--panel);
   border: 1px solid var(--line);
@@ -1343,6 +1344,33 @@ body.admin-locked { overflow: hidden; }
   padding: 32px 28px 24px;
   text-align: center;
   box-shadow: 0 24px 60px -10px rgba(0,0,0,0.6);
+}
+.admin-login-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid rgba(200, 163, 94, .4);
+  color: #1c130a;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background .25s ease, transform .25s ease, border-color .25s ease;
+  padding: 0;
+}
+.admin-login-close:hover {
+  background: rgba(212, 176, 106, .2);
+  border-color: rgba(200, 163, 94, .7);
+  transform: rotate(90deg);
+}
+.admin-login-close:focus-visible {
+  outline: 2px solid var(--gold-deep);
+  outline-offset: 2px;
 }
 .admin-login-mark { display: flex; justify-content: center; margin-bottom: 18px; }
 .admin-login-card h2 {
