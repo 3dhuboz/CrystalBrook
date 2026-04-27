@@ -43,20 +43,39 @@ def process(src: Path) -> tuple[Path, int, int]:
     return dst, img.size[0], img.size[1]
 
 
+def has_opaque_white_corners(path: Path) -> bool:
+    """Detect a baked-in white background by sampling the four corners.
+
+    Already-transparent cutout PNGs return False (corners are alpha=0); PNGs
+    saved out of PIL with a flat white background composited on return True.
+    """
+    try:
+        img = Image.open(path).convert("RGBA")
+    except Exception:
+        return False
+    w, h = img.size
+    px = img.load()
+    corners = [px[0, 0], px[w - 1, 0], px[0, h - 1], px[w - 1, h - 1]]
+    # Opaque AND near-white in all four corners ⇒ likely a flat white BG
+    return all(p[3] == 255 and min(p[0], p[1], p[2]) > 235 for p in corners)
+
+
 def main() -> int:
     jpgs = sorted(PRODUCTS.glob("*.jpg")) + sorted(PRODUCTS.glob("*.jpeg"))
-    if not jpgs:
-        print("No .jpg files found in", PRODUCTS)
+    pngs = [p for p in sorted(PRODUCTS.glob("*.png")) if has_opaque_white_corners(p)]
+    targets = jpgs + pngs
+    if not targets:
+        print("No .jpg or white-background .png files found in", PRODUCTS)
         return 1
 
-    print(f"Processing {len(jpgs)} files…")
-    for i, src in enumerate(jpgs, 1):
+    print(f"Processing {len(targets)} files… ({len(jpgs)} jpgs + {len(pngs)} pngs with white BG)")
+    for i, src in enumerate(targets, 1):
         try:
             dst, w, h = process(src)
             sz = dst.stat().st_size / 1024
-            print(f"  [{i:>2}/{len(jpgs)}] {src.name:36s} -> {dst.name:36s}  {w}x{h}  {sz:>5.0f} KB")
+            print(f"  [{i:>2}/{len(targets)}] {src.name:36s} -> {dst.name:36s}  {w}x{h}  {sz:>5.0f} KB")
         except Exception as e:
-            print(f"  [{i:>2}/{len(jpgs)}] {src.name:36s}  FAILED: {e}")
+            print(f"  [{i:>2}/{len(targets)}] {src.name:36s}  FAILED: {e}")
     print("Done.")
     return 0
 
