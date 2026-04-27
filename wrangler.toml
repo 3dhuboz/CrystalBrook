@@ -1,0 +1,16 @@
+#:schema node_modules/wrangler/config-schema.json
+# Crystal Brook Wall Mounts — storefront deploy
+#
+# Serves the static site (HTML / CSS / JS / images) via Cloudflare Workers
+# Static Assets. No build step — every file in the repo root is shipped as-is.
+# The image-builder Worker lives separately in workers/image-builder/.
+
+name = "crystalbrook"
+compatibility_date = "2025-04-01"
+
+[assets]
+directory = "."
+not_found_handling = "404-page"
+
+[observability]
+enabled = true

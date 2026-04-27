@@ -1,0 +1,38 @@
+# Patterns of files NOT to upload as static assets to Cloudflare Workers.
+# Same syntax as .gitignore.
+
+# Repo metadata
+.git/
+.gitignore
+.gitattributes
+.claude/
+.vscode/
+.idea/
+
+# Backend / infra (deployed separately)
+workers/
+scripts/
+.wrangler/
+wrangler.toml
+
+# Build output (the Worker entrypoint, not assets)
+.dev.vars
+.env
+.env.*
+
+# Image processing source files — large, not needed in production
+assets/images/incoming/
+assets/images/*.zip
+
+# Documentation that doesn't need to ship
+README.md
+pitch.html
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+*~
+__pycache__/
+*.py[cod]
+node_modules/
