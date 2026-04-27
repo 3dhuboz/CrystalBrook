@@ -2,7 +2,84 @@
    Crystal Brook Wall Mounts — admin app
    ====================================================== */
 
-/* ---------- SAMPLE DATA ---------- */
+/* ---------- API CONFIG ---------- *
+ * Admin writes go to /api/products/:id with the X-Admin-Password header.
+ * The password is set once at admin entry (login modal) and cached in
+ * localStorage. If a write returns 401 we clear it and prompt again.
+ * ----------------------------------------------------- */
+const ADMIN_AUTH_KEY = 'cbwm_admin_password';
+const ADMIN_AUTH_NAME_KEY = 'cbwm_admin_name';
+
+function adminPassword() {
+  return localStorage.getItem(ADMIN_AUTH_KEY) || '';
+}
+function adminAuthHeaders() {
+  const pw = adminPassword();
+  return pw ? { 'X-Admin-Password': pw } : {};
+}
+
+async function fetchCatalogue() {
+  const res = await fetch('/api/products?drafts=1', { cache: 'no-store' });
+  if (!res.ok) throw new Error('catalogue fetch failed: ' + res.status);
+  const data = await res.json();
+  return Array.isArray(data.products) ? data.products : [];
+}
+
+async function saveProductChanges(id, patch) {
+  const res = await fetch('/api/products/' + encodeURIComponent(id), {
+    method: 'PUT',
+    cache: 'no-store',
+    headers: { 'content-type': 'application/json', ...adminAuthHeaders() },
+    body: JSON.stringify(patch),
+  });
+  if (res.status === 401) {
+    localStorage.removeItem(ADMIN_AUTH_KEY);
+    showAdminLogin('Your session expired — please sign in again.');
+    throw new Error('unauthorised');
+  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'save failed: ' + res.status);
+  return data.product;
+}
+
+async function verifyAdminPassword(pw) {
+  const res = await fetch('/api/admin/check', {
+    method: 'POST',
+    headers: { 'X-Admin-Password': pw },
+  });
+  return res.ok;
+}
+
+/* Admin-friendly category labels (storefront uses lowercase keys) */
+const CAT_LABELS_ADMIN = {
+  saltwater:  'Saltwater Fish',
+  freshwater: 'Freshwater Fish',
+  cars:       'Cars',
+  animals:    'Animals',
+  birds:      'Birds',
+  montages:   'Montages',
+};
+
+/* Convert an API product into the shape the admin renderers expect.
+ * Keeps every API field too so write-backs round-trip cleanly. */
+function apiToAdminProduct(api) {
+  const cat = api.cat;
+  const sku = `CBW-${(cat || 'X').slice(0, 2).toUpperCase()}-${api.id.replace(/^p-/, '').slice(0, 6).toUpperCase()}`;
+  return {
+    ...api,
+    catKey: cat,
+    cat: CAT_LABELS_ADMIN[cat] || cat,
+    sku,
+    stock: api.draft ? 0 : 5,        // until we wire real stock; drafts read as out-of-stock
+    img: (api.name || '?').trim().charAt(0).toUpperCase(),
+  };
+}
+
+
+/* ---------- INITIAL FALLBACK DATA ---------- *
+ * Renders something on first paint while the API fetch is in flight.
+ * Replaced by live data once fetchCatalogue() resolves.
+ * ----------------------------------------------------- */
 const PRODUCTS = [
   { id:'p-coral',    name:'Coral Trout',              cat:'Saltwater Fish', sku:'CBW-SW-001', price:485, size:'68 × 32 cm',  stock:6,  img:'C' },
   { id:'p-marlin',   name:'Blue Marlin',              cat:'Saltwater Fish', sku:'CBW-SW-002', price:760, size:'120 × 40 cm', stock:2,  img:'M' },
@@ -234,48 +311,105 @@ function renderRevProducts(){
 }
 renderRevProducts();
 
-/* ---------- PRODUCTS / STOCKTAKE ---------- */
+/* ---------- PRODUCTS / STOCKTAKE ---------- *
+ * Each row's Price and Size are inline-editable. Hitting Save PUTs the
+ * change to /api/products/:id; the row's "edited" pill goes back to a
+ * green tick when the write succeeds.
+ * ----------------------------------------------------- */
 function renderProducts(filter='all', q=''){
   const body = document.getElementById('productsBody'); if(!body) return;
   let list = PRODUCTS.slice();
   if(q){
     const s = q.toLowerCase();
-    list = list.filter(p=>p.name.toLowerCase().includes(s) || p.sku.toLowerCase().includes(s));
+    list = list.filter(p=>p.name.toLowerCase().includes(s) || (p.sku||'').toLowerCase().includes(s));
   }
   if(filter==='in')  list = list.filter(p=>p.stock>2);
   if(filter==='low') list = list.filter(p=>p.stock>0 && p.stock<=2);
   if(filter==='out') list = list.filter(p=>p.stock===0);
 
   body.innerHTML = list.map(p=>{
-    const s = stockStatus(p.stock);
     return `
-      <tr>
+      <tr data-id="${p.id}">
         <td><input type="checkbox"/></td>
         <td>
           <div class="cell-product">
             <div class="cell-thumb">${p.img}</div>
             <div>
               <strong>${p.name}</strong>
-              <span class="cell-sub">${p.cat} · ${p.size}</span>
+              <span class="cell-sub">${p.cat}</span>
             </div>
           </div>
         </td>
         <td><span class="status muted">${p.cat}</span></td>
         <td>${p.sku}</td>
-        <td>$${p.price.toLocaleString()}</td>
         <td>
-          <strong>${p.stock}</strong>
-          <div class="stock-bar ${s.bar}"><span style="width:${s.pct}%"></span></div>
+          <div class="cell-edit">
+            <span class="cell-edit-prefix">$</span>
+            <input class="inp inp-inline" type="number" min="0" step="1"
+                   data-edit-field="price" value="${p.price}"/>
+          </div>
         </td>
-        <td><span class="status ${s.cls}">${s.label}</span></td>
+        <td>
+          <input class="inp inp-inline" type="text" data-edit-field="size" value="${p.size||''}" placeholder="60 × 30 cm"/>
+        </td>
+        <td><span class="status ${p.draft?'warn':'ok'}">${p.draft?'Draft':'Live'}</span></td>
         <td>
           <div class="row-act">
-            <button class="iact" title="Edit"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
-            <button class="iact" title="Delete"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
+            <button class="iact iact-save" title="Save changes" data-save="${p.id}" disabled>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5 5L20 6"/></svg>
+            </button>
           </div>
         </td>
       </tr>`;
   }).join('');
+
+  // Wire each row: enable Save when an input differs from its starting value
+  body.querySelectorAll('tr[data-id]').forEach(tr => {
+    const id = tr.dataset.id;
+    const inputs = tr.querySelectorAll('[data-edit-field]');
+    const saveBtn = tr.querySelector('[data-save]');
+    if (!saveBtn) return;
+    const initial = {};
+    inputs.forEach(inp => { initial[inp.dataset.editField] = inp.value; });
+
+    function dirty(){
+      let changed = false;
+      inputs.forEach(inp => {
+        if (inp.value !== initial[inp.dataset.editField]) changed = true;
+      });
+      saveBtn.disabled = !changed;
+      saveBtn.classList.toggle('is-dirty', changed);
+    }
+    inputs.forEach(inp => inp.addEventListener('input', dirty));
+
+    saveBtn.addEventListener('click', async () => {
+      saveBtn.disabled = true;
+      const patch = {};
+      inputs.forEach(inp => {
+        const f = inp.dataset.editField;
+        if (inp.value === initial[f]) return;
+        patch[f] = f === 'price' ? Number(inp.value) : inp.value;
+      });
+      if (!Object.keys(patch).length) return;
+      try {
+        await saveProductChanges(id, patch);
+        // Update the local PRODUCTS row so re-renders pick up the change
+        const local = PRODUCTS.find(x => x.id === id);
+        if (local) {
+          if ('price' in patch) local.price = patch.price;
+          if ('size' in patch) local.size = patch.size;
+        }
+        inputs.forEach(inp => { initial[inp.dataset.editField] = inp.value; });
+        saveBtn.classList.remove('is-dirty');
+        saveBtn.classList.add('is-saved');
+        setTimeout(() => saveBtn.classList.remove('is-saved'), 1500);
+      } catch (err) {
+        console.error('save failed', err);
+        alert('Save failed: ' + err.message);
+        saveBtn.disabled = false;
+      }
+    });
+  });
 
   const counts = {
     all: PRODUCTS.length,
@@ -1334,3 +1468,126 @@ if ('serviceWorker' in navigator) {
     });
   });
 }
+
+
+/* ---------- LOGIN MODAL + LIVE CATALOGUE BOOT ---------- *
+ * On admin entry: ask for the password if we don't have one cached.
+ * Once we do, fetch the live catalogue from D1 (via /api/products) and
+ * re-render the views that depend on it. Editing a price + hitting Save
+ * round-trips through PUT /api/products/:id.
+ * ----------------------------------------------------- */
+function showAdminLogin(message = '') {
+  // Idempotent — if a login modal is already on the page, just update its message
+  let modal = document.getElementById('adminLoginModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'adminLoginModal';
+    modal.className = 'admin-login';
+    modal.innerHTML = `
+      <div class="admin-login-card">
+        <div class="admin-login-mark" aria-hidden="true">
+          <img src="/assets/logos/logo-mark-96.png" alt="" width="56" height="56" style="border-radius:6px;display:block;"/>
+        </div>
+        <h2>Crystal Brook Admin</h2>
+        <p class="admin-login-lede" id="adminLoginLede">Enter the admin password to manage the catalogue.</p>
+        <form id="adminLoginForm" class="admin-login-form" autocomplete="off">
+          <label>
+            <span>Password</span>
+            <input type="password" id="adminLoginPw" required autofocus autocomplete="current-password"/>
+          </label>
+          <button class="btn btn-gold" type="submit">Sign in</button>
+        </form>
+        <p class="admin-login-err" id="adminLoginErr" hidden></p>
+        <p class="admin-login-foot">Forgot the password? Drop Steve a line and he'll reset it.</p>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+  if (message) {
+    const lede = modal.querySelector('#adminLoginLede');
+    if (lede) lede.textContent = message;
+  }
+  modal.hidden = false;
+  document.body.classList.add('admin-locked');
+
+  const form = modal.querySelector('#adminLoginForm');
+  const pwInput = modal.querySelector('#adminLoginPw');
+  const errEl = modal.querySelector('#adminLoginErr');
+
+  // Replace any prior submit handler — easier than tracking listeners
+  const fresh = form.cloneNode(true);
+  form.replaceWith(fresh);
+
+  fresh.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const pw = fresh.querySelector('#adminLoginPw').value.trim();
+    if (!pw) return;
+    const submitBtn = fresh.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Checking…';
+    const localErr = fresh.querySelector('#adminLoginErr') || errEl;
+    if (localErr) { localErr.hidden = true; localErr.textContent = ''; }
+    try {
+      const ok = await verifyAdminPassword(pw);
+      if (!ok) {
+        if (localErr) {
+          localErr.textContent = "That password didn't match. Try again.";
+          localErr.hidden = false;
+        }
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Sign in';
+        return;
+      }
+      localStorage.setItem(ADMIN_AUTH_KEY, pw);
+      hideAdminLogin();
+      await refreshCatalogueAndRerender();
+    } catch (err) {
+      console.error('login error', err);
+      if (localErr) {
+        localErr.textContent = 'Something went wrong — check your connection and try again.';
+        localErr.hidden = false;
+      }
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Sign in';
+    }
+  });
+}
+
+function hideAdminLogin() {
+  const modal = document.getElementById('adminLoginModal');
+  if (modal) modal.hidden = true;
+  document.body.classList.remove('admin-locked');
+}
+
+async function refreshCatalogueAndRerender() {
+  try {
+    const apiProducts = await fetchCatalogue();
+    if (!apiProducts.length) return;
+    PRODUCTS.length = 0;
+    PRODUCTS.push(...apiProducts.map(apiToAdminProduct));
+
+    // Re-run the views that depend on PRODUCTS
+    try { renderProducts(); } catch (_) {}
+    try { renderRecentOrders(); } catch (_) {}
+    try { renderRevProducts(); } catch (_) {}
+    try { renderFeatured(); } catch (_) {}
+  } catch (err) {
+    console.warn('catalogue refresh failed', err);
+  }
+}
+
+(async () => {
+  const pw = adminPassword();
+  if (!pw) { showAdminLogin(); return; }
+
+  // Quick verify so a stale-but-unmatching password doesn't silently fail
+  // on the first save attempt
+  const ok = await verifyAdminPassword(pw).catch(() => false);
+  if (!ok) {
+    localStorage.removeItem(ADMIN_AUTH_KEY);
+    showAdminLogin('Your saved password no longer works — please sign in again.');
+    return;
+  }
+
+  await refreshCatalogueAndRerender();
+})();

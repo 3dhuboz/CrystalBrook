@@ -2582,3 +2582,57 @@ document.addEventListener('keydown', e=>{
     toast('Request sent — Max will reply within a business day.');
   });
 })();
+
+/* ---------- LIVE CATALOGUE FROM /api/products ---------------------- *
+ * The PRODUCTS array above ships with the build as a fast-paint
+ * fallback. After load, we fetch the live catalogue from D1 (via the
+ * Worker's /api/products endpoint) and re-render so any admin edits
+ * Max made through Stocktake show up to customers without a redeploy.
+ * If the API is unreachable we keep the embedded fallback — the site
+ * still works, just won't reflect today's edits.
+ * ------------------------------------------------------------------- */
+(() => {
+  async function refreshCatalogueFromAPI() {
+    try {
+      const res = await fetch('/api/products', { cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      if (!data || !Array.isArray(data.products) || !data.products.length) return;
+
+      // Replace PRODUCTS in place so existing const references stay valid
+      PRODUCTS.length = 0;
+      PRODUCTS.push(...data.products);
+      // Recompute the storefront (non-draft) view in place too
+      SHOP.length = 0;
+      for (const p of PRODUCTS) if (!p.draft) SHOP.push(p);
+
+      // Re-run any renders that depend on the catalogue. Each is a no-op
+      // when its target element isn't on the current page.
+      try { renderCategoryShowcase(); } catch (_) {}
+      if (typeof window.__cbApplyShopFilters === 'function') {
+        try { window.__cbApplyShopFilters(); } catch (_) {}
+      }
+      // Update the shop-hero "30 pieces" stat if it's on the current page
+      document.querySelectorAll('[data-shop-stat="total"]').forEach(el => {
+        el.textContent = SHOP.length;
+      });
+      // Patch the cat-tab counts on shop.html
+      const tabs = document.getElementById('catTabs');
+      if (tabs) {
+        const counts = {};
+        for (const p of SHOP) counts[p.cat] = (counts[p.cat] || 0) + 1;
+        tabs.querySelectorAll('.cat-tab').forEach(tab => {
+          const cat = tab.dataset.cat;
+          const badge = tab.querySelector('.cat-tab-count');
+          if (!badge) return;
+          if (cat === 'all') badge.textContent = SHOP.length;
+          else if (cat in counts) badge.textContent = counts[cat];
+        });
+      }
+    } catch (err) {
+      // API unreachable / error → site keeps running on the embedded fallback
+      console.warn('[catalogue] API refresh failed; using embedded fallback', err);
+    }
+  }
+  refreshCatalogueFromAPI();
+})();

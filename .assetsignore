@@ -15,6 +15,10 @@ scripts/
 .wrangler/
 wrangler.toml
 
+# Worker source — shipped as the API entrypoint (main = "src/index.js"),
+# not as a static asset
+src/
+
 # Build output (the Worker entrypoint, not assets)
 .dev.vars
 .env

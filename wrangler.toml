@@ -1,16 +1,31 @@
 #:schema node_modules/wrangler/config-schema.json
-# Crystal Brook Wall Mounts — storefront deploy
+# Crystal Brook Wall Mounts — storefront + catalogue API deploy
 #
-# Serves the static site (HTML / CSS / JS / images) via Cloudflare Workers
-# Static Assets. No build step — every file in the repo root is shipped as-is.
-# The image-builder Worker lives separately in workers/image-builder/.
+# Single Worker with two responsibilities:
+#   1. /api/* — read/write the product catalogue from D1 (see src/index.js)
+#   2. everything else — serve the static site (HTML/CSS/JS/images) from
+#      Workers Static Assets, configured via [assets] below.
+#
+# The image-builder Worker lives separately in workers/image-builder/ — it
+# was the first Worker added to the project and runs on its own deploy.
 
 name = "crystalbrook"
+main = "src/index.js"
 compatibility_date = "2025-04-01"
 
 [assets]
 directory = "."
 not_found_handling = "404-page"
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "crystalbrook"
+database_id = "5b43ae6e-915e-48a7-8193-7b3cf86a5623"
 
 [observability]
 enabled = true
+
+# ADMIN_PASSWORD is held as a Worker secret (set via `wrangler secret put
+# ADMIN_PASSWORD`). The admin UI sends it via the X-Admin-Password header
+# on every write request; src/index.js validates it before mutating D1.
