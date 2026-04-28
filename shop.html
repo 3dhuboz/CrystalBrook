@@ -8,10 +8,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Great+Vibes&family=Dancing+Script:wght@500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/styles.css?v=20260429-4" />
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260429-4" />
-<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260429-4" />
-<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260429-4" />
+<link rel="stylesheet" href="assets/styles.css?v=20260429-9" />
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260429-9" />
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260429-9" />
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260429-9" />
 <link rel="manifest" href="manifest.webmanifest" />
 <meta name="theme-color" content="#1c130a" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -24,7 +24,7 @@
 <header class="site-nav" id="siteNav">
   <div class="nav-inner">
     <a href="index.html" class="brand">
-      <span class="brand-mark"><img src="assets/logos/logo-mark-96.png?v=20260429-4" alt="Crystal Brook Wall Mounts emblem" width="64" height="64" style="display:block;border-radius:7px;" /></span>
+      <span class="brand-mark"><img src="assets/logos/logo-mark-96.png?v=20260429-9" alt="Crystal Brook Wall Mounts emblem" width="64" height="64" style="display:block;border-radius:7px;" /></span>
       <span class="brand-text">
         <span class="brand-name">Crystal Brook</span>
         <span class="brand-sub">Wall Mounts</span>
@@ -60,9 +60,9 @@
 <section class="shop-hero" id="top">
   <div class="shop-hero-grain" aria-hidden="true"></div>
   <div class="shop-hero-inner">
-    <p class="eyebrow">The Collection</p>
-    <h1>Bring the world<br/><em>to your walls.</em></h1>
-    <p class="shop-hero-lede">Hand-finished pieces across five categories. Each one resin-sealed, signed and numbered in the Gordonvale workshop. Pick a category — or browse the lot.</p>
+    <p class="eyebrow" data-content-key="shop_eyebrow">The Collection</p>
+    <h1 data-content-key="shop_h1" data-content-html>Bring the world<br/><em>to your walls.</em></h1>
+    <p class="shop-hero-lede" data-content-key="shop_lede">Hand-finished pieces across five categories. Each one resin-sealed, signed and numbered in the Gordonvale workshop. Pick a category — or browse the lot.</p>
     <ul class="shop-hero-stats">
       <li><strong data-shop-stat="total">38</strong><span>Pieces</span></li>
       <li><strong>6</strong><span>Categories</span></li>
@@ -99,12 +99,12 @@
       <div class="shop-toolbar">
         <button class="shop-filter-btn" id="shopFilterBtn" type="button" aria-expanded="false" aria-controls="shopFilterPanel">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
-          <span>Filters</span>
+          <span data-content-key="shop_filter_btn">Filters</span>
           <span class="shop-filter-count" id="shopFilterCount" hidden>0</span>
           <svg class="shop-filter-chev" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
         </button>
         <div class="shop-sort">
-          <label for="shopSort">Sort</label>
+          <label for="shopSort" data-content-key="shop_sort_label">Sort</label>
           <select id="shopSort">
             <option value="featured">Featured</option>
             <option value="price-asc">Price: low to high</option>
@@ -164,10 +164,10 @@
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 4v16M4 12h16"/></svg>
       </div>
       <div class="request-cta-copy">
-        <strong id="requestCtaTitle">Don't see what you're after?</strong>
-        <span id="requestCtaSub">Tell Max which fish, car or critter and he'll come back with a quote.</span>
+        <strong id="requestCtaTitle" data-content-key="shop_request_cta_title_default">Don't see what you're after?</strong>
+        <span id="requestCtaSub" data-content-key="shop_request_cta_sub_default">Tell Max which fish, car or critter and he'll come back with a quote.</span>
       </div>
-      <button class="btn btn-primary" id="requestCtaBtn" type="button">Request a piece →</button>
+      <button class="btn btn-primary" id="requestCtaBtn" type="button" data-content-key="shop_request_cta_btn">Request a piece →</button>
     </div>
   </aside>
 
@@ -184,9 +184,9 @@
     <button class="request-close" id="requestClose" type="button" aria-label="Close request form">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m6 6 12 12M18 6 6 18"/></svg>
     </button>
-    <p class="eyebrow">Request a piece</p>
-    <h2 id="requestModalTitle">Tell Max what you're after.</h2>
-    <p class="request-lede">No upload needed — just describe the subject. Max will reply within a business day with a quote and any timber recommendations.</p>
+    <p class="eyebrow" data-content-key="shop_request_modal_eyebrow">Request a piece</p>
+    <h2 id="requestModalTitle" data-content-key="shop_request_modal_h2">Tell Max what you're after.</h2>
+    <p class="request-lede" data-content-key="shop_request_modal_lede">No upload needed — just describe the subject. Max will reply within a business day with a quote and any timber recommendations.</p>
     <form id="requestForm" class="request-form" novalidate>
       <label>
         <span>What would you like? *</span>
@@ -238,7 +238,7 @@
         <button class="btn btn-ghost" id="requestCancel" type="button">Cancel</button>
         <button class="btn btn-primary" type="submit">Send request</button>
       </div>
-      <p class="request-fineprint">No payment taken yet. Max replies first with a quote — you decide whether to go ahead.</p>
+      <p class="request-fineprint" data-content-key="shop_request_modal_fineprint">No payment taken yet. Max replies first with a quote — you decide whether to go ahead.</p>
     </form>
   </div>
 </div>
@@ -314,7 +314,7 @@
 <!-- ============ PWA INSTALL PROMPT ============ -->
 <div class="pwa-install" id="pwaInstall" hidden role="dialog" aria-labelledby="pwaInstallTitle">
   <div class="pwa-install-mark" aria-hidden="true">
-    <img src="assets/logos/logo-mark-96.png?v=20260429-4" alt="" width="44" height="44" style="display:block;border-radius:6px;"/>
+    <img src="assets/logos/logo-mark-96.png?v=20260429-9" alt="" width="44" height="44" style="display:block;border-radius:6px;"/>
   </div>
   <div class="pwa-install-copy">
     <strong id="pwaInstallTitle" data-content-key="pwa_title">Add Crystal Brook to your home screen</strong>
@@ -453,7 +453,7 @@
 <aside class="nav-drawer" id="navDrawer" aria-hidden="true" aria-label="Mobile navigation">
   <div class="nav-drawer-head">
     <span class="brand">
-      <span class="brand-mark"><img src="assets/logos/logo-mark-96.png?v=20260429-4" alt="Crystal Brook Wall Mounts emblem" width="64" height="64" style="display:block;border-radius:7px;" /></span>
+      <span class="brand-mark"><img src="assets/logos/logo-mark-96.png?v=20260429-9" alt="Crystal Brook Wall Mounts emblem" width="64" height="64" style="display:block;border-radius:7px;" /></span>
       <span class="brand-text">
         <span class="brand-name">Crystal Brook</span>
         <span class="brand-sub">Wall Mounts</span>
@@ -481,6 +481,6 @@
 <!-- ============ TOAST ============ -->
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/app.js?v=20260429-4"></script>
+<script src="assets/app.js?v=20260429-9"></script>
 </body>
 </html>

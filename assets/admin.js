@@ -2597,6 +2597,10 @@ function wireContentEditor(viewName, opts = {}) {
 }
 
 wireContentEditor('homepage',    { statusElId: 'homepageSaveStatus',    saveAllBtnId: 'homepageSaveAll' });
+wireContentEditor('shoppage',    { statusElId: 'shoppageSaveStatus',    saveAllBtnId: 'shoppageSaveAll' });
+wireContentEditor('productpage', { statusElId: 'productpageSaveStatus', saveAllBtnId: 'productpageSaveAll' });
+wireContentEditor('orderpage',   { statusElId: 'orderpageSaveStatus',   saveAllBtnId: 'orderpageSaveAll' });
+wireContentEditor('page404',     { statusElId: 'page404SaveStatus',     saveAllBtnId: 'page404SaveAll' });
 wireContentEditor('about',       { statusElId: 'aboutSaveStatus',       saveAllBtnId: 'aboutSaveAll' });
 wireContentEditor('shipping',    { statusElId: 'shippingSaveStatus',    saveAllBtnId: 'shippingSaveAll' });
 wireContentEditor('returns',     { statusElId: 'returnsSaveStatus',     saveAllBtnId: 'returnsSaveAll' });

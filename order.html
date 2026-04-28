@@ -8,10 +8,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/styles.css?v=20260429-4" />
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260429-4" />
-<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260429-4" />
-<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260429-4" />
+<link rel="stylesheet" href="assets/styles.css?v=20260429-9" />
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260429-9" />
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260429-9" />
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260429-9" />
 <link rel="manifest" href="manifest.webmanifest" />
 <meta name="theme-color" content="#1c130a" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -24,7 +24,7 @@
 <header class="site-nav" id="siteNav">
   <div class="nav-inner">
     <a href="index.html" class="brand">
-      <span class="brand-mark"><img src="assets/logos/logo-mark-96.png?v=20260429-4" alt="Crystal Brook Wall Mounts emblem" width="64" height="64" style="display:block;border-radius:7px;" /></span>
+      <span class="brand-mark"><img src="assets/logos/logo-mark-96.png?v=20260429-9" alt="Crystal Brook Wall Mounts emblem" width="64" height="64" style="display:block;border-radius:7px;" /></span>
       <span class="brand-text">
         <span class="brand-name">Crystal Brook</span>
         <span class="brand-sub">Wall Mounts</span>
@@ -66,7 +66,7 @@
 
   <div class="order-hero-inner" id="orderHeroInner">
     <!-- Hydrated by app.js -->
-    <p class="order-loading">Loading your order…</p>
+    <p class="order-loading" data-content-key="order_loading_msg">Loading your order…</p>
   </div>
 </section>
 
@@ -75,7 +75,7 @@
   <div class="order-grid">
     <!-- Status timeline -->
     <div class="order-timeline-card">
-      <h3 class="order-section-title">Status</h3>
+      <h3 class="order-section-title" data-content-key="order_status_h">Status</h3>
       <ol class="order-timeline" id="orderTimeline">
         <!-- Hydrated -->
       </ol>
@@ -85,24 +85,24 @@
     <!-- Items + customer info -->
     <div class="order-side">
       <div class="order-items-card">
-        <h3 class="order-section-title">Pieces in this order</h3>
+        <h3 class="order-section-title" data-content-key="order_items_h">Pieces in this order</h3>
         <div class="order-items" id="orderItems"></div>
         <div class="order-totals">
-          <div class="order-total-row"><span>Subtotal</span><strong id="orderSubtotal">$0</strong></div>
-          <div class="order-total-row"><span>Shipping</span><strong id="orderShipping">$0</strong></div>
-          <div class="order-total-row order-grand"><span>Total paid</span><strong id="orderTotal">$0</strong></div>
+          <div class="order-total-row"><span data-content-key="order_subtotal_label">Subtotal</span><strong id="orderSubtotal">$0</strong></div>
+          <div class="order-total-row"><span data-content-key="order_shipping_label">Shipping</span><strong id="orderShipping">$0</strong></div>
+          <div class="order-total-row order-grand"><span data-content-key="order_total_label">Total paid</span><strong id="orderTotal">$0</strong></div>
         </div>
       </div>
 
       <div class="order-customer-card">
-        <h3 class="order-section-title">Shipping to</h3>
+        <h3 class="order-section-title" data-content-key="order_shipto_h">Shipping to</h3>
         <p class="order-ship-block" id="orderShipBlock"></p>
         <p class="order-payment-line" id="orderPaymentLine"></p>
       </div>
 
       <div class="order-help-card">
-        <h3 class="order-section-title">Need help?</h3>
-        <p>Email Max directly at <a href="mailto:mandpwhite@optusnet.com.au">mandpwhite@optusnet.com.au</a> or call <a href="tel:+61740561887">(07) 4056 1887</a> — quote your order number.</p>
+        <h3 class="order-section-title" data-content-key="order_help_h">Need help?</h3>
+        <p data-content-key="order_help_body" data-content-html>Email Max directly at <a href="mailto:mandpwhite@optusnet.com.au">mandpwhite@optusnet.com.au</a> or call <a href="tel:+61740561887">(07) 4056 1887</a> — quote your order number.</p>
       </div>
     </div>
   </div>
@@ -187,7 +187,7 @@
 <aside class="nav-drawer" id="navDrawer" aria-hidden="true" aria-label="Mobile navigation">
   <div class="nav-drawer-head">
     <span class="brand">
-      <span class="brand-mark"><img src="assets/logos/logo-mark-96.png?v=20260429-4" alt="Crystal Brook Wall Mounts emblem" width="64" height="64" style="display:block;border-radius:7px;" /></span>
+      <span class="brand-mark"><img src="assets/logos/logo-mark-96.png?v=20260429-9" alt="Crystal Brook Wall Mounts emblem" width="64" height="64" style="display:block;border-radius:7px;" /></span>
       <span class="brand-text"><span class="brand-name">Crystal Brook</span><span class="brand-sub">Wall Mounts</span></span>
     </span>
     <button class="icon-btn" id="navDrawerClose" aria-label="Close menu" type="button">
@@ -212,6 +212,6 @@
 <!-- ============ TOAST ============ -->
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/app.js?v=20260429-4"></script>
+<script src="assets/app.js?v=20260429-9"></script>
 </body>
 </html>

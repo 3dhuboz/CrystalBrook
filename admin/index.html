@@ -7,10 +7,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="../assets/admin.css?v=20260429-8" />
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260429-8" />
-<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260429-8" />
-<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260429-8" />
+<link rel="stylesheet" href="../assets/admin.css?v=20260429-9" />
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260429-9" />
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260429-9" />
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260429-9" />
 <link rel="manifest" href="../manifest.webmanifest" />
 <meta name="theme-color" content="#1c130a" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -58,6 +58,10 @@
     <a class="s-link" data-view="studio"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l1.8 4.6 4.7.4-3.6 3.1 1.1 4.6L12 13.3 8 15.7l1.1-4.6L5.5 8l4.7-.4z"/><circle cx="18" cy="18" r="3"/><path d="m20 20 2 2"/></svg> Image Builder <span class="s-link-pill">NEW</span></a>
     <a class="s-link" data-view="revenue"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 20V4M3 20h18"/><path d="M7 16l4-5 3 3 6-8"/></svg> Revenue</a>
     <a class="s-link" data-view="homepage"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10 12 3l9 7v11H3z"/><path d="M9 21v-8h6v8"/></svg> Homepage Editor</a>
+    <a class="s-link" data-view="shoppage"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 8h14l-1 12H6zM9 8a3 3 0 0 1 6 0"/></svg> Shop Page</a>
+    <a class="s-link" data-view="productpage"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M8 9h8M8 13h8M8 17h5"/></svg> Product Page</a>
+    <a class="s-link" data-view="orderpage"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Order-tracking Page</a>
+    <a class="s-link" data-view="page404"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg> 404 Page</a>
     <a class="s-link" data-view="about"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg> About Page</a>
     <a class="s-link" data-view="shipping"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="8" width="12" height="9" rx="1"/><path d="M15 11h4l3 3v3h-7z"/><circle cx="8" cy="19" r="2"/><circle cx="18" cy="19" r="2"/></svg> Shipping Page</a>
     <a class="s-link" data-view="returns"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7l4 4 4-4"/><path d="M7 11V4"/><path d="M14 4h5v6h-5z"/><path d="M10 17h11v3H10z"/></svg> Returns Page</a>
@@ -544,6 +548,238 @@
     <p class="about-edit-hint">Tip: each field saves on its own when you click out of it. The two heading fields with "(HTML allowed)" accept <code>&lt;br/&gt;</code> for the line break — leave it in if you want the heading on two lines.</p>
   </section>
 
+  <!-- ========= SHOP PAGE ========= -->
+  <section class="view" data-view="shoppage">
+    <div class="v-head">
+      <div>
+        <h1>Shop Page</h1>
+        <p>The hero, filter labels, and request-a-piece copy on <a href="../shop.html" target="_blank" rel="noopener">shop.html</a>. Edits save automatically when you click out of a field — or press <strong>Save all</strong> to commit any pending changes at once.</p>
+      </div>
+      <div class="v-head-actions">
+        <span class="about-save-status" id="shoppageSaveStatus" hidden>Saved ✓</span>
+        <button class="btn btn-gold" id="shoppageSaveAll" type="button">Save all changes</button>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Hero — top of the page</h3></div>
+      <div class="form">
+        <label data-content-edit="shop_eyebrow"><span>Eyebrow</span><input class="inp" value="The Collection"/></label>
+        <label data-content-edit="shop_h1" data-content-html><span>Heading (HTML allowed — keep the &lt;br/&gt; for the line break)</span><input class="inp" value="Bring the world&lt;br/&gt;&lt;em&gt;to your walls.&lt;/em&gt;"/></label>
+        <label data-content-edit="shop_lede"><span>Lede paragraph</span><textarea class="inp" rows="3">Hand-finished pieces across five categories. Each one resin-sealed, signed and numbered in the Gordonvale workshop. Pick a category — or browse the lot.</textarea></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Toolbar labels</h3></div>
+      <div class="form">
+        <div class="row-2">
+          <label data-content-edit="shop_filter_btn"><span>Filters button</span><input class="inp" value="Filters"/></label>
+          <label data-content-edit="shop_sort_label"><span>Sort label</span><input class="inp" value="Sort"/></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Request-a-piece CTA (default — shown when "All" tab is active)</h3></div>
+      <div class="form">
+        <label data-content-edit="shop_request_cta_title_default"><span>CTA title</span><input class="inp" value="Don't see what you're after?"/></label>
+        <label data-content-edit="shop_request_cta_sub_default"><span>CTA sub-line</span><input class="inp" value="Tell Max which fish, car or critter and he'll come back with a quote."/></label>
+        <label data-content-edit="shop_request_cta_btn"><span>Button label</span><input class="inp" value="Request a piece →"/></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Request-a-piece modal</h3></div>
+      <div class="form">
+        <div class="row-2">
+          <label data-content-edit="shop_request_modal_eyebrow"><span>Eyebrow</span><input class="inp" value="Request a piece"/></label>
+          <label data-content-edit="shop_request_modal_h2"><span>Heading</span><input class="inp" value="Tell Max what you're after."/></label>
+        </div>
+        <label data-content-edit="shop_request_modal_lede"><span>Lede</span><textarea class="inp" rows="2">No upload needed — just describe the subject. Max will reply within a business day with a quote and any timber recommendations.</textarea></label>
+        <label data-content-edit="shop_request_modal_fineprint"><span>Fineprint (under the form)</span><input class="inp" value="No payment taken yet. Max replies first with a quote — you decide whether to go ahead."/></label>
+      </div>
+    </div>
+
+    <p class="about-edit-hint">Tip: the per-category CTA copy (the version that swaps in when you click "Saltwater", "Cars" etc.) lives in <code>app.js</code> and isn't editable from here yet — what you can edit above is the default fallback shown on first load and on the "All" tab.</p>
+  </section>
+
+  <!-- ========= PRODUCT PAGE ========= -->
+  <section class="view" data-view="productpage">
+    <div class="v-head">
+      <div>
+        <h1>Product Page</h1>
+        <p>The static labels, spec rows, pills and shipping copy shown on every product page (see <a href="../product.html" target="_blank" rel="noopener">product.html</a>). Edits save automatically when you click out of a field — or press <strong>Save all</strong> to commit any pending changes at once.</p>
+      </div>
+      <div class="v-head-actions">
+        <span class="about-save-status" id="productpageSaveStatus" hidden>Saved ✓</span>
+        <button class="btn btn-gold" id="productpageSaveAll" type="button">Save all changes</button>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Top of page</h3></div>
+      <div class="form">
+        <label data-content-edit="pdp_back_btn"><span>"Back" button label</span><input class="inp" value="Back"/></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Spec rows — labels (left column)</h3></div>
+      <div class="form">
+        <div class="row-2">
+          <label data-content-edit="pdp_specs_size"><span>Row 1 — Size label</span><input class="inp" value="Size"/></label>
+          <label data-content-edit="pdp_specs_mount"><span>Row 2 — Mount label</span><input class="inp" value="Mount"/></label>
+        </div>
+        <div class="row-2">
+          <label data-content-edit="pdp_specs_finish_label"><span>Row 3 — Finish label</span><input class="inp" value="Finish"/></label>
+          <label data-content-edit="pdp_specs_hanging_label"><span>Row 4 — Hanging label</span><input class="inp" value="Hanging"/></label>
+        </div>
+        <label data-content-edit="pdp_specs_made_label"><span>Row 5 — Made label</span><input class="inp" value="Made"/></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Spec rows — fixed values (right column)</h3></div>
+      <div class="form">
+        <label data-content-edit="pdp_specs_finish_value"><span>Finish value</span><input class="inp" value="Resin-sealed · UV-stable epoxy"/></label>
+        <label data-content-edit="pdp_specs_hanging_value"><span>Hanging value</span><input class="inp" value="Sturdy picture wire · holds up to 5 kg"/></label>
+        <label data-content-edit="pdp_specs_made_value"><span>Made value</span><input class="inp" value="Gordonvale, FNQ · 4–6 wk lead time"/></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Add-to-cart row</h3></div>
+      <div class="form">
+        <label data-content-edit="pdp_add_btn"><span>"Add to cart" button label</span><input class="inp" value="Add to cart"/></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Pills — the four selling-point chips</h3></div>
+      <div class="form">
+        <label data-content-edit="pdp_pill_ink"><span>Pill 1</span><input class="inp" value="10-colour archival pigment ink"/></label>
+        <label data-content-edit="pdp_pill_timber"><span>Pill 2</span><input class="inp" value="Australian hardwood backing"/></label>
+        <label data-content-edit="pdp_pill_resin"><span>Pill 3</span><input class="inp" value="Jewellery-grade resin finish"/></label>
+        <label data-content-edit="pdp_pill_signed"><span>Pill 4</span><input class="inp" value="Signed &amp; numbered by Max"/></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Shipping line (under the price)</h3></div>
+      <div class="form">
+        <label data-content-edit="pdp_shipping_strong"><span>Bold lead-in</span><input class="inp" value="Ships free Australia-wide."/></label>
+        <label data-content-edit="pdp_shipping_intl" data-content-html><span>Sub-line (HTML allowed for the contact link)</span><textarea class="inp" rows="2">International? &lt;a href="about.html#contact"&gt;Drop us a line&lt;/a&gt; for a quote.</textarea></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Related strip (below the page)</h3></div>
+      <div class="form">
+        <label data-content-edit="pdp_related_eyebrow"><span>Eyebrow above the related grid</span><input class="inp" value="More from this category"/></label>
+      </div>
+    </div>
+
+    <p class="about-edit-hint">Tip: the per-product title, price, description, and "Lost piece" 404 fallback inside product.html are generated from the catalogue (Stocktake) and from app.js — they aren't edited here.</p>
+  </section>
+
+  <!-- ========= ORDER-TRACKING PAGE ========= -->
+  <section class="view" data-view="orderpage">
+    <div class="v-head">
+      <div>
+        <h1>Order-tracking Page</h1>
+        <p>The static headings and labels on the order-tracking page (<a href="../order.html" target="_blank" rel="noopener">order.html</a>). Edits save automatically when you click out of a field — or press <strong>Save all</strong> to commit pending changes at once.</p>
+      </div>
+      <div class="v-head-actions">
+        <span class="about-save-status" id="orderpageSaveStatus" hidden>Saved ✓</span>
+        <button class="btn btn-gold" id="orderpageSaveAll" type="button">Save all changes</button>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Loading state</h3></div>
+      <div class="form">
+        <label data-content-edit="order_loading_msg"><span>Loading message (shown briefly while order details load)</span><input class="inp" value="Loading your order…"/></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Section headings</h3></div>
+      <div class="form">
+        <div class="row-2">
+          <label data-content-edit="order_status_h"><span>Status section heading</span><input class="inp" value="Status"/></label>
+          <label data-content-edit="order_items_h"><span>Pieces section heading</span><input class="inp" value="Pieces in this order"/></label>
+        </div>
+        <div class="row-2">
+          <label data-content-edit="order_shipto_h"><span>Shipping address heading</span><input class="inp" value="Shipping to"/></label>
+          <label data-content-edit="order_help_h"><span>Help card heading</span><input class="inp" value="Need help?"/></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Totals labels</h3></div>
+      <div class="form">
+        <div class="row-2">
+          <label data-content-edit="order_subtotal_label"><span>Subtotal label</span><input class="inp" value="Subtotal"/></label>
+          <label data-content-edit="order_shipping_label"><span>Shipping label</span><input class="inp" value="Shipping"/></label>
+        </div>
+        <label data-content-edit="order_total_label"><span>Total label</span><input class="inp" value="Total paid"/></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>"Need help?" body</h3></div>
+      <div class="form">
+        <label data-content-edit="order_help_body" data-content-html><span>Body (HTML allowed — keep the email and phone &lt;a&gt; tags clickable)</span><textarea class="inp" rows="3">Email Max directly at &lt;a href="mailto:mandpwhite@optusnet.com.au"&gt;mandpwhite@optusnet.com.au&lt;/a&gt; or call &lt;a href="tel:+61740561887"&gt;(07) 4056 1887&lt;/a&gt; — quote your order number.</textarea></label>
+      </div>
+    </div>
+
+    <p class="about-edit-hint">Tip: the dynamic parts (order number, status timeline, item list, shipping address) are filled in from the actual order — only the static headings and labels above are editable here.</p>
+  </section>
+
+  <!-- ========= 404 PAGE ========= -->
+  <section class="view" data-view="page404">
+    <div class="v-head">
+      <div>
+        <h1>404 Page</h1>
+        <p>The "page not found" copy on <a href="../404.html" target="_blank" rel="noopener">404.html</a> — what visitors see when a link is broken or a piece has sold and been retired. Edits save automatically when you click out of a field — or press <strong>Save all</strong> to commit pending changes at once.</p>
+      </div>
+      <div class="v-head-actions">
+        <span class="about-save-status" id="page404SaveStatus" hidden>Saved ✓</span>
+        <button class="btn btn-gold" id="page404SaveAll" type="button">Save all changes</button>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Hero copy</h3></div>
+      <div class="form">
+        <div class="row-2">
+          <label data-content-edit="nf_eyebrow"><span>Eyebrow</span><input class="inp" value="Lost piece"/></label>
+          <label data-content-edit="nf_h1"><span>Heading</span><input class="inp" value="Couldn't find that page."/></label>
+        </div>
+        <label data-content-edit="nf_lede"><span>Body paragraph</span><textarea class="inp" rows="3">Maybe it sold and we never made another. Maybe a link's gone stale. Either way — there's plenty more on the wall.</textarea></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>"Frame" subtitle (italic line inside the wood frame)</h3></div>
+      <div class="form">
+        <label data-content-edit="nf_subtitle_404"><span>Subtitle</span><input class="inp" value="— this piece never made it to the wall —"/></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Calls to action</h3></div>
+      <div class="form">
+        <label data-content-edit="nf_browse_cta"><span>Main button label</span><input class="inp" value="Browse the collection →"/></label>
+        <label data-content-edit="nf_categories_h"><span>Categories prompt</span><input class="inp" value="Or jump straight to a category:"/></label>
+      </div>
+    </div>
+
+    <p class="about-edit-hint">Tip: the category links (Saltwater Fish, Freshwater Fish, etc.) come straight from the live category list — no need to edit them by hand here.</p>
+  </section>
+
   <!-- ========= ABOUT PAGE ========= -->
   <section class="view" data-view="about">
     <div class="v-head">
@@ -590,6 +826,82 @@
         <label data-content-edit="about_story_pull"><span>Pull-quote</span><input class="inp" placeholder="&quot;Each one is its own piece…&quot;"/></label>
         <label data-content-edit="about_story_p3" data-content-html><span>Paragraph 3 (HTML allowed)</span><textarea class="inp" rows="4" placeholder="The product range is deliberately narrow…"></textarea></label>
         <label data-content-edit="about_story_p4" data-content-html><span>Paragraph 4 (HTML allowed)</span><textarea class="inp" rows="4" placeholder="What unites them is the finish…"></textarea></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>The place — Far North Queensland</h3></div>
+      <div class="form">
+        <div class="row-2">
+          <label data-content-edit="about_place_eyebrow"><span>Eyebrow</span><input class="inp" value="The workshop"/></label>
+          <label data-content-edit="about_place_h2" data-content-html><span>Heading (HTML allowed)</span><input class="inp" value="Made in &lt;em&gt;Far North Queensland.&lt;/em&gt;"/></label>
+        </div>
+        <label data-content-edit="about_place_p1"><span>Paragraph 1</span><textarea class="inp" rows="4">Gordonvale is a small cane town nestled at the foot of Walsh's Pyramid, on the Mulgrave River flats south of Cairns. The Bruce Highway runs straight through it. The Wet Tropics rainforest sits to the west; the Great Barrier Reef is forty minutes' drive east.</textarea></label>
+        <label data-content-edit="about_place_p2"><span>Paragraph 2</span><textarea class="inp" rows="4">It's the kind of place where the subject matter is local and the timber's local too — Silky Oak, Spotted Gum, Blackwood and Ironbark, all sourced from QLD mills. The resin's mixed in the workshop. The prints are done in Cairns. Nothing on a Crystal Brook mount has travelled further than it had to.</textarea></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>The place — stats strip (4 columns)</h3></div>
+      <div class="form">
+        <div class="row-2">
+          <label data-content-edit="about_place_stat1_value"><span>Stat 1 — value</span><input class="inp" value="4865"/></label>
+          <label data-content-edit="about_place_stat1_label"><span>Stat 1 — label</span><input class="inp" value="Postcode · Gordonvale"/></label>
+        </div>
+        <div class="row-2">
+          <label data-content-edit="about_place_stat2_value"><span>Stat 2 — value</span><input class="inp" value="~25 km"/></label>
+          <label data-content-edit="about_place_stat2_label"><span>Stat 2 — label</span><input class="inp" value="South of Cairns"/></label>
+        </div>
+        <div class="row-2">
+          <label data-content-edit="about_place_stat3_value"><span>Stat 3 — value</span><input class="inp" value="6"/></label>
+          <label data-content-edit="about_place_stat3_label"><span>Stat 3 — label</span><input class="inp" value="Categories"/></label>
+        </div>
+        <div class="row-2">
+          <label data-content-edit="about_place_stat4_value"><span>Stat 4 — value</span><input class="inp" value="48 hr"/></label>
+          <label data-content-edit="about_place_stat4_label"><span>Stat 4 — label</span><input class="inp" value="Resin cure"/></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>The promise — section header</h3></div>
+      <div class="form">
+        <div class="row-2">
+          <label data-content-edit="about_promise_eyebrow"><span>Eyebrow</span><input class="inp" value="The promise"/></label>
+          <label data-content-edit="about_promise_h2"><span>Heading</span><input class="inp" value="Four things every mount is."/></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Promise 1 — One-of-a-kind</h3></div>
+      <div class="form">
+        <label data-content-edit="about_promise_1_h"><span>Title</span><input class="inp" value="One-of-a-kind"/></label>
+        <label data-content-edit="about_promise_1_body"><span>Body</span><textarea class="inp" rows="2">Every piece is hand-cut to its own silhouette and individually mounted — no two come off the bench identical.</textarea></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Promise 2 — Built to last</h3></div>
+      <div class="form">
+        <label data-content-edit="about_promise_2_h"><span>Title</span><input class="inp" value="Built to last"/></label>
+        <label data-content-edit="about_promise_2_body"><span>Body</span><textarea class="inp" rows="2">Archival pigment inks rated for 100+ years, sealed under jewellery-grade epoxy. A piece you'll pass down.</textarea></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Promise 3 — Made by hand</h3></div>
+      <div class="form">
+        <label data-content-edit="about_promise_3_h"><span>Title</span><input class="inp" value="Made by hand"/></label>
+        <label data-content-edit="about_promise_3_body"><span>Body</span><textarea class="inp" rows="2">Cut, mounted, sanded, sealed and finished by Max, in the Gordonvale workshop. No mass production, no contract work.</textarea></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Promise 4 — Signed &amp; numbered</h3></div>
+      <div class="form">
+        <label data-content-edit="about_promise_4_h" data-content-html><span>Title (HTML allowed)</span><input class="inp" value="Signed &amp; numbered"/></label>
+        <label data-content-edit="about_promise_4_body"><span>Body</span><textarea class="inp" rows="2">Every mount carries Max's signature and a sequential number on the back. Yours is the only one with that number.</textarea></label>
       </div>
     </div>
 
@@ -1254,6 +1566,6 @@
   </div>
 </div>
 
-<script src="../assets/admin.js?v=20260429-8"></script>
+<script src="../assets/admin.js?v=20260429-9"></script>
 </body>
 </html>
