@@ -708,6 +708,319 @@ function openRequestDetail(id) {
   });
 }
 
+/* ---------- ADMIN-SIDE QUOTE / MANUAL ORDER FORMS ----------
+ * Two near-identical modals — one for "+ New quote" on Custom Orders,
+ * one for "+ Manual order" on Orders. Both POST to /api/requests so
+ * everything Max takes offline still lands in D1 and shows up in the
+ * Custom Orders kanban (with a different source tag so Max can tell
+ * them apart). Each form has an optional reference-picture upload —
+ * Max can attach the print the customer chose on the phone.
+ */
+
+async function shrinkAdminReferenceImage(file, maxEdge = 1024, quality = 0.82) {
+  const dataUrl = await new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = () => reject(new Error('read failed'));
+    r.readAsDataURL(file);
+  });
+  const img = await new Promise((resolve, reject) => {
+    const im = new Image();
+    im.onload = () => resolve(im);
+    im.onerror = () => reject(new Error('decode failed'));
+    im.src = dataUrl;
+  });
+  const w = img.naturalWidth, h = img.naturalHeight;
+  const scale = Math.min(1, maxEdge / Math.max(w, h));
+  const tw = Math.max(1, Math.round(w * scale));
+  const th = Math.max(1, Math.round(h * scale));
+  const cv = document.createElement('canvas');
+  cv.width = tw; cv.height = th;
+  const ctx = cv.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, tw, th);
+  ctx.drawImage(img, 0, 0, tw, th);
+  return cv.toDataURL('image/jpeg', quality);
+}
+
+/* Wires a photo-upload section inside the modal. Returns a getter that
+ * yields the current data URL (or null) at submit time. */
+function wireAdminPhotoUploader(scope) {
+  let dataUrl = null;
+  const input  = scope.querySelector('input[type="file"]');
+  const upload = scope.querySelector('[data-photo-upload]');
+  const clear  = scope.querySelector('[data-photo-clear]');
+  const prev   = scope.querySelector('[data-photo-preview]');
+  function setPreview(src) {
+    if (!prev) return;
+    if (!src) {
+      prev.innerHTML = '<span class="contact-photo-empty">No reference attached</span>';
+      if (clear) clear.hidden = true;
+      return;
+    }
+    prev.innerHTML = '';
+    const img = new Image(); img.alt = ''; img.src = src;
+    prev.appendChild(img);
+    if (clear) clear.hidden = false;
+  }
+  upload?.addEventListener('click', () => input?.click());
+  input?.addEventListener('change', async e => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!/^image\//.test(file.type)) {
+      toast('That doesn\'t look like a photo. Try JPG, PNG or WebP.');
+      return;
+    }
+    upload.disabled = true;
+    const original = upload.textContent;
+    upload.textContent = 'Resizing…';
+    try {
+      dataUrl = await shrinkAdminReferenceImage(file);
+      setPreview(dataUrl);
+    } catch (_) {
+      toast('Couldn\'t read that file. Try a different one.');
+    } finally {
+      upload.disabled = false;
+      upload.textContent = original;
+      input.value = '';
+    }
+  });
+  clear?.addEventListener('click', () => { dataUrl = null; setPreview(null); });
+  return () => dataUrl;
+}
+
+const _PHOTO_BLOCK_HTML = `
+  <div class="row-2" style="grid-template-columns: 1fr;">
+    <label style="display:block;">
+      <span>Reference picture (optional)</span>
+      <div class="contact-photo" style="margin-top:6px;">
+        <div class="contact-photo-preview" data-photo-preview>
+          <span class="contact-photo-empty">No reference attached</span>
+        </div>
+        <div class="contact-photo-actions">
+          <button class="btn btn-ghost btn-small" type="button" data-photo-upload>↑ Attach a picture</button>
+          <button class="btn btn-ghost btn-small" type="button" data-photo-clear hidden>× Remove</button>
+          <input type="file" accept="image/png,image/jpeg,image/webp" hidden/>
+          <small class="contact-photo-hint">Helpful when the customer has chosen a print on the phone — attach a snap so Max sees what they want.</small>
+        </div>
+      </div>
+    </label>
+  </div>`;
+
+function openNewQuoteForm() {
+  let modal = document.getElementById('newQuoteModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'newQuoteModal';
+    modal.className = 'request-detail-modal';
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.hidden = true; });
+  }
+  modal.innerHTML = `
+    <div class="rd-card">
+      <button class="rd-close" type="button" aria-label="Close">×</button>
+      <p class="rd-eyebrow">Manual entry</p>
+      <h2 class="rd-name">New quote request</h2>
+      <p class="rd-meta">Use this when a customer phoned or emailed Max directly. Fields marked * are required.</p>
+      <form id="newQuoteForm" class="form" autocomplete="off">
+        <label><span>Customer name *</span><input class="inp" name="name" required autocomplete="off"/></label>
+        <div class="row-2">
+          <label><span>Email *</span><input class="inp" name="email" type="email" required/></label>
+          <label><span>Phone</span><input class="inp" name="phone" type="tel"/></label>
+        </div>
+        <label><span>What do they want? *</span><textarea class="inp" name="subject" rows="3" required placeholder="e.g. a 1.4 m Spanish Mackerel — side profile, silver-blue sheen, taken off Cairns"></textarea></label>
+        <div class="row-2">
+          <label><span>Category</span>
+            <select class="inp" name="category">
+              <option value="">Not sure yet</option>
+              <option value="saltwater">Saltwater fish</option>
+              <option value="freshwater">Freshwater fish</option>
+              <option value="cars">Cars</option>
+              <option value="animals">Animals</option>
+              <option value="birds">Birds</option>
+              <option value="other">Something else</option>
+            </select>
+          </label>
+          <label><span>Approximate size</span>
+            <select class="inp" name="size">
+              <option value="">No preference</option>
+              <option value="small">Small (≤ 50 cm)</option>
+              <option value="medium">Medium (50–80 cm)</option>
+              <option value="large">Large (80–100 cm)</option>
+              <option value="xl">XL (100 cm +)</option>
+            </select>
+          </label>
+        </div>
+        <label><span>Notes (anything else)</span><textarea class="inp" name="notes" rows="3" placeholder="Deadline, gift occasion, timber preference…"></textarea></label>
+        ${_PHOTO_BLOCK_HTML}
+        <p class="newquote-err" id="newQuoteErr" hidden style="color:#d9534f;margin:0;font-size:.9rem;"></p>
+      </form>
+      <div class="rd-actions">
+        <button class="btn btn-gold" type="button" id="newQuoteSave">Save request</button>
+        <button class="btn btn-ghost" type="button" id="newQuoteCancel">Cancel</button>
+      </div>
+    </div>`;
+  modal.hidden = false;
+  modal.querySelector('.rd-close').addEventListener('click', () => modal.hidden = true);
+  modal.querySelector('#newQuoteCancel').addEventListener('click', () => modal.hidden = true);
+
+  const form = modal.querySelector('#newQuoteForm');
+  const errEl = modal.querySelector('#newQuoteErr');
+  const saveBtn = modal.querySelector('#newQuoteSave');
+  const getPhoto = wireAdminPhotoUploader(form);
+
+  saveBtn.addEventListener('click', async () => {
+    errEl.hidden = true;
+    const data = Object.fromEntries(new FormData(form).entries());
+    const missing = ['name','email','subject'].filter(k => !(data[k] || '').trim());
+    if (missing.length) {
+      errEl.textContent = 'Please fill in: ' + missing.join(', ');
+      errEl.hidden = false;
+      return;
+    }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(data.email.trim())) {
+      errEl.textContent = 'That doesn\'t look like a valid email address.';
+      errEl.hidden = false;
+      return;
+    }
+    saveBtn.disabled = true;
+    const original = saveBtn.textContent;
+    saveBtn.textContent = 'Saving…';
+    try {
+      const res = await fetch('/api/requests', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', ...adminAuthHeaders() },
+        body: JSON.stringify({
+          name: data.name, email: data.email, phone: data.phone || '',
+          subject: data.subject, category: data.category || '',
+          size: data.size || '', notes: data.notes || '',
+          photoDataUrl: getPhoto() || '',
+          source: 'manual_admin',
+        }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j.error || 'save failed');
+      }
+      const result = await res.json();
+      modal.hidden = true;
+      toast(`Request saved · ${result.id}`);
+      if (typeof refreshRequestsFromAPI === 'function') refreshRequestsFromAPI();
+    } catch (err) {
+      errEl.textContent = 'Couldn\'t save: ' + (err.message || 'try again');
+      errEl.hidden = false;
+      saveBtn.disabled = false;
+      saveBtn.textContent = original;
+    }
+  });
+
+  setTimeout(() => form.querySelector('[name="name"]')?.focus(), 50);
+}
+
+/* Manual Order — for when Max takes a phone or in-person sale. Same
+ * pipeline as New Quote for now (lands in /api/requests with source
+ * 'manual_order' so Max sees it in Custom Orders). A real orders
+ * table is pending — see audit notes. */
+function openNewManualOrderForm() {
+  let modal = document.getElementById('newManualOrderModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'newManualOrderModal';
+    modal.className = 'request-detail-modal';
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.hidden = true; });
+  }
+  modal.innerHTML = `
+    <div class="rd-card">
+      <button class="rd-close" type="button" aria-label="Close">×</button>
+      <p class="rd-eyebrow">Phone or in-person sale</p>
+      <h2 class="rd-name">Manual order</h2>
+      <p class="rd-meta">Quickly punch in a sale Max took offline so it doesn't get lost. Fields marked * are required.</p>
+      <form id="newManualOrderForm" class="form" autocomplete="off">
+        <label><span>Customer name *</span><input class="inp" name="name" required/></label>
+        <div class="row-2">
+          <label><span>Email *</span><input class="inp" name="email" type="email" required/></label>
+          <label><span>Phone</span><input class="inp" name="phone" type="tel"/></label>
+        </div>
+        <label><span>What did they buy / commission? *</span><textarea class="inp" name="subject" rows="3" required placeholder="e.g. Coral Trout (CBW-SW-001) ×1, plus a custom Murray Cod 80×34 cm"></textarea></label>
+        <div class="row-2">
+          <label><span>Total ($AUD)</span><input class="inp" name="size" type="text" placeholder="e.g. 985"/></label>
+          <label><span>Status</span>
+            <select class="inp" name="category">
+              <option value="other">Awaiting payment</option>
+              <option value="other">Paid — start production</option>
+              <option value="other">Quote agreed</option>
+            </select>
+          </label>
+        </div>
+        <label><span>Notes (anything else)</span><textarea class="inp" name="notes" rows="3" placeholder="Pickup vs ship, deadline, deposit taken, timber preference…"></textarea></label>
+        ${_PHOTO_BLOCK_HTML}
+        <p id="newManualOrderErr" hidden style="color:#d9534f;margin:0;font-size:.9rem;"></p>
+      </form>
+      <div class="rd-actions">
+        <button class="btn btn-gold" type="button" id="newManualOrderSave">Save order</button>
+        <button class="btn btn-ghost" type="button" id="newManualOrderCancel">Cancel</button>
+      </div>
+    </div>`;
+  modal.hidden = false;
+  modal.querySelector('.rd-close').addEventListener('click', () => modal.hidden = true);
+  modal.querySelector('#newManualOrderCancel').addEventListener('click', () => modal.hidden = true);
+
+  const form = modal.querySelector('#newManualOrderForm');
+  const errEl = modal.querySelector('#newManualOrderErr');
+  const saveBtn = modal.querySelector('#newManualOrderSave');
+  const getPhoto = wireAdminPhotoUploader(form);
+
+  saveBtn.addEventListener('click', async () => {
+    errEl.hidden = true;
+    const data = Object.fromEntries(new FormData(form).entries());
+    const missing = ['name','email','subject'].filter(k => !(data[k] || '').trim());
+    if (missing.length) {
+      errEl.textContent = 'Please fill in: ' + missing.join(', ');
+      errEl.hidden = false;
+      return;
+    }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(data.email.trim())) {
+      errEl.textContent = 'That doesn\'t look like a valid email address.';
+      errEl.hidden = false;
+      return;
+    }
+    saveBtn.disabled = true;
+    const original = saveBtn.textContent;
+    saveBtn.textContent = 'Saving…';
+    try {
+      const res = await fetch('/api/requests', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', ...adminAuthHeaders() },
+        body: JSON.stringify({
+          name: data.name, email: data.email, phone: data.phone || '',
+          subject: data.subject,
+          category: data.category || '',
+          size: data.size || '',
+          notes: data.notes || '',
+          photoDataUrl: getPhoto() || '',
+          source: 'manual_order',
+        }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j.error || 'save failed');
+      }
+      const result = await res.json();
+      modal.hidden = true;
+      toast(`Order saved · ${result.id}`);
+      if (typeof refreshRequestsFromAPI === 'function') refreshRequestsFromAPI();
+    } catch (err) {
+      errEl.textContent = 'Couldn\'t save: ' + (err.message || 'try again');
+      errEl.hidden = false;
+      saveBtn.disabled = false;
+      saveBtn.textContent = original;
+    }
+  });
+
+  setTimeout(() => form.querySelector('[name="name"]')?.focus(), 50);
+}
+
 /* ---------- HOMEPAGE EDITOR · sortable featured list ---------- */
 function renderFeatured(){
   const el = document.getElementById('featSortable'); if(!el) return;
@@ -859,7 +1172,18 @@ function handleAdminAction(label, view, btn){
     }, 700);
     return;
   }
-  // + New product / + Manual order / + New quote / + Add product → modal
+  // "+ New quote" on Custom Orders → real form that creates a request in D1
+  if (view === 'custom' && (l.includes('quote') || l.includes('new'))) {
+    openNewQuoteForm();
+    return;
+  }
+  // "+ Manual order" on Orders → real form (saves to /api/requests for now,
+  //   pending a dedicated orders table — see audit follow-up)
+  if (view === 'orders' && (l.includes('manual') || l.includes('new'))) {
+    openNewManualOrderForm();
+    return;
+  }
+  // + New product / + Add product → generic placeholder modal
   if (l.startsWith('+') || l.includes('new') || l.includes('add') || l.includes('manual')){
     openAdminModal(label, view);
     return;
