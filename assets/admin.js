@@ -363,12 +363,15 @@ renderRevProducts();
  * change to /api/products/:id; the row's "edited" pill goes back to a
  * green tick when the write succeeds.
  * ----------------------------------------------------- */
-function renderProducts(filter='all', q=''){
+function renderProducts(filter='all', q='', cat=''){
   const body = document.getElementById('productsBody'); if(!body) return;
   let list = PRODUCTS.slice();
   if(q){
     const s = q.toLowerCase();
     list = list.filter(p=>p.name.toLowerCase().includes(s) || (p.sku||'').toLowerCase().includes(s));
+  }
+  if(cat){
+    list = list.filter(p => (p.cat||'') === cat);
   }
   if(filter==='in')  list = list.filter(p=>p.stock>2);
   if(filter==='low') list = list.filter(p=>p.stock>0 && p.stock<=2);
@@ -520,17 +523,27 @@ function renderProducts(filter='all', q=''){
 }
 renderProducts();
 
+function _currentStockFilters() {
+  const active = document.querySelector('[data-view="products"] .tab.is-active');
+  return {
+    filter: active?.dataset.filter || 'all',
+    q:      document.getElementById('prodSearch')?.value || '',
+    cat:    document.getElementById('prodCatFilter')?.value || '',
+  };
+}
+function _refreshStocktake() {
+  const { filter, q, cat } = _currentStockFilters();
+  renderProducts(filter, q, cat);
+}
 document.querySelectorAll('[data-view="products"] .tab').forEach(tab=>{
   tab.addEventListener('click', ()=>{
     document.querySelectorAll('[data-view="products"] .tab').forEach(t=>t.classList.remove('is-active'));
     tab.classList.add('is-active');
-    renderProducts(tab.dataset.filter, document.getElementById('prodSearch').value);
+    _refreshStocktake();
   });
 });
-document.getElementById('prodSearch')?.addEventListener('input', e=>{
-  const active = document.querySelector('[data-view="products"] .tab.is-active');
-  renderProducts(active?.dataset.filter || 'all', e.target.value);
-});
+document.getElementById('prodSearch')?.addEventListener('input', _refreshStocktake);
+document.getElementById('prodCatFilter')?.addEventListener('change', _refreshStocktake);
 
 /* ---------- ORDERS ---------- */
 function renderOrders(){
@@ -2136,6 +2149,8 @@ function wireContentEditor(viewName, opts = {}) {
 
 wireContentEditor('about',       { statusElId: 'aboutSaveStatus',       saveAllBtnId: 'aboutSaveAll' });
 wireContentEditor('shipping',    { statusElId: 'shippingSaveStatus',    saveAllBtnId: 'shippingSaveAll' });
+wireContentEditor('returns',     { statusElId: 'returnsSaveStatus',     saveAllBtnId: 'returnsSaveAll' });
+wireContentEditor('guarantee',   { statusElId: 'guaranteeSaveStatus',   saveAllBtnId: 'guaranteeSaveAll' });
 wireContentEditor('commissions', { statusElId: 'commissionsSaveStatus', saveAllBtnId: 'commissionsSaveAll' });
 
 

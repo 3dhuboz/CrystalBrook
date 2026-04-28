@@ -7,10 +7,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="../assets/admin.css?v=20260428-10" />
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260428-10" />
-<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260428-10" />
-<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260428-10" />
+<link rel="stylesheet" href="../assets/admin.css?v=20260428-11" />
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260428-11" />
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260428-11" />
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260428-11" />
 <link rel="manifest" href="../manifest.webmanifest" />
 <meta name="theme-color" content="#1c130a" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -60,6 +60,8 @@
     <a class="s-link" data-view="homepage"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10 12 3l9 7v11H3z"/><path d="M9 21v-8h6v8"/></svg> Homepage Editor</a>
     <a class="s-link" data-view="about"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg> About Page</a>
     <a class="s-link" data-view="shipping"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="8" width="12" height="9" rx="1"/><path d="M15 11h4l3 3v3h-7z"/><circle cx="8" cy="19" r="2"/><circle cx="18" cy="19" r="2"/></svg> Shipping Page</a>
+    <a class="s-link" data-view="returns"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7l4 4 4-4"/><path d="M7 11V4"/><path d="M14 4h5v6h-5z"/><path d="M10 17h11v3H10z"/></svg> Returns Page</a>
+    <a class="s-link" data-view="guarantee"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5z"/><path d="m9 12 2 2 4-4"/></svg> Guarantee Page</a>
     <a class="s-link" data-view="commissions"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l2 2 4-4"/><path d="M21 12c0 5-4 9-9 9s-9-4-9-9 4-9 9-9c2 0 4 .8 5.5 2"/></svg> Commissions Page</a>
     <a class="s-link" data-view="settings"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.4.9a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-.9-2 3.4 2 1.5A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.5 2 3.4 2.4-.9a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4.9 2-3.4-2-1.5c.1-.4.1-.8.1-1.2Z"/></svg> Settings</a>
   </nav>
@@ -228,7 +230,15 @@
         <button class="tab" data-filter="out">Out <em id="fOut">0</em></button>
       </div>
       <div class="filter-right">
-        <select class="sel"><option>All categories</option><option>Saltwater Fish</option><option>Freshwater Fish</option><option>Cars</option><option>Animals</option><option>Birds</option></select>
+        <select class="sel" id="prodCatFilter">
+          <option value="">All categories</option>
+          <option value="Saltwater Fish">Saltwater Fish</option>
+          <option value="Freshwater Fish">Freshwater Fish</option>
+          <option value="Cars">Cars</option>
+          <option value="Animals">Animals</option>
+          <option value="Birds">Birds</option>
+          <option value="Montages">Montages</option>
+        </select>
         <input class="inp" placeholder="Search by name or SKU…" id="prodSearch"/>
       </div>
     </div>
@@ -561,7 +571,7 @@ Signed, numbered and wrapped for shipping</textarea></label>
     <div class="v-head">
       <div>
         <h1>Shipping Page</h1>
-        <p>The shipping copy shown on <a href="../policies.html#shipping" target="_blank" rel="noopener">policies.html</a>. Edits save automatically when you click out of a field — or press <strong>Save all</strong> to commit any pending changes at once.</p>
+        <p>The page header and shipping copy shown on <a href="../policies.html" target="_blank" rel="noopener">policies.html</a>. Edits save automatically when you click out of a field — or press <strong>Save all</strong> to commit any pending changes at once.</p>
       </div>
       <div class="v-head-actions">
         <span class="about-save-status" id="shippingSaveStatus" hidden>Saved ✓</span>
@@ -570,7 +580,33 @@ Signed, numbered and wrapped for shipping</textarea></label>
     </div>
 
     <div class="card about-edit-card">
-      <div class="card-head"><h3>Section header</h3></div>
+      <div class="card-head"><h3>Page header (top of <code>policies.html</code>)</h3></div>
+      <div class="form">
+        <div class="row-2">
+          <label data-content-edit="pol_crumb"><span>Breadcrumb name</span><input class="inp" placeholder="Shipping &amp; Returns"/></label>
+          <label data-content-edit="pol_eyebrow"><span>Eyebrow</span><input class="inp" placeholder="The fine print, in plain English"/></label>
+        </div>
+        <label data-content-edit="pol_h1"><span>Page heading</span><input class="inp" placeholder="Shipping &amp; Returns."/></label>
+        <label data-content-edit="pol_lede"><span>Hero paragraph</span><textarea class="inp" rows="3" placeholder="No legalese. No surprises…"></textarea></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Jump-link buttons</h3></div>
+      <div class="form">
+        <div class="row-2">
+          <label data-content-edit="pol_jump1"><span>Link 1 label</span><input class="inp" placeholder="Shipping →"/></label>
+          <label data-content-edit="pol_jump2"><span>Link 2 label</span><input class="inp" placeholder="Returns →"/></label>
+        </div>
+        <div class="row-2">
+          <label data-content-edit="pol_jump3"><span>Link 3 label</span><input class="inp" placeholder="Workmanship guarantee →"/></label>
+          <label data-content-edit="pol_jump4"><span>Link 4 label</span><input class="inp" placeholder="Custom commissions →"/></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Section 01 header — Shipping</h3></div>
       <div class="form">
         <div class="row-2">
           <label data-content-edit="shipping_eyebrow"><span>Eyebrow</span><input class="inp" placeholder="Shipping"/></label>
@@ -619,6 +655,121 @@ Signed, numbered and wrapped for shipping</textarea></label>
     </div>
 
     <p class="about-edit-hint">Tip: each field saves on its own when you click out of it. The <strong>HTML allowed</strong> fields (Card 4 body and the Big-pieces callout) accept tags like <code>&lt;strong&gt;</code> and <code>&lt;a href="mailto:…"&gt;</code> — leave the <code>&lt;a&gt;</code> tag alone if you want the email to stay clickable.</p>
+  </section>
+
+  <!-- ========= RETURNS PAGE ========= -->
+  <section class="view" data-view="returns">
+    <div class="v-head">
+      <div>
+        <h1>Returns Page</h1>
+        <p>The Returns section (02) on <a href="../policies.html#returns" target="_blank" rel="noopener">policies.html</a>. Edits save automatically when you click out of a field — or press <strong>Save all</strong> to commit any pending changes at once.</p>
+      </div>
+      <div class="v-head-actions">
+        <span class="about-save-status" id="returnsSaveStatus" hidden>Saved ✓</span>
+        <button class="btn btn-gold" id="returnsSaveAll" type="button">Save all changes</button>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Section header</h3></div>
+      <div class="form">
+        <div class="row-2">
+          <label data-content-edit="returns_eyebrow"><span>Eyebrow</span><input class="inp" placeholder="Returns"/></label>
+          <label data-content-edit="returns_h2"><span>Heading</span><input class="inp" placeholder="If it arrives wrong, we make it right."/></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Card 1 — Damaged in transit</h3></div>
+      <div class="form">
+        <label data-content-edit="returns_card1_title"><span>Title</span><input class="inp" placeholder="Damaged in transit"/></label>
+        <label data-content-edit="returns_card1_body" data-content-html><span>Body (HTML allowed for emphasis)</span><textarea class="inp" rows="3" placeholder="Send a photo within &lt;strong&gt;72 hours of delivery&lt;/strong&gt;…"></textarea></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Card 2 — Wrong piece sent</h3></div>
+      <div class="form">
+        <label data-content-edit="returns_card2_title"><span>Title</span><input class="inp" placeholder="Wrong piece sent"/></label>
+        <label data-content-edit="returns_card2_body"><span>Body</span><textarea class="inp" rows="3" placeholder="If we ship the wrong fish…"></textarea></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Card 3 — Changed your mind</h3></div>
+      <div class="form">
+        <label data-content-edit="returns_card3_title"><span>Title</span><input class="inp" placeholder="Changed your mind"/></label>
+        <label data-content-edit="returns_card3_body" data-content-html><span>Body (HTML allowed for emphasis)</span><textarea class="inp" rows="4" placeholder="Standard catalogue pieces…"></textarea></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Card 4 — Custom commissions</h3></div>
+      <div class="form">
+        <label data-content-edit="returns_card4_title"><span>Title</span><input class="inp" placeholder="Custom commissions"/></label>
+        <label data-content-edit="returns_card4_body" data-content-html><span>Body (HTML allowed for emphasis)</span><textarea class="inp" rows="4" placeholder="Once Max has printed your one-off…"></textarea></label>
+      </div>
+    </div>
+
+    <p class="about-edit-hint">Tip: <strong>HTML allowed</strong> fields accept <code>&lt;strong&gt;</code> tags for bold emphasis (e.g. "<strong>72 hours of delivery</strong>"). Plain text in non-HTML fields renders as-is.</p>
+  </section>
+
+  <!-- ========= GUARANTEE PAGE ========= -->
+  <section class="view" data-view="guarantee">
+    <div class="v-head">
+      <div>
+        <h1>Guarantee Page</h1>
+        <p>The Workmanship Guarantee section (03) on <a href="../policies.html#guarantee" target="_blank" rel="noopener">policies.html</a>. Edits save automatically when you click out of a field — or press <strong>Save all</strong> to commit any pending changes at once.</p>
+      </div>
+      <div class="v-head-actions">
+        <span class="about-save-status" id="guaranteeSaveStatus" hidden>Saved ✓</span>
+        <button class="btn btn-gold" id="guaranteeSaveAll" type="button">Save all changes</button>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Section header</h3></div>
+      <div class="form">
+        <label data-content-edit="guarantee_eyebrow"><span>Eyebrow</span><input class="inp" placeholder="Workmanship guarantee"/></label>
+        <label data-content-edit="guarantee_h2"><span>Heading</span><input class="inp" placeholder="If the resin yellows or the timber cracks…"/></label>
+        <label data-content-edit="guarantee_lede"><span>Intro paragraph</span><textarea class="inp" rows="3" placeholder="Every Crystal Brook piece is built to outlive its owner…"></textarea></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Item 1 — Resin yellowing</h3></div>
+      <div class="form">
+        <label data-content-edit="guarantee_item1_title"><span>Title</span><input class="inp" placeholder="Resin yellowing"/></label>
+        <label data-content-edit="guarantee_item1_body"><span>Body</span><textarea class="inp" rows="2" placeholder="Lifetime cover…"></textarea></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Item 2 — Print fading</h3></div>
+      <div class="form">
+        <label data-content-edit="guarantee_item2_title"><span>Title</span><input class="inp" placeholder="Print fading"/></label>
+        <label data-content-edit="guarantee_item2_body"><span>Body</span><textarea class="inp" rows="2" placeholder="Archival pigment ink rated 100+ years indoors…"></textarea></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Item 3 — Timber cracking / warping</h3></div>
+      <div class="form">
+        <label data-content-edit="guarantee_item3_title"><span>Title</span><input class="inp" placeholder="Timber cracking / warping"/></label>
+        <label data-content-edit="guarantee_item3_body"><span>Body</span><textarea class="inp" rows="2" placeholder="5-year cover under normal indoor conditions…"></textarea></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Item 4 — Mounting hardware failure</h3></div>
+      <div class="form">
+        <label data-content-edit="guarantee_item4_title"><span>Title</span><input class="inp" placeholder="Mounting hardware failure"/></label>
+        <label data-content-edit="guarantee_item4_body"><span>Body</span><textarea class="inp" rows="2" placeholder="Lifetime — heavy-duty D-rings…"></textarea></label>
+      </div>
+    </div>
+
+    <p class="about-edit-hint">Tip: each field saves on its own when you click out of it.</p>
   </section>
 
   <!-- ========= COMMISSIONS PAGE ========= -->
@@ -903,6 +1054,6 @@ Signed, numbered and wrapped for shipping</textarea></label>
   </div>
 </div>
 
-<script src="../assets/admin.js?v=20260428-10"></script>
+<script src="../assets/admin.js?v=20260428-11"></script>
 </body>
 </html>
