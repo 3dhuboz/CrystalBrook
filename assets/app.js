@@ -2089,8 +2089,14 @@ document.addEventListener('keydown', e=>{
     order.payment?.last4 ? `Paid with card ending •••• ${order.payment.last4}` : '';
 })();
 
-/* ---------- PRODUCT DETAIL PAGE (product.html) ---------- */
-(() => {
+/* ---------- PRODUCT DETAIL PAGE (product.html) ----------
+ * Wrapped in a callable function so the catalogue-refresh hook can
+ * re-render after /api/products comes back with fresh data — without
+ * this, edits Max makes in admin only show in Quick View (which reads
+ * PRODUCTS lazily on click), not on the full product page (which used
+ * to render once and cache the snapshot in DOM).
+ */
+function renderProductPage() {
   const titleEl = document.getElementById('pdpTitle');
   if (!titleEl) return;
 
@@ -2229,12 +2235,19 @@ document.addEventListener('keydown', e=>{
   document.getElementById('pdpMount').textContent = mountText;
   document.getElementById('pdpPrice').textContent = '$' + product.price.toLocaleString();
 
-  // Add to cart
-  document.getElementById('pdpAdd').addEventListener('click', () => addToCart(product));
+  // Add to cart — clone-replace to drop any stale listener from a prior render
+  const addBtnOld = document.getElementById('pdpAdd');
+  if (addBtnOld) {
+    const addBtn = addBtnOld.cloneNode(true);
+    addBtnOld.replaceWith(addBtn);
+    addBtn.addEventListener('click', () => addToCart(product));
+  }
 
-  // Heart / wishlist
-  const heartBtn = document.getElementById('pdpHeart');
-  if (heartBtn){
+  // Heart / wishlist — same clone-replace pattern
+  const heartOld = document.getElementById('pdpHeart');
+  if (heartOld){
+    const heartBtn = heartOld.cloneNode(true);
+    heartOld.replaceWith(heartBtn);
     if (isWishlisted(product.id)) heartBtn.classList.add('is-wishlisted');
     heartBtn.addEventListener('click', () => {
       toggleWishlist(product.id);
@@ -2272,6 +2285,26 @@ document.addEventListener('keydown', e=>{
       });
     }
   }
+}
+// Initial render on page load — and expose so the catalogue-refresh hook
+// can re-run us after /api/products lands with any admin-edited values.
+renderProductPage();
+window.__cbRenderProductPage = renderProductPage;
+
+// Back button — uses session history if there's a previous page, falls back
+// to the shop grid for direct deep-links (e.g. shared product URL).
+(() => {
+  const backBtn = document.getElementById('pdpBack');
+  if (!backBtn) return;
+  backBtn.addEventListener('click', () => {
+    const sameOriginRef = document.referrer &&
+      (() => { try { return new URL(document.referrer).origin === location.origin; } catch (_) { return false; } })();
+    if (sameOriginRef && history.length > 1) {
+      history.back();
+    } else {
+      location.href = 'shop.html';
+    }
+  });
 })();
 
 /* ---------- PWA: SERVICE WORKER + INSTALL PROMPT ---------- */
@@ -2611,6 +2644,9 @@ document.addEventListener('keydown', e=>{
       try { renderCategoryShowcase(); } catch (_) {}
       if (typeof window.__cbApplyShopFilters === 'function') {
         try { window.__cbApplyShopFilters(); } catch (_) {}
+      }
+      if (typeof window.__cbRenderProductPage === 'function') {
+        try { window.__cbRenderProductPage(); } catch (_) {}
       }
       // Update the shop-hero "30 pieces" stat if it's on the current page
       document.querySelectorAll('[data-shop-stat="total"]').forEach(el => {

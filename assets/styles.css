@@ -1284,6 +1284,27 @@ section > .container { padding: 0; }
 .pdp-crumbs a:hover { color: var(--ink); }
 .pdp-crumbs span[aria-hidden] { opacity: .5; }
 .pdp-crumb-name { color: var(--ink); }
+.pdp-back {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 13px 7px 9px;
+  margin-bottom: 14px;
+  background: transparent;
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: .78rem; letter-spacing: .04em;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, transform .15s ease;
+}
+.pdp-back:hover {
+  background: rgba(0,0,0,0.04);
+  border-color: rgba(0,0,0,0.22);
+}
+.pdp-back:active { transform: translateX(-2px); }
+.pdp-back:focus-visible {
+  outline: 2px solid var(--gold-deep, #b8862c);
+  outline-offset: 2px;
+}
 .pdp-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 56px; align-items: start; }
 .pdp-stage-wrap { position: sticky; top: 90px; }
 .pdp-product-stage {

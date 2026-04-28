@@ -7,10 +7,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="../assets/admin.css?v=20260428-12" />
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260428-12" />
-<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260428-12" />
-<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260428-12" />
+<link rel="stylesheet" href="../assets/admin.css?v=20260429-3" />
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260429-3" />
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260429-3" />
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260429-3" />
 <link rel="manifest" href="../manifest.webmanifest" />
 <meta name="theme-color" content="#1c130a" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -871,7 +871,16 @@
 
   <!-- ========= SETTINGS ========= -->
   <section class="view" data-view="settings">
-    <div class="v-head"><div><h1>Settings</h1><p>Business, payments, shipping and holiday mode.</p></div></div>
+    <div class="v-head">
+      <div>
+        <h1>Settings</h1>
+        <p>Business, payments, shipping and holiday mode. Edits save automatically when you click out of a field — or press <strong>Save all</strong> to commit pending changes at once.</p>
+      </div>
+      <div class="v-head-actions">
+        <span class="about-save-status" id="settingsSaveStatus" hidden>Saved ✓</span>
+        <button class="btn btn-gold" id="settingsSaveAll" type="button">Save all changes</button>
+      </div>
+    </div>
     <div class="dash-grid">
       <div class="card holiday-card" id="holidayCard">
         <div class="card-head">
@@ -918,22 +927,22 @@
       </div>
       <div class="card"><div class="card-head"><h3>Business</h3></div>
         <div class="form">
-          <label><span>Business name</span><input class="inp" value="Crystal Brook Wall Mounts"/></label>
-          <label><span>ABN</span><input class="inp" value="00 000 000 000"/></label>
-          <label><span>Email</span><input class="inp" value="hello@crystalbrookwallmounts.com.au"/></label>
+          <label data-content-edit="biz_name"><span>Business name</span><input class="inp" value="Crystal Brook Wall Mounts"/></label>
+          <label data-content-edit="biz_abn"><span>ABN</span><input class="inp" value="00 000 000 000"/></label>
+          <label data-content-edit="biz_email"><span>Email</span><input class="inp" value="mandpwhite@optusnet.com.au"/></label>
         </div>
       </div>
       <div class="card"><div class="card-head"><h3>Payments</h3></div>
         <div class="form">
           <label><span>Stripe account</span><div class="stripe-row"><span class="stripe-dot"></span>Connected · acct_1N••••••</div></label>
-          <label><span>Currency</span><input class="inp" value="AUD"/></label>
-          <label><span>Tax</span><input class="inp" value="GST 10%"/></label>
+          <label data-content-edit="pay_currency"><span>Currency</span><input class="inp" value="AUD"/></label>
+          <label data-content-edit="pay_tax"><span>Tax</span><input class="inp" value="GST 10%"/></label>
         </div>
       </div>
       <div class="card"><div class="card-head"><h3>Shipping</h3></div>
         <div class="form">
-          <label><span>Australia</span><input class="inp" value="Free — every order" readonly/></label>
-          <label><span>International</span><input class="inp" value="Quote on request"/></label>
+          <label data-content-edit="ship_au"><span>Australia</span><input class="inp" value="Free — every order"/></label>
+          <label data-content-edit="ship_intl"><span>International</span><input class="inp" value="Quote on request"/></label>
           <p class="form-note">Shipping costs are baked into your prices. If you need to flip back to a flat-rate or threshold model later, drop Steve a line.</p>
         </div>
       </div>
@@ -1083,6 +1092,6 @@
   </div>
 </div>
 
-<script src="../assets/admin.js?v=20260428-12"></script>
+<script src="../assets/admin.js?v=20260429-3"></script>
 </body>
 </html>

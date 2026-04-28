@@ -2153,6 +2153,7 @@ wireContentEditor('shipping',    { statusElId: 'shippingSaveStatus',    saveAllB
 wireContentEditor('returns',     { statusElId: 'returnsSaveStatus',     saveAllBtnId: 'returnsSaveAll' });
 wireContentEditor('guarantee',   { statusElId: 'guaranteeSaveStatus',   saveAllBtnId: 'guaranteeSaveAll' });
 wireContentEditor('commissions', { statusElId: 'commissionsSaveStatus', saveAllBtnId: 'commissionsSaveAll' });
+wireContentEditor('settings',    { statusElId: 'settingsSaveStatus',    saveAllBtnId: 'settingsSaveAll' });
 
 
 /* ---------- CHANGE ADMIN PASSWORD (Settings card) ---------- *

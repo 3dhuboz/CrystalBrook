@@ -65,6 +65,14 @@ INSERT INTO site_content (key, value) VALUES
   ('guarantee_item4_title', 'Mounting hardware failure'),
   ('guarantee_item4_body',  'Lifetime — heavy-duty D-rings rated 4× the piece weight come standard.'),
 
+  ('biz_name',     'Crystal Brook Wall Mounts'),
+  ('biz_abn',      '00 000 000 000'),
+  ('biz_email',    'mandpwhite@optusnet.com.au'),
+  ('pay_currency', 'AUD'),
+  ('pay_tax',      'GST 10%'),
+  ('ship_au',      'Free — every order'),
+  ('ship_intl',    'Quote on request'),
+
   ('commissions_eyebrow',     'Custom commissions'),
   ('commissions_h2',          'Your idea, on the wall.'),
   ('commissions_lede',        'A few notes on how custom pieces work:'),
