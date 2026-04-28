@@ -2134,8 +2134,9 @@ function wireContentEditor(viewName, opts = {}) {
   });
 }
 
-wireContentEditor('about',    { statusElId: 'aboutSaveStatus',    saveAllBtnId: 'aboutSaveAll' });
-wireContentEditor('shipping', { statusElId: 'shippingSaveStatus', saveAllBtnId: 'shippingSaveAll' });
+wireContentEditor('about',       { statusElId: 'aboutSaveStatus',       saveAllBtnId: 'aboutSaveAll' });
+wireContentEditor('shipping',    { statusElId: 'shippingSaveStatus',    saveAllBtnId: 'shippingSaveAll' });
+wireContentEditor('commissions', { statusElId: 'commissionsSaveStatus', saveAllBtnId: 'commissionsSaveAll' });
 
 
 /* ---------- CHANGE ADMIN PASSWORD (Settings card) ---------- *

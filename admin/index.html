@@ -7,10 +7,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="../assets/admin.css?v=20260428-8" />
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260428-8" />
-<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260428-8" />
-<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260428-8" />
+<link rel="stylesheet" href="../assets/admin.css?v=20260428-9" />
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260428-9" />
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260428-9" />
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260428-9" />
 <link rel="manifest" href="../manifest.webmanifest" />
 <meta name="theme-color" content="#1c130a" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -60,6 +60,7 @@
     <a class="s-link" data-view="homepage"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10 12 3l9 7v11H3z"/><path d="M9 21v-8h6v8"/></svg> Homepage Editor</a>
     <a class="s-link" data-view="about"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg> About Page</a>
     <a class="s-link" data-view="shipping"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="8" width="12" height="9" rx="1"/><path d="M15 11h4l3 3v3h-7z"/><circle cx="8" cy="19" r="2"/><circle cx="18" cy="19" r="2"/></svg> Shipping Page</a>
+    <a class="s-link" data-view="commissions"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l2 2 4-4"/><path d="M21 12c0 5-4 9-9 9s-9-4-9-9 4-9 9-9c2 0 4 .8 5.5 2"/></svg> Commissions Page</a>
     <a class="s-link" data-view="settings"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.4.9a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-.9-2 3.4 2 1.5A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.5 2 3.4 2.4-.9a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4.9 2-3.4-2-1.5c.1-.4.1-.8.1-1.2Z"/></svg> Settings</a>
   </nav>
 
@@ -620,6 +621,74 @@ Signed, numbered and wrapped for shipping</textarea></label>
     <p class="about-edit-hint">Tip: each field saves on its own when you click out of it. The <strong>HTML allowed</strong> fields (Card 4 body and the Big-pieces callout) accept tags like <code>&lt;strong&gt;</code> and <code>&lt;a href="mailto:…"&gt;</code> — leave the <code>&lt;a&gt;</code> tag alone if you want the email to stay clickable.</p>
   </section>
 
+  <!-- ========= COMMISSIONS PAGE ========= -->
+  <section class="view" data-view="commissions">
+    <div class="v-head">
+      <div>
+        <h1>Commissions Page</h1>
+        <p>The Custom Commissions section (04) on <a href="../policies.html#commissions" target="_blank" rel="noopener">policies.html</a>. Edits save automatically when you click out of a field — or press <strong>Save all</strong> to commit pending changes at once.</p>
+      </div>
+      <div class="v-head-actions">
+        <span class="about-save-status" id="commissionsSaveStatus" hidden>Saved ✓</span>
+        <button class="btn btn-gold" id="commissionsSaveAll" type="button">Save all changes</button>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Section header</h3></div>
+      <div class="form">
+        <div class="row-2">
+          <label data-content-edit="commissions_eyebrow"><span>Eyebrow</span><input class="inp" placeholder="Custom commissions"/></label>
+          <label data-content-edit="commissions_h2"><span>Heading</span><input class="inp" placeholder="Your idea, on the wall."/></label>
+        </div>
+        <label data-content-edit="commissions_lede"><span>Sub-line</span><input class="inp" placeholder="A few notes on how custom pieces work:"/></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Card 1 — Working from your idea</h3></div>
+      <div class="form">
+        <label data-content-edit="commissions_card1_title"><span>Title</span><input class="inp" placeholder="Working from your idea"/></label>
+        <label data-content-edit="commissions_card1_body" data-content-html><span>Body (HTML allowed)</span><textarea class="inp" rows="4" placeholder="Max prints from your idea, not from your photographs…"></textarea></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Card 2 — Approval before pour</h3></div>
+      <div class="form">
+        <label data-content-edit="commissions_card2_title"><span>Title</span><input class="inp" placeholder="Approval before pour"/></label>
+        <label data-content-edit="commissions_card2_body"><span>Body</span><textarea class="inp" rows="3" placeholder="Max emails a digital mockup before he prints…"></textarea></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Card 3 — Lead time</h3></div>
+      <div class="form">
+        <label data-content-edit="commissions_card3_title"><span>Title</span><input class="inp" placeholder="Lead time"/></label>
+        <label data-content-edit="commissions_card3_body"><span>Body</span><textarea class="inp" rows="3" placeholder="5–7 weeks for commissions…"></textarea></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Card 4 — Permissions</h3></div>
+      <div class="form">
+        <label data-content-edit="commissions_card4_title"><span>Title</span><input class="inp" placeholder="Permissions"/></label>
+        <label data-content-edit="commissions_card4_body"><span>Body</span><textarea class="inp" rows="3" placeholder="If the subject is someone else's pet, vehicle or artwork…"></textarea></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Still got questions? — call-to-action</h3></div>
+      <div class="form">
+        <label data-content-edit="commissions_cta_title"><span>Title</span><input class="inp" placeholder="Still got questions?"/></label>
+        <label data-content-edit="commissions_cta_body" data-content-html><span>Body (HTML allowed — keep the phone &amp; email links inside the <code>&lt;a&gt;</code> tags)</span><textarea class="inp" rows="3" placeholder="Easiest way is a phone call to…"></textarea></label>
+        <label data-content-edit="commissions_cta_button"><span>Button label</span><input class="inp" placeholder="Get in touch →"/></label>
+      </div>
+    </div>
+
+    <p class="about-edit-hint">Tip: this section now reflects that Max prints from <em>ideas</em>, not customer-supplied photos. The Card 1 body explains that — keep the wording in the same direction so customers don't email photo files.</p>
+  </section>
+
   <!-- ========= SETTINGS ========= -->
   <section class="view" data-view="settings">
     <div class="v-head"><div><h1>Settings</h1><p>Business, payments, shipping and holiday mode.</p></div></div>
@@ -834,6 +903,6 @@ Signed, numbered and wrapped for shipping</textarea></label>
   </div>
 </div>
 
-<script src="../assets/admin.js?v=20260428-8"></script>
+<script src="../assets/admin.js?v=20260428-9"></script>
 </body>
 </html>

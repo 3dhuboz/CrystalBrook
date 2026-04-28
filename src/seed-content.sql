@@ -31,4 +31,19 @@ INSERT INTO site_content (key, value) VALUES
   ('shipping_card3_body',   'Once Max packs it (in a custom timber crate for anything over 80 cm), it ships via Australia Post tracked. Tracking link emailed the moment it leaves the workshop.'),
   ('shipping_card4_title',  'International? Drop us a line'),
   ('shipping_card4_body',   'We''ve shipped to NZ, Singapore and the UK. Ask for a quote at <a href="mailto:mandpwhite@optusnet.com.au">mandpwhite@optusnet.com.au</a> with your suburb and the piece you''re after.'),
-  ('shipping_callout',      '<strong>Big pieces.</strong> Anything over 100 × 70 cm goes road freight (still tracked, still insured) — allow an extra few days, and we''ll co-ordinate a delivery window with you. Lift gate available on request.');
+  ('shipping_callout',      '<strong>Big pieces.</strong> Anything over 100 × 70 cm goes road freight (still tracked, still insured) — allow an extra few days, and we''ll co-ordinate a delivery window with you. Lift gate available on request.'),
+
+  ('commissions_eyebrow',     'Custom commissions'),
+  ('commissions_h2',          'Your idea, on the wall.'),
+  ('commissions_lede',        'A few notes on how custom pieces work:'),
+  ('commissions_card1_title', 'Working from your idea'),
+  ('commissions_card1_body',  'Max prints from your <em>idea</em>, not from your photographs. Tell him the subject — a particular reef fish, a working dog, a classic ute — and he''ll source or produce a high-resolution master ready for the resin treatment. No need to send your own photos; he prefers to start fresh.'),
+  ('commissions_card2_title', 'Approval before pour'),
+  ('commissions_card2_body',  'Max emails a digital mockup before he prints. You sign off, then production begins. No surprises.'),
+  ('commissions_card3_title', 'Lead time'),
+  ('commissions_card3_body',  '5–7 weeks for commissions (one extra week for the back-and-forth). Faster turnaround can be arranged for an extra fee.'),
+  ('commissions_card4_title', 'Permissions'),
+  ('commissions_card4_body',  'If the subject is someone else''s pet, vehicle or artwork, you confirm you have permission to commission a print of it. Crystal Brook keeps no rights to the finished piece — it''s yours.'),
+  ('commissions_cta_title',   'Still got questions?'),
+  ('commissions_cta_body',    'Easiest way is a phone call to <a href="tel:+61740561887">(07) 4056 1887</a> or an email to <a href="mailto:mandpwhite@optusnet.com.au">mandpwhite@optusnet.com.au</a>. Max usually replies same-day.'),
+  ('commissions_cta_button',  'Get in touch →');
