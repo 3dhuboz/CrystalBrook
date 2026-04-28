@@ -2044,6 +2044,7 @@ function wireContentEditor(viewName, opts = {}) {
   const labels = view.querySelectorAll('[data-content-edit]');
   if (!labels.length) return;
   const statusEl = opts.statusElId ? document.getElementById(opts.statusElId) : null;
+  const saveAllBtn = opts.saveAllBtnId ? document.getElementById(opts.saveAllBtnId) : null;
 
   function showSaved(msg = 'Saved ✓') {
     if (!statusEl) return;
@@ -2053,6 +2054,9 @@ function wireContentEditor(viewName, opts = {}) {
     statusEl._timer = setTimeout(() => { statusEl.hidden = true; }, 2200);
   }
 
+  // Per-field flush functions, exposed so Save-all can call them
+  const flushers = [];
+
   labels.forEach(label => {
     const key = label.dataset.contentEdit;
     const field = label.querySelector('input, textarea');
@@ -2061,7 +2065,7 @@ function wireContentEditor(viewName, opts = {}) {
     let pending = null;
 
     async function flush() {
-      if (field.value === initial) return;
+      if (field.value === initial) return false;  // returns true if a save fired
       label.classList.remove('is-error', 'is-saved');
       label.classList.add('is-saving');
       try {
@@ -2069,24 +2073,55 @@ function wireContentEditor(viewName, opts = {}) {
         initial = field.value;
         label.classList.remove('is-saving');
         label.classList.add('is-saved');
-        showSaved();
         setTimeout(() => label.classList.remove('is-saved'), 1500);
+        return true;
       } catch (err) {
         label.classList.remove('is-saving');
         label.classList.add('is-error');
-        showSaved('Save failed — try again');
+        throw err;
       }
     }
 
+    flushers.push(flush);
+
     // Auto-save on blur (or 1.5s after last keystroke, whichever first)
-    field.addEventListener('blur', flush);
+    field.addEventListener('blur', () => { flush().then(saved => { if (saved) showSaved(); }).catch(() => showSaved('Save failed — try again')); });
     field.addEventListener('input', () => {
       clearTimeout(pending);
-      pending = setTimeout(flush, 1500);
+      pending = setTimeout(() => { flush().then(saved => { if (saved) showSaved(); }).catch(() => showSaved('Save failed — try again')); }, 1500);
     });
     // Stash initial value once loadContentEditorFor() populates the field
     field.addEventListener('focus', () => { initial = field.value; }, { once: true });
   });
+
+  // Save-all button — flushes every dirty field at once and reports an
+  // explicit summary toast. Useful when Max wants definite confirmation.
+  if (saveAllBtn) {
+    saveAllBtn.addEventListener('click', async () => {
+      saveAllBtn.disabled = true;
+      const original = saveAllBtn.textContent;
+      saveAllBtn.textContent = 'Saving…';
+      let saved = 0, failed = 0;
+      for (const flush of flushers) {
+        try {
+          if (await flush()) saved++;
+        } catch (_) {
+          failed++;
+        }
+      }
+      saveAllBtn.disabled = false;
+      saveAllBtn.textContent = original;
+      if (failed) {
+        showSaved(`${failed} field${failed === 1 ? '' : 's'} failed — try again`);
+        toast(`Save failed for ${failed} field${failed === 1 ? '' : 's'}`);
+      } else if (saved) {
+        showSaved(`Saved ${saved} change${saved === 1 ? '' : 's'} ✓`);
+        toast(`Saved ${saved} change${saved === 1 ? '' : 's'}`);
+      } else {
+        showSaved('Nothing to save');
+      }
+    });
+  }
 
   // Populate values once on admin entry so switching to this view is instant
   loadContentEditorFor(view);
@@ -2099,8 +2134,8 @@ function wireContentEditor(viewName, opts = {}) {
   });
 }
 
-wireContentEditor('about', { statusElId: 'aboutSaveStatus' });
-wireContentEditor('shipping', { statusElId: 'shippingSaveStatus' });
+wireContentEditor('about',    { statusElId: 'aboutSaveStatus',    saveAllBtnId: 'aboutSaveAll' });
+wireContentEditor('shipping', { statusElId: 'shippingSaveStatus', saveAllBtnId: 'shippingSaveAll' });
 
 
 /* ---------- CHANGE ADMIN PASSWORD (Settings card) ---------- *
