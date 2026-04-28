@@ -105,8 +105,21 @@ function apiToAdminProduct(api) {
     cat: CAT_LABELS_ADMIN[cat] || cat,
     sku,
     stock: api.draft ? 0 : 5,        // until we wire real stock; drafts read as out-of-stock
-    img: (api.name || '?').trim().charAt(0).toUpperCase(),
+    img: (api.name || '?').trim().charAt(0).toUpperCase(),  // initial-letter fallback
   };
+}
+
+/* Resolve a product's image src for use in <img>. Handles:
+ *  - data URLs (uploaded photos): return as-is
+ *  - relative paths (assets/images/products/...): prefix with /
+ *  - empty/placeholder: return null so we fall back to the letter
+ */
+function productImageSrc(p) {
+  const raw = p && p.image;
+  if (!raw || raw === 'assets/images/products/' || raw.endsWith('/')) return null;
+  if (raw.startsWith('data:')) return raw;
+  if (raw.startsWith('http')) return raw;
+  return '/' + raw.replace(/^\/+/, '');
 }
 
 
@@ -367,7 +380,12 @@ function renderProducts(filter='all', q=''){
         <td><input type="checkbox"/></td>
         <td>
           <div class="cell-product">
-            <div class="cell-thumb">${p.img}</div>
+            ${(() => {
+              const src = productImageSrc(p);
+              return src
+                ? `<div class="cell-thumb has-photo"><img src="${src}" alt="" onerror="this.parentElement.classList.remove('has-photo');this.parentElement.textContent='${(p.img || '?').replace(/'/g,'')}'"/></div>`
+                : `<div class="cell-thumb">${p.img}</div>`;
+            })()}
             <div>
               <strong>${p.name}</strong>
               <span class="cell-sub">${p.cat}</span>
