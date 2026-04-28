@@ -7,10 +7,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="../assets/admin.css?v=20260428-4" />
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260428-4" />
-<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260428-4" />
-<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260428-4" />
+<link rel="stylesheet" href="../assets/admin.css?v=20260428-5" />
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260428-5" />
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260428-5" />
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260428-5" />
 <link rel="manifest" href="../manifest.webmanifest" />
 <meta name="theme-color" content="#1c130a" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -713,10 +713,24 @@ Signed, numbered and wrapped for shipping</textarea></label>
         <input class="inp" name="size" required placeholder="68 × 32 cm"/>
       </label>
     </div>
+    <div class="pdf-row pdf-photo-row">
+      <span class="pdf-photo-label">Photo</span>
+      <div class="pdf-photo">
+        <div class="pdf-photo-preview" id="pdfPhotoPreview">
+          <span class="pdf-photo-empty">No photo yet</span>
+        </div>
+        <div class="pdf-photo-actions">
+          <button class="btn btn-ghost btn-small" type="button" id="pdfPhotoUpload">↑ Upload from your computer</button>
+          <button class="btn btn-ghost btn-small" type="button" id="pdfPhotoClear" hidden>× Remove</button>
+          <input type="file" id="pdfPhotoFile" accept="image/png,image/jpeg,image/webp" hidden/>
+          <small class="pdf-photo-hint">JPG, PNG or WebP. Big photos are auto-shrunk so the page stays fast.</small>
+        </div>
+      </div>
+    </div>
     <label class="pdf-row">
-      <span>Image path *</span>
+      <span>Image path</span>
       <input class="inp" name="image" required placeholder="assets/images/products/coral-trout-vivid.png"/>
-      <small>Relative path from the site root. Wall mockups are auto-discovered as <code>&lt;name&gt;-wall.jpg</code>.</small>
+      <small>Auto-filled when you upload a photo. You can also paste an existing path like <code>assets/images/products/coral-trout.png</code>.</small>
     </label>
     <label class="pdf-row">
       <span>Meta line</span>
@@ -753,6 +767,6 @@ Signed, numbered and wrapped for shipping</textarea></label>
   </div>
 </div>
 
-<script src="../assets/admin.js?v=20260428-4"></script>
+<script src="../assets/admin.js?v=20260428-5"></script>
 </body>
 </html>

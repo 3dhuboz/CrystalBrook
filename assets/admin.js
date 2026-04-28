@@ -1720,6 +1720,7 @@ function openProductDrawer(product, opts = {}) {
   form.querySelector('[name="price"]').value = product?.price ?? '';
   form.querySelector('[name="size"]').value = product?.size || '';
   form.querySelector('[name="image"]').value = product?.image || 'assets/images/products/';
+  previewProductImage(form.querySelector('[name="image"]').value);
   form.querySelector('[name="meta"]').value = product?.meta || '';
   form.querySelector('[name="description"]').value = product?.desc || product?.description || '';
   form.querySelector('[name="draft"]').checked = !!product?.draft;
@@ -1773,6 +1774,62 @@ function validateDrawerData(data, mode) {
   return errors;
 }
 
+/* ---------- DRAWER PHOTO UPLOAD ----------
+ * Max can pick a photo from his computer (or one downloaded from the
+ * Image Builder). We resize to 1024px on the long edge and re-encode
+ * as JPEG so the data URL fits comfortably in D1 (max row ~1MB).
+ */
+function previewProductImage(src) {
+  const previewEl = document.getElementById('pdfPhotoPreview');
+  const clearBtn  = document.getElementById('pdfPhotoClear');
+  if (!previewEl) return;
+  const looksEmpty = !src || src === 'assets/images/products/' || src.endsWith('/');
+  if (looksEmpty) {
+    previewEl.innerHTML = '<span class="pdf-photo-empty">No photo yet</span>';
+    if (clearBtn) clearBtn.hidden = true;
+    return;
+  }
+  const isData = src.startsWith('data:');
+  const resolved = isData ? src : ('/' + src.replace(/^\/+/, ''));
+  const img = new Image();
+  img.alt = '';
+  img.onload = () => {
+    previewEl.innerHTML = '';
+    previewEl.appendChild(img);
+  };
+  img.onerror = () => {
+    previewEl.innerHTML = '<span class="pdf-photo-empty">Couldn\'t load that path</span>';
+  };
+  img.src = resolved;
+  if (clearBtn) clearBtn.hidden = false;
+}
+
+async function shrinkImageFile(file, maxEdge = 1024, quality = 0.85) {
+  const dataUrl = await new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = () => reject(new Error('read failed'));
+    r.readAsDataURL(file);
+  });
+  const img = await new Promise((resolve, reject) => {
+    const im = new Image();
+    im.onload = () => resolve(im);
+    im.onerror = () => reject(new Error('decode failed'));
+    im.src = dataUrl;
+  });
+  const w = img.naturalWidth, h = img.naturalHeight;
+  const scale = Math.min(1, maxEdge / Math.max(w, h));
+  const tw = Math.max(1, Math.round(w * scale));
+  const th = Math.max(1, Math.round(h * scale));
+  const cv = document.createElement('canvas');
+  cv.width = tw; cv.height = th;
+  const ctx = cv.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, tw, th);
+  ctx.drawImage(img, 0, 0, tw, th);
+  return cv.toDataURL('image/jpeg', quality);
+}
+
 (() => {
   // Wire drawer once on script load
   const form = _drawer.form(); if (!form) return;
@@ -1782,6 +1839,42 @@ function validateDrawerData(data, mode) {
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && !_drawer.el()?.hidden) closeProductDrawer();
   });
+
+  // Photo upload widget
+  const fileInput = document.getElementById('pdfPhotoFile');
+  const uploadBtn = document.getElementById('pdfPhotoUpload');
+  const clearBtn  = document.getElementById('pdfPhotoClear');
+  const imageInput = form.querySelector('[name="image"]');
+  uploadBtn?.addEventListener('click', () => fileInput?.click());
+  fileInput?.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!/^image\//.test(file.type)) {
+      toast('That doesn\'t look like a photo. Try a JPG, PNG or WebP.');
+      return;
+    }
+    uploadBtn.disabled = true;
+    const originalLabel = uploadBtn.textContent;
+    uploadBtn.textContent = 'Resizing…';
+    try {
+      const dataUrl = await shrinkImageFile(file);
+      imageInput.value = dataUrl;
+      previewProductImage(dataUrl);
+      toast('Photo loaded — hit Save to keep it.');
+    } catch (err) {
+      console.error('photo upload failed', err);
+      toast('Couldn\'t read that file. Try a JPG or PNG.');
+    } finally {
+      uploadBtn.disabled = false;
+      uploadBtn.textContent = originalLabel;
+      fileInput.value = '';
+    }
+  });
+  clearBtn?.addEventListener('click', () => {
+    imageInput.value = 'assets/images/products/';
+    previewProductImage('');
+  });
+  imageInput?.addEventListener('input', () => previewProductImage(imageInput.value));
 
   _drawer.saveBtn()?.addEventListener('click', async () => {
     const data = readDrawerForm();
