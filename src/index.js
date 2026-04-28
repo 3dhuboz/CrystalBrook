@@ -105,19 +105,26 @@ async function isAuthorised(request, env) {
   const sent = request.headers.get('x-admin-password');
   if (!sent) return false;
 
-  // Once Max has rotated, the D1 hash is the source of truth.
+  // Two valid credentials, either grants access:
+  //   1. env.ADMIN_PASSWORD — the developer master, set via
+  //      `wrangler secret put ADMIN_PASSWORD`. Never changes when Max
+  //      rotates his password from inside the admin UI, so Steve can
+  //      always get back in to debug or reset things.
+  //   2. The PBKDF2 hash in admin_password (id=1) — Max's user-rotatable
+  //      password, set/changed from Settings → Admin password.
+  // Both are checked on every auth so neither side can lock the other out.
+  const master = env.ADMIN_PASSWORD;
+  if (master && constantTimeEqualString(sent, master)) return true;
+
   const row = await env.DB.prepare(
     'SELECT hash, salt FROM admin_password WHERE id = 1'
   ).first();
   if (row && row.hash && row.salt) {
     const computed = await pbkdf2Hash(sent, row.salt);
-    return constantTimeEqualString(computed, row.hash);
+    if (constantTimeEqualString(computed, row.hash)) return true;
   }
 
-  // Bootstrap mode (D1 row absent): fall through to the Worker secret.
-  const expected = env.ADMIN_PASSWORD;
-  if (!expected) return false;
-  return constantTimeEqualString(sent, expected);
+  return false;
 }
 
 function validateProductPatch(patch) {
