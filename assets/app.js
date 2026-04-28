@@ -2474,62 +2474,98 @@ window.__cbRenderProductPage = renderProductPage;
   }
 })();
 
-/* ---------- HOLIDAY MODE BANNER (all storefront pages) ---------- */
+/* ---------- HOLIDAY MODE BANNER (all storefront pages) ----------
+ * State now lives in D1 site_content (keys holiday_active, holiday_until,
+ * holiday_message). The banner fetches /api/content on load. localStorage
+ * is kept as a fast first-paint cache so returning visitors see the
+ * banner before the API responds.
+ */
 (() => {
   if (!document.body) return;
+
+  // Read cached fallback so the first paint isn't blocked by the API call
   let state;
   try { state = JSON.parse(localStorage.getItem('cbwm_holiday') || '{}') || {}; }
   catch(_) { state = {}; }
-  if (!state.active) return;
 
-  // Past the "back on" date? Treat as inactive.
-  if (state.until) {
-    const back = new Date(state.until + 'T00:00:00');
-    if (!isNaN(back) && back < new Date()) return;
-  }
-
-  // Format the "back on" date in a friendly way (e.g. "12 May")
-  let backLabel = '';
-  if (state.until) {
-    const d = new Date(state.until + 'T00:00:00');
-    if (!isNaN(d)) {
-      backLabel = d.toLocaleDateString('en-AU', { day: 'numeric', month: 'long' });
+  function applyState(s) {
+    document.querySelectorAll('.holiday-banner').forEach(el => el.remove());
+    if (!s || !s.active) {
+      // Re-enable any locked checkout/next buttons in case the banner was lifted
+      const cb = document.getElementById('checkoutBtn');
+      if (cb && cb.classList.contains('is-locked')) {
+        cb.disabled = false;
+        cb.classList.remove('is-locked');
+        cb.textContent = 'Checkout';
+      }
+      document.querySelectorAll('[data-co-next].is-locked').forEach(b => {
+        b.disabled = false;
+        b.classList.remove('is-locked');
+      });
+      return;
     }
-  }
 
-  const banner = document.createElement('div');
-  banner.className = 'holiday-banner';
-  banner.setAttribute('role', 'status');
-  const msg = (state.message || '').trim() || 'We\'re away from the workshop for a short break — orders resume the moment we\'re back.';
-  banner.innerHTML = `
-    <span class="holiday-banner-mark" aria-hidden="true">
-      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2 4 7v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V7l-8-5z"/></svg>
-    </span>
-    <span class="holiday-banner-copy">
-      <strong>Workshop on holiday${backLabel ? ` — back ${backLabel}` : ''}.</strong>
-      <span>${msg}</span>
-    </span>
-  `;
-  document.body.insertBefore(banner, document.body.firstChild);
-
-  // Disable the cart checkout button and any in-flow checkout-next buttons
-  function lockCheckout(){
-    const checkoutBtn = document.getElementById('checkoutBtn');
-    if (checkoutBtn) {
-      checkoutBtn.disabled = true;
-      checkoutBtn.classList.add('is-locked');
-      checkoutBtn.textContent = backLabel ? `Orders paused — back ${backLabel}` : 'Orders paused';
+    // Past the "back on" date? Treat as inactive.
+    if (s.until) {
+      const back = new Date(s.until + 'T00:00:00');
+      if (!isNaN(back) && back < new Date()) return;
     }
-    document.querySelectorAll('[data-co-next]').forEach(b => {
-      b.disabled = true;
-      b.classList.add('is-locked');
-    });
+
+    let backLabel = '';
+    if (s.until) {
+      const d = new Date(s.until + 'T00:00:00');
+      if (!isNaN(d)) backLabel = d.toLocaleDateString('en-AU', { day: 'numeric', month: 'long' });
+    }
+    const banner = document.createElement('div');
+    banner.className = 'holiday-banner';
+    banner.setAttribute('role', 'status');
+    const msg = (s.message || '').trim() ||
+      'We\'re away from the workshop for a short break — orders resume the moment we\'re back.';
+    banner.innerHTML = `
+      <span class="holiday-banner-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2 4 7v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V7l-8-5z"/></svg>
+      </span>
+      <span class="holiday-banner-copy">
+        <strong>Workshop on holiday${backLabel ? ` — back ${backLabel}` : ''}.</strong>
+        <span>${msg}</span>
+      </span>
+    `;
+    document.body.insertBefore(banner, document.body.firstChild);
+
+    function lockCheckout(){
+      const checkoutBtn = document.getElementById('checkoutBtn');
+      if (checkoutBtn) {
+        checkoutBtn.disabled = true;
+        checkoutBtn.classList.add('is-locked');
+        checkoutBtn.textContent = backLabel ? `Orders paused — back ${backLabel}` : 'Orders paused';
+      }
+      document.querySelectorAll('[data-co-next]').forEach(b => {
+        b.disabled = true;
+        b.classList.add('is-locked');
+      });
+    }
+    lockCheckout();
+    const obs = new MutationObserver(lockCheckout);
+    const cartFoot = document.getElementById('cartFoot');
+    if (cartFoot) obs.observe(cartFoot, { childList: true, subtree: true });
   }
-  // Run now and again on each cart re-render (other code calls renderCart)
-  lockCheckout();
-  const obs = new MutationObserver(lockCheckout);
-  const cartFoot = document.getElementById('cartFoot');
-  if (cartFoot) obs.observe(cartFoot, { childList: true, subtree: true });
+
+  applyState(state);
+
+  // Then refresh from D1 so customers everywhere see the latest, even
+  // if they've never visited the admin (which is what was holding the
+  // localStorage-only flow back from actually working).
+  fetch('/api/content', { cache: 'no-store' }).then(r => r.ok && r.json()).then(data => {
+    if (!data || !data.content) return;
+    const c = data.content;
+    const fresh = {
+      active: c.holiday_active === '1' || c.holiday_active === 'true',
+      until:   c.holiday_until || '',
+      message: c.holiday_message || '',
+    };
+    try { localStorage.setItem('cbwm_holiday', JSON.stringify(fresh)); } catch (_) {}
+    applyState(fresh);
+  }).catch(() => {});
 })();
 
 /* ---------- SHARED: image shrinker + request submission ----------

@@ -1021,39 +1021,22 @@ function openNewManualOrderForm() {
   setTimeout(() => form.querySelector('[name="name"]')?.focus(), 50);
 }
 
-/* ---------- HOMEPAGE EDITOR · sortable featured list ---------- */
-function renderFeatured(){
-  const el = document.getElementById('featSortable'); if(!el) return;
-  const featured = PRODUCTS.slice(0,8);
-  el.innerHTML = featured.map(p=>`
-    <li draggable="true" data-id="${p.id}">
-      <span class="sort-handle">⋮⋮</span>
-      <span class="sort-thumb">${p.img}</span>
-      <span>
-        <span class="sort-name">${p.name}</span>
-        <span class="sort-sub">${p.cat} · $${p.price}</span>
-      </span>
-      <button class="sort-rm" title="Remove">×</button>
-    </li>
-  `).join('');
-  let dragged;
-  el.querySelectorAll('li').forEach(li=>{
-    li.addEventListener('dragstart', ()=>{ dragged = li; li.style.opacity=.4; });
-    li.addEventListener('dragend',   ()=>{ li.style.opacity=1; dragged=null; });
-    li.addEventListener('dragover',  e=> e.preventDefault());
-    li.addEventListener('drop',      e=>{
-      e.preventDefault();
-      if(dragged && dragged!==li){
-        const rect = li.getBoundingClientRect();
-        const after = (e.clientY - rect.top) > rect.height/2;
-        el.insertBefore(dragged, after ? li.nextSibling : li);
-      }
-    });
-  });
-}
+/* ---------- HOMEPAGE EDITOR · featured products list ----------
+ * (Removed during the Homepage Editor rebuild — Max's homepage now
+ * shows the category-showcase tiles instead of curated featured
+ * products, and the rebuilt content editor doesn't include a feature
+ * picker. If a featured-products row is added to the storefront
+ * homepage in future, persist the picked IDs in
+ * site_content.home_featured_ids and read them back here.) */
+function renderFeatured(){ /* intentionally a no-op for now */ }
 renderFeatured();
 
-/* ---------- HOLIDAY MODE ---------- */
+/* ---------- HOLIDAY MODE ----------
+ * Persisted in D1 site_content under three keys (holiday_active,
+ * holiday_until, holiday_message) so the banner reaches every
+ * customer, not just whoever's localStorage Max happens to share.
+ * localStorage is still updated as a fast cache for first-paint.
+ */
 (() => {
   const KEY = 'cbwm_holiday';
   const activeEl = document.getElementById('holidayActive');
@@ -1062,19 +1045,6 @@ renderFeatured();
   const pill     = document.getElementById('holidayStatusPill');
   if (!activeEl || !untilEl || !msgEl) return;
 
-  function load(){
-    try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; }
-    catch (_) { return {}; }
-  }
-  function save(state){
-    localStorage.setItem(KEY, JSON.stringify(state));
-  }
-  function updatePill(state){
-    if (!pill) return;
-    const on = !!state.active;
-    pill.dataset.state = on ? 'on' : 'off';
-    pill.textContent = on ? 'On' : 'Off';
-  }
   function read(){
     return {
       active: !!activeEl.checked,
@@ -1082,21 +1052,73 @@ renderFeatured();
       message: msgEl.value || '',
     };
   }
-  function commit(){
-    const state = read();
-    save(state);
-    updatePill(state);
+  function updatePill(state){
+    if (!pill) return;
+    const on = !!state.active;
+    pill.dataset.state = on ? 'on' : 'off';
+    pill.textContent = on ? 'On' : 'Off';
+  }
+  function localCache(state){
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (_) {}
   }
 
-  const initial = load();
-  activeEl.checked = !!initial.active;
-  untilEl.value    = initial.until || '';
-  msgEl.value      = initial.message || msgEl.value;
-  updatePill(initial);
+  // Async-debounced save — clicking the toggle or typing in the message
+  // shouldn't fire 50 PUTs in a row.
+  let pending = null;
+  async function saveRemote() {
+    const state = read();
+    localCache(state);
+    updatePill(state);
+    try {
+      await Promise.all([
+        saveContent('holiday_active',  state.active ? '1' : '0'),
+        saveContent('holiday_until',   state.until || ''),
+        saveContent('holiday_message', state.message || ''),
+      ]);
+      if (pill) {
+        pill.classList.add('is-flash');
+        setTimeout(() => pill.classList.remove('is-flash'), 800);
+      }
+    } catch (err) {
+      toast('Holiday mode save failed — try again');
+    }
+  }
+  function commit(){
+    clearTimeout(pending);
+    pending = setTimeout(saveRemote, 500);
+  }
+
+  // Populate from D1 first, fall back to localStorage if /api/content is
+  // unreachable. Without this, the admin always shows whatever's in this
+  // browser's localStorage — even if Max set it on a different machine.
+  (async () => {
+    let initial = {};
+    try {
+      const res = await fetch('/api/content', { cache: 'no-store' });
+      if (res.ok) {
+        const { content } = await res.json();
+        if (content) initial = {
+          active:  content.holiday_active === '1' || content.holiday_active === 'true',
+          until:   content.holiday_until || '',
+          message: content.holiday_message || '',
+        };
+      }
+    } catch (_) {}
+    if (!initial.active && !initial.until && !initial.message) {
+      try { initial = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; }
+      catch (_) { initial = {}; }
+    }
+    activeEl.checked = !!initial.active;
+    untilEl.value    = initial.until || '';
+    if (initial.message) msgEl.value = initial.message;
+    updatePill(initial);
+    localCache(initial);
+  })();
 
   activeEl.addEventListener('change', commit);
   untilEl.addEventListener('change', commit);
   msgEl.addEventListener('input', commit);
+  msgEl.addEventListener('blur', () => { clearTimeout(pending); saveRemote(); });
 })();
 
 /* ---------- PUBLISH BUTTON ---------- */
