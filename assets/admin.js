@@ -2015,8 +2015,7 @@ async function saveContent(key, value) {
   }
 }
 
-async function loadAboutEditor() {
-  const view = document.querySelector('[data-view="about"]');
+async function loadContentEditorFor(view) {
   if (!view) return;
   const labels = view.querySelectorAll('[data-content-edit]');
   if (!labels.length) return;
@@ -2031,16 +2030,20 @@ async function loadAboutEditor() {
       if (field && key in content) field.value = content[key];
     });
   } catch (err) {
-    console.warn('about editor: load failed', err);
+    console.warn('content editor: load failed', err);
   }
 }
+// Back-compat alias used elsewhere
+const loadAboutEditor = () =>
+  loadContentEditorFor(document.querySelector('section[data-view="about"]'));
 
-(() => {
-  const view = document.querySelector('[data-view="about"]');
+function wireContentEditor(viewName, opts = {}) {
+  // Scope to <section> — the nav uses the same data-view on its <a> link.
+  const view = document.querySelector(`section[data-view="${viewName}"]`);
   if (!view) return;
-
   const labels = view.querySelectorAll('[data-content-edit]');
-  const statusEl = document.getElementById('aboutSaveStatus');
+  if (!labels.length) return;
+  const statusEl = opts.statusElId ? document.getElementById(opts.statusElId) : null;
 
   function showSaved(msg = 'Saved ✓') {
     if (!statusEl) return;
@@ -2081,21 +2084,23 @@ async function loadAboutEditor() {
       clearTimeout(pending);
       pending = setTimeout(flush, 1500);
     });
-    // Stash initial value once loadAboutEditor() populates the field
+    // Stash initial value once loadContentEditorFor() populates the field
     field.addEventListener('focus', () => { initial = field.value; }, { once: true });
   });
 
-  // Load values when admin first lands on /admin (we may not be on the
-  // About view yet, but populating ahead of time keeps switching snappy)
-  loadAboutEditor();
+  // Populate values once on admin entry so switching to this view is instant
+  loadContentEditorFor(view);
 
-  // If the admin navigates to the About view later, refresh values then too
+  // Refresh values whenever Max actually navigates to this view
   const sideNav = document.getElementById('sideNav');
   sideNav?.addEventListener('click', e => {
-    const link = e.target.closest('[data-view="about"]');
-    if (link) loadAboutEditor();
+    const link = e.target.closest(`[data-view="${viewName}"]`);
+    if (link) loadContentEditorFor(view);
   });
-})();
+}
+
+wireContentEditor('about', { statusElId: 'aboutSaveStatus' });
+wireContentEditor('shipping', { statusElId: 'shippingSaveStatus' });
 
 
 /* ---------- CHANGE ADMIN PASSWORD (Settings card) ---------- *
