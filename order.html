@@ -31,10 +31,10 @@
       </span>
     </a>
     <nav class="nav-links" aria-label="Primary">
-      <a href="index.html">Home</a>
-      <a href="shop.html">Shop</a>
-      <a href="about.html">About Max</a>
-      <a href="about.html#contact">Contact</a>
+      <a href="index.html" data-content-key="nav_home">Home</a>
+      <a href="shop.html" data-content-key="nav_shop">Shop</a>
+      <a href="about.html" data-content-key="nav_about">About Max</a>
+      <a href="about.html#contact" data-content-key="nav_contact">Contact</a>
     </nav>
     <div class="nav-actions">
       <button class="icon-btn" id="searchBtn" aria-label="Search the collection" title="Search (press /)">
@@ -112,53 +112,53 @@
 <footer class="site-footer">
   <div class="foot-top">
     <div class="foot-brand">
-      <span class="brand-name">Crystal Brook Wall Mounts</span>
-      <span class="brand-sub">Bring the world to your walls</span>
-      <p>Handcrafted resin-coated wall mounts from our Gordonvale workshop in Far North Queensland.</p>
+      <span class="brand-name" data-content-key="footer_brand_name">Crystal Brook Wall Mounts</span>
+      <span class="brand-sub" data-content-key="footer_brand_sub">Bring the world to your walls</span>
+      <p data-content-key="footer_brand_lede">Handcrafted resin-coated wall mounts from our Gordonvale workshop in Far North Queensland.</p>
     </div>
     <div class="foot-cols">
       <div>
-        <h5>Shop</h5>
+        <h5 data-content-key="footer_col_shop_h">Shop</h5>
         <a href="shop.html#saltwater">Saltwater Fish</a><a href="shop.html#freshwater">Freshwater Fish</a><a href="shop.html#cars">Cars</a><a href="shop.html#animals">Animals</a><a href="shop.html#birds">Birds</a><a href="shop.html#montages">Montages</a>
       </div>
       <div>
-        <h5>Company</h5>
+        <h5 data-content-key="footer_col_company_h">Company</h5>
         <a href="about.html">About Max</a><a href="about.html#contact">Contact</a><a href="policies.html#shipping">Shipping</a><a href="policies.html#returns">Returns</a>
       </div>
       <div>
-        <h5>Follow</h5>
+        <h5 data-content-key="footer_col_follow_h">Follow</h5>
         <a href="#">Facebook</a><a href="#">Instagram</a><a href="#">TikTok</a>
       </div>
     </div>
   </div>
   <div class="foot-bot">
     <span>© <span id="year"></span> Crystal Brook Wall Mounts</span>
-    <span>Built by <a href="#">Penny Wise I.T.</a></span>
+    <span><span data-content-key="footer_built_label">Built by</span> <a href="#">Penny Wise I.T.</a></span>
   </div>
 </footer>
 
 <!-- ============ CART DRAWER ============ -->
 <aside class="cart-drawer" id="cartDrawer" aria-hidden="true">
   <div class="cart-head">
-    <h3>Your cart</h3>
+    <h3 data-content-key="cart_heading">Your cart</h3>
     <button class="icon-btn" id="cartClose" aria-label="Close cart">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m6 6 12 12M18 6 6 18"/></svg>
     </button>
   </div>
   <div class="cart-body" id="cartBody">
-    <p class="cart-empty">Your cart's empty.<br/>Have a browse of <a href="shop.html">the collection →</a></p>
+    <p class="cart-empty" data-content-key="cart_empty" data-content-html>Your cart's empty.<br/>Have a browse of <a href="shop.html">the collection →</a></p>
   </div>
   <div class="cart-foot" id="cartFoot" hidden>
-    <div class="cart-total"><span>Subtotal</span><strong id="cartTotal">$0</strong></div>
-    <button class="btn btn-primary btn-block" id="checkoutBtn" type="button">Checkout</button>
-    <small>Free shipping Australia-wide.</small>
+    <div class="cart-total"><span data-content-key="cart_subtotal_label">Subtotal</span><strong id="cartTotal">$0</strong></div>
+    <button class="btn btn-primary btn-block" id="checkoutBtn" type="button" data-content-key="cart_checkout_btn">Checkout</button>
+    <small data-content-key="cart_shipping_note">Free shipping Australia-wide.</small>
   </div>
 </aside>
 
 <!-- ============ WISHLIST DRAWER ============ -->
 <aside class="cart-drawer wishlist-drawer" id="wishlistDrawer" aria-hidden="true">
   <div class="cart-head">
-    <h3>Wishlist</h3>
+    <h3 data-content-key="wishlist_heading">Wishlist</h3>
     <button class="icon-btn" id="wishlistClose" aria-label="Close wishlist">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m6 6 12 12M18 6 6 18"/></svg>
     </button>
@@ -177,7 +177,7 @@
       </button>
     </div>
     <div class="search-results" id="searchResults">
-      <p class="search-hint">Try <button class="search-chip" data-q="barra">barra</button> · <button class="search-chip" data-q="monaro">monaro</button> · <button class="search-chip" data-q="lorikeet">lorikeet</button> · <button class="search-chip" data-q="reef">reef</button></p>
+      <p class="search-hint"><span data-content-key="search_chips_label">Try </span><button class="search-chip" data-q="barra">barra</button> · <button class="search-chip" data-q="monaro">monaro</button> · <button class="search-chip" data-q="lorikeet">lorikeet</button> · <button class="search-chip" data-q="reef">reef</button></p>
     </div>
   </div>
 </div>
@@ -195,17 +195,17 @@
     </button>
   </div>
   <nav class="nav-drawer-links" aria-label="Primary mobile">
-    <a href="index.html"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m3 12 9-8 9 8v9a1 1 0 0 1-1 1h-5v-7H10v7H5a1 1 0 0 1-1-1z"/></svg><span>Home</span></a>
-    <a href="shop.html"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 8h14l-1 12H6zM9 8a3 3 0 0 1 6 0"/></svg><span>Shop the collection</span></a>
-    <a href="about.html"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>About Max</span></a>
-    <a href="about.html#contact"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 7l9 6 9-6M3 7v10h18V7"/></svg><span>Contact</span></a>
+    <a href="index.html"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m3 12 9-8 9 8v9a1 1 0 0 1-1 1h-5v-7H10v7H5a1 1 0 0 1-1-1z"/></svg><span data-content-key="mobilenav_home">Home</span></a>
+    <a href="shop.html"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 8h14l-1 12H6zM9 8a3 3 0 0 1 6 0"/></svg><span data-content-key="mobilenav_shop">Shop the collection</span></a>
+    <a href="about.html"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span data-content-key="mobilenav_about">About Max</span></a>
+    <a href="about.html#contact"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 7l9 6 9-6M3 7v10h18V7"/></svg><span data-content-key="mobilenav_contact">Contact</span></a>
   </nav>
   <div class="nav-drawer-foot">
     <a href="admin/index.html" class="nav-drawer-admin">
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="9"/></svg>
-      <span>Admin dashboard</span>
+      <span data-content-key="mobilenav_admin">Admin dashboard</span>
     </a>
-    <p class="nav-drawer-tagline">Handcrafted in Gordonvale, FNQ · est. 2019</p>
+    <p class="nav-drawer-tagline" data-content-key="mobilenav_tagline">Handcrafted in Gordonvale, FNQ · est. 2019</p>
   </div>
 </aside>
 

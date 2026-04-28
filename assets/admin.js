@@ -2602,6 +2602,7 @@ wireContentEditor('shipping',    { statusElId: 'shippingSaveStatus',    saveAllB
 wireContentEditor('returns',     { statusElId: 'returnsSaveStatus',     saveAllBtnId: 'returnsSaveAll' });
 wireContentEditor('guarantee',   { statusElId: 'guaranteeSaveStatus',   saveAllBtnId: 'guaranteeSaveAll' });
 wireContentEditor('commissions', { statusElId: 'commissionsSaveStatus', saveAllBtnId: 'commissionsSaveAll' });
+wireContentEditor('sitewide',    { statusElId: 'sitewideSaveStatus',    saveAllBtnId: 'sitewideSaveAll' });
 wireContentEditor('settings',    { statusElId: 'settingsSaveStatus',    saveAllBtnId: 'settingsSaveAll' });
 
 
