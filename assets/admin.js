@@ -565,33 +565,48 @@ function renderOrders(){
 }
 renderOrders();
 
-/* ---------- CUSTOM ORDERS KANBAN ---------- */
+/* ---------- CUSTOM ORDERS KANBAN ---------- *
+ * Live requests come from D1 via GET /api/requests (admin auth). We
+ * render the static CUSTOM_ORDERS stub columns alongside so the page
+ * still has the kanban shape on first paint, then re-render when the
+ * fetch lands. Click a request card to open a detail drawer with the
+ * full submission (incl. reference photo and notes).
+ */
+function relativeTime(iso) {
+  if (!iso) return '';
+  const t = new Date(iso.replace(' ', 'T') + 'Z').getTime();
+  if (!Number.isFinite(t)) return '';
+  const diff = (Date.now() - t) / 1000;
+  if (diff < 90) return 'Just in';
+  if (diff < 3600) return Math.round(diff / 60) + ' min ago';
+  if (diff < 86400) return Math.round(diff / 3600) + ' h ago';
+  if (diff < 86400 * 7) return Math.round(diff / 86400) + ' d ago';
+  return new Date(iso).toLocaleDateString();
+}
+
+let _requestsCache = [];
+
 function renderKanban(){
   const kb = document.getElementById('kanban'); if(!kb) return;
-
-  // Pull any "Request a piece" submissions from the storefront's localStorage
-  // and prepend them to the New column. They have no photo or quote — just a
-  // text brief — so we render a lightweight variant with a "Request" tag.
-  let live = [];
-  try { live = JSON.parse(localStorage.getItem('cbwm_requests') || '[]'); } catch(_) {}
-  const liveCards = live.map(r => ({
-    name: r.name || 'Anonymous',
-    subject: r.subject || '(no subject)',
-    size: r.size ? r.size.toUpperCase() : '—',
-    budget: 'Awaiting quote',
-    due: 'Just in',
+  const reqCards = _requestsCache.filter(r => r.status === 'new').map(r => ({
+    id:       r.id,
+    name:     r.name || 'Anonymous',
+    subject:  r.subject || '(no subject)',
+    size:     r.size ? r.size.toUpperCase() : '—',
+    budget:   'Awaiting quote',
+    due:      relativeTime(r.createdAt),
     isRequest: true,
-    category: r.category || '',
+    hasPhoto: !!r.photoDataUrl,
   }));
-
-  const merged = { ...CUSTOM_ORDERS, New: [...liveCards, ...CUSTOM_ORDERS.New] };
+  const merged = { ...CUSTOM_ORDERS, New: [...reqCards, ...CUSTOM_ORDERS.New] };
 
   kb.innerHTML = Object.entries(merged).map(([title, cards])=>`
     <div class="kcol">
       <div class="kcol-head"><strong>${title}</strong><span>${cards.length}</span></div>
       ${cards.map(c=>`
-        <div class="kcard${c.isRequest ? ' is-request' : ''}" draggable="true">
+        <div class="kcard${c.isRequest ? ' is-request' : ''}"${c.id ? ` data-request-id="${c.id}"` : ''} draggable="true">
           ${c.isRequest ? '<span class="kcard-pill">Request</span>' : ''}
+          ${c.hasPhoto  ? '<span class="kcard-photo-pill" title="Reference photo attached">📎 photo</span>' : ''}
           <div class="kcard-name">${c.name}</div>
           <div class="kcard-sub">${c.subject}</div>
           <div class="kcard-row">
@@ -602,8 +617,96 @@ function renderKanban(){
       `).join('')}
     </div>
   `).join('');
+
+  kb.querySelectorAll('[data-request-id]').forEach(card => {
+    card.addEventListener('click', () => openRequestDetail(card.dataset.requestId));
+  });
 }
 renderKanban();
+
+async function refreshRequestsFromAPI() {
+  try {
+    const res = await fetch('/api/requests', {
+      headers: { ...adminAuthHeaders() },
+      cache: 'no-store',
+    });
+    if (!res.ok) {
+      if (res.status === 401) {
+        localStorage.removeItem(ADMIN_AUTH_KEY);
+        showAdminLogin('Your session expired — please sign in again.');
+      }
+      return;
+    }
+    const data = await res.json();
+    _requestsCache = Array.isArray(data.requests) ? data.requests : [];
+    renderKanban();
+  } catch (err) {
+    console.warn('[requests] fetch failed', err);
+  }
+}
+refreshRequestsFromAPI();
+
+function openRequestDetail(id) {
+  const r = _requestsCache.find(x => x.id === id);
+  if (!r) return;
+  let modal = document.getElementById('requestDetailModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'requestDetailModal';
+    modal.className = 'request-detail-modal';
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.hidden = true; });
+  }
+  const photo = r.photoDataUrl
+    ? `<div class="rd-photo"><img src="${r.photoDataUrl}" alt="Reference photo"/></div>`
+    : '<div class="rd-photo rd-photo-empty">No reference photo attached</div>';
+  modal.innerHTML = `
+    <div class="rd-card">
+      <button class="rd-close" type="button" aria-label="Close">×</button>
+      <p class="rd-eyebrow">${r.id} · ${relativeTime(r.createdAt)}</p>
+      <h2 class="rd-name">${r.name}</h2>
+      <p class="rd-meta">
+        <a href="mailto:${r.email}">${r.email}</a>
+        ${r.phone ? ` · <a href="tel:${r.phone}">${r.phone}</a>` : ''}
+      </p>
+      ${photo}
+      <dl class="rd-list">
+        <div><dt>What they want</dt><dd>${(r.subject || '').replace(/</g,'&lt;')}</dd></div>
+        ${r.category ? `<div><dt>Category</dt><dd>${r.category}</dd></div>` : ''}
+        ${r.size ? `<div><dt>Size</dt><dd>${r.size}</dd></div>` : ''}
+        ${r.notes ? `<div><dt>Notes</dt><dd>${(r.notes || '').replace(/</g,'&lt;')}</dd></div>` : ''}
+        <div><dt>Source</dt><dd>${r.source || '—'}</dd></div>
+        <div><dt>Status</dt><dd>${r.status}</dd></div>
+      </dl>
+      <div class="rd-actions">
+        <a class="btn btn-gold" href="mailto:${r.email}?subject=${encodeURIComponent('Re: ' + r.subject.slice(0, 60))}&body=${encodeURIComponent('Hi ' + (r.name.split(' ')[0] || '') + ',\n\n')}">Reply by email →</a>
+        <button class="btn btn-ghost" type="button" data-rd-status="quoted">Mark as quoted</button>
+        <button class="btn btn-ghost" type="button" data-rd-status="declined">Decline</button>
+      </div>
+    </div>`;
+  modal.hidden = false;
+  modal.querySelector('.rd-close').addEventListener('click', () => modal.hidden = true);
+  modal.querySelectorAll('[data-rd-status]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const status = btn.dataset.rdStatus;
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/requests/' + encodeURIComponent(r.id), {
+          method: 'PATCH',
+          headers: { 'content-type': 'application/json', ...adminAuthHeaders() },
+          body: JSON.stringify({ status }),
+        });
+        if (!res.ok) throw new Error('save failed');
+        toast('Marked ' + status);
+        modal.hidden = true;
+        refreshRequestsFromAPI();
+      } catch (err) {
+        toast('Save failed — try again');
+        btn.disabled = false;
+      }
+    });
+  });
+}
 
 /* ---------- HOMEPAGE EDITOR · sortable featured list ---------- */
 function renderFeatured(){

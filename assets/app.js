@@ -2532,6 +2532,52 @@ window.__cbRenderProductPage = renderProductPage;
   if (cartFoot) obs.observe(cartFoot, { childList: true, subtree: true });
 })();
 
+/* ---------- SHARED: image shrinker + request submission ----------
+ * Used by both the shop.html "Request a piece" modal and the
+ * about.html#contact quote form. Resizes a picked file to ≤ 1024px
+ * and re-encodes as JPEG @ q0.82 so the resulting data URL fits
+ * comfortably under D1's 1MB row cap.
+ */
+async function shrinkImageFileForReference(file, maxEdge = 1024, quality = 0.82) {
+  const dataUrl = await new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = () => reject(new Error('read failed'));
+    r.readAsDataURL(file);
+  });
+  const img = await new Promise((resolve, reject) => {
+    const im = new Image();
+    im.onload = () => resolve(im);
+    im.onerror = () => reject(new Error('decode failed'));
+    im.src = dataUrl;
+  });
+  const w = img.naturalWidth, h = img.naturalHeight;
+  const scale = Math.min(1, maxEdge / Math.max(w, h));
+  const tw = Math.max(1, Math.round(w * scale));
+  const th = Math.max(1, Math.round(h * scale));
+  const cv = document.createElement('canvas');
+  cv.width = tw; cv.height = th;
+  const ctx = cv.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, tw, th);
+  ctx.drawImage(img, 0, 0, tw, th);
+  return cv.toDataURL('image/jpeg', quality);
+}
+
+async function submitQuoteRequest(payload) {
+  const res = await fetch('/api/requests', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    let msg = 'Server rejected the request';
+    try { const j = await res.json(); if (j.error) msg = j.error; } catch (_) {}
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
 /* ---------- REQUEST-A-PIECE CTA (shop.html) ---------- */
 (() => {
   const cta      = document.getElementById('requestCta');
@@ -2591,7 +2637,7 @@ window.__cbRenderProductPage = renderProductPage;
   modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.hidden) closeModal(); });
 
-  form.addEventListener('submit', e => {
+  form.addEventListener('submit', async e => {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(form).entries());
     const missing = ['subject','name','email'].filter(k => !data[k]?.trim());
@@ -2599,20 +2645,136 @@ window.__cbRenderProductPage = renderProductPage;
       toast(`Please add your ${missing.join(', ')}.`);
       return;
     }
-    const entry = {
-      id: 'REQ-' + Date.now().toString(36).toUpperCase(),
-      ...data,
-      source: 'request',
-      submittedAt: new Date().toISOString(),
-    };
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalLabel = submitBtn?.textContent;
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Sending…'; }
     try {
-      const list = JSON.parse(localStorage.getItem('cbwm_requests') || '[]');
-      list.unshift(entry);
-      localStorage.setItem('cbwm_requests', JSON.stringify(list));
-    } catch (_) {}
+      const result = await submitQuoteRequest({
+        name: data.name, email: data.email, phone: data.phone || '',
+        subject: data.subject, category: data.category || '',
+        size: data.size || '', notes: data.notes || '',
+        source: 'shop_request',
+      });
+      form.reset();
+      closeModal();
+      toast(`Request sent (${result.id}) — Max will reply within a business day.`);
+    } catch (err) {
+      toast(`Couldn't send: ${err.message || 'try again in a moment'}`);
+    } finally {
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = originalLabel; }
+    }
+  });
+})();
+
+/* ---------- ABOUT-PAGE CONTACT FORM (about.html#contact) ----------
+ * Same backend as the shop.html modal — POST /api/requests. Includes
+ * an optional reference photo (data URL) which the customer can attach
+ * for inspiration; the form copy is explicit that Max prints from
+ * ideas not photos.
+ */
+(() => {
+  const form        = document.getElementById('contactForm');
+  if (!form) return;
+  const errEl       = document.getElementById('contactErr');
+  const thanksEl    = document.getElementById('contactThanks');
+  const thanksIdEl  = document.getElementById('contactThanksId');
+  const anotherBtn  = document.getElementById('contactThanksAnother');
+  const photoInput  = document.getElementById('contactPhotoFile');
+  const photoUpload = document.getElementById('contactPhotoUpload');
+  const photoClear  = document.getElementById('contactPhotoClear');
+  const photoPrev   = document.getElementById('contactPhotoPreview');
+  let photoDataUrl = null;
+
+  function showErr(msg) {
+    if (!errEl) return;
+    errEl.textContent = msg;
+    errEl.hidden = false;
+  }
+  function clearErr() { if (errEl) { errEl.hidden = true; errEl.textContent = ''; } }
+
+  function setPreview(src) {
+    if (!photoPrev) return;
+    if (!src) {
+      photoPrev.innerHTML = '<span class="contact-photo-empty">No reference attached</span>';
+      if (photoClear) photoClear.hidden = true;
+      return;
+    }
+    photoPrev.innerHTML = '';
+    const img = new Image(); img.alt = ''; img.src = src;
+    photoPrev.appendChild(img);
+    if (photoClear) photoClear.hidden = false;
+  }
+
+  photoUpload?.addEventListener('click', () => photoInput?.click());
+  photoInput?.addEventListener('change', async e => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!/^image\//.test(file.type)) {
+      showErr('That doesn\'t look like a photo. Try a JPG, PNG or WebP.');
+      return;
+    }
+    clearErr();
+    photoUpload.disabled = true;
+    const original = photoUpload.textContent;
+    photoUpload.textContent = 'Resizing…';
+    try {
+      photoDataUrl = await shrinkImageFileForReference(file);
+      setPreview(photoDataUrl);
+    } catch (err) {
+      showErr('Couldn\'t read that file. Try a different one.');
+    } finally {
+      photoUpload.disabled = false;
+      photoUpload.textContent = original;
+      photoInput.value = '';
+    }
+  });
+  photoClear?.addEventListener('click', () => {
+    photoDataUrl = null;
+    setPreview(null);
+  });
+
+  function show(formVisible) {
+    form.hidden = !formVisible;
+    if (thanksEl) thanksEl.hidden = formVisible;
+  }
+  anotherBtn?.addEventListener('click', () => {
     form.reset();
-    closeModal();
-    toast('Request sent — Max will reply within a business day.');
+    photoDataUrl = null;
+    setPreview(null);
+    clearErr();
+    show(true);
+    document.getElementById('contactSubject')?.focus();
+  });
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    clearErr();
+    const data = Object.fromEntries(new FormData(form).entries());
+    const missing = ['subject','name','email'].filter(k => !(data[k] || '').trim());
+    if (missing.length) {
+      const labels = { subject: 'a description of what you\'d like', name: 'your name', email: 'your email' };
+      showErr('Please add ' + missing.map(k => labels[k]).join(', ') + '.');
+      return;
+    }
+    const submitBtn = document.getElementById('contactSubmit');
+    const originalLabel = submitBtn?.textContent;
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Sending…'; }
+    try {
+      const result = await submitQuoteRequest({
+        name: data.name, email: data.email, phone: data.phone || '',
+        subject: data.subject, category: data.category || '',
+        size: data.size || '', notes: data.notes || '',
+        photoDataUrl: photoDataUrl || '',
+        source: 'about_contact',
+      });
+      if (thanksIdEl) thanksIdEl.textContent = result.id || 'sent';
+      show(false);
+      window.scrollTo({ top: thanksEl.getBoundingClientRect().top + window.scrollY - 80, behavior: 'smooth' });
+    } catch (err) {
+      showErr('Couldn\'t send right now — ' + (err.message || 'try again in a moment') + '.');
+    } finally {
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = originalLabel; }
+    }
   });
 })();
 

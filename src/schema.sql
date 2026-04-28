@@ -45,3 +45,27 @@ CREATE TABLE IF NOT EXISTS admin_password (
   salt       TEXT NOT NULL,
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+
+-- Quote / commission requests submitted from the public site (the form
+-- on about.html#contact and the request-a-piece modal on shop.html).
+-- Public POST writes a row; admin GET reads them all back into the
+-- Custom Orders kanban. photo_data_url holds an optional reference image
+-- the customer pasted in (NOT a photo to print from — Max prints from
+-- the *idea*; the picture is just to help him understand what they want).
+CREATE TABLE IF NOT EXISTS requests (
+  id              TEXT PRIMARY KEY,        -- 'REQ-1A2B3C…'
+  name            TEXT NOT NULL,
+  email           TEXT NOT NULL,
+  phone           TEXT,
+  subject         TEXT NOT NULL,           -- what they want a piece of
+  category        TEXT,                    -- saltwater | freshwater | cars | … | other
+  size            TEXT,                    -- small | medium | large | xl | ''
+  notes           TEXT,
+  photo_data_url  TEXT,                    -- optional reference image (data:image/…)
+  status          TEXT NOT NULL DEFAULT 'new',  -- new | quoted | in_progress | done | declined
+  source          TEXT,                    -- 'about_contact' | 'shop_request' | 'product_page'
+  created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_requests_created ON requests(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_requests_status  ON requests(status);

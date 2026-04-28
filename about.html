@@ -8,10 +8,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/styles.css?v=20260429-3" />
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260429-3" />
-<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260429-3" />
-<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260429-3" />
+<link rel="stylesheet" href="assets/styles.css?v=20260429-4" />
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260429-4" />
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260429-4" />
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260429-4" />
 <link rel="manifest" href="manifest.webmanifest" />
 <meta name="theme-color" content="#ffffff" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -294,7 +294,7 @@
 <header class="site-nav" id="siteNav">
   <div class="nav-inner">
     <a href="index.html" class="brand">
-      <span class="brand-mark"><img src="assets/logos/logo-mark-96.png?v=20260429-3" alt="Crystal Brook Wall Mounts emblem" width="64" height="64" style="display:block;border-radius:7px;" /></span>
+      <span class="brand-mark"><img src="assets/logos/logo-mark-96.png?v=20260429-4" alt="Crystal Brook Wall Mounts emblem" width="64" height="64" style="display:block;border-radius:7px;" /></span>
       <span class="brand-text">
         <span class="brand-name">Crystal Brook</span>
         <span class="brand-sub">Wall Mounts</span>
@@ -343,7 +343,7 @@
     </div>
     <div>
       <div class="about-portrait">
-        <img src="assets/images/max-portrait.jpg?v=20260429-3" alt="Max White on the FNQ coast holding one of his torched-wood shark mounts" />
+        <img src="assets/images/max-portrait.jpg?v=20260429-4" alt="Max White on the FNQ coast holding one of his torched-wood shark mounts" />
       </div>
       <p class="about-portrait-cap">Max with one of his torched-shark pieces, on the coast just south of Gordonvale.</p>
     </div>
@@ -419,23 +419,112 @@
 <!-- ============ FINAL CTA / CONTACT ============ -->
 <section class="about-final" id="contact">
   <div class="about-final-inner">
-    <p class="eyebrow">Get in touch</p>
-    <h2>Workshop visits, by <em>appointment.</em></h2>
-    <p>Drop Max a line by phone or email, or commission a piece from a photo. He'll talk you through the timber options and the size that'll suit the wall. Workshop visits in Gordonvale are by appointment — get in touch to arrange a time.</p>
+    <p class="eyebrow" data-content-key="contact_eyebrow">Get in touch</p>
+    <h2 data-content-key="contact_h2" data-content-html>Workshop visits, by <em>appointment.</em></h2>
+    <p data-content-key="contact_lede">Drop Max a line by phone, email, or fill in the form below — he'll come back with a quote, timber options, and a size that suits your wall. Workshop visits in Gordonvale are by appointment.</p>
+
     <dl class="about-contact-strip">
       <div>
         <dt>Phone</dt>
-        <dd><a href="tel:+61740561887">(07) 4056 1887</a></dd>
+        <dd><a href="tel:+61740561887" data-content-key="contact_phone">(07) 4056 1887</a></dd>
       </div>
       <div>
         <dt>Email</dt>
-        <dd><a href="mailto:mandpwhite@optusnet.com.au">mandpwhite@optusnet.com.au</a></dd>
+        <dd><a href="mailto:mandpwhite@optusnet.com.au" data-content-key="contact_email">mandpwhite@optusnet.com.au</a></dd>
       </div>
       <div>
         <dt>Workshop</dt>
-        <dd>Gordonvale, FNQ<br/><em>Visits by appointment</em></dd>
+        <dd><span data-content-key="contact_workshop">Gordonvale, FNQ</span><br/><em>Visits by appointment</em></dd>
       </div>
     </dl>
+
+    <!-- Quote / commission form — saves to D1 via /api/requests -->
+    <form class="contact-form" id="contactForm" novalidate>
+      <p class="contact-form-eyebrow">Or send a request right here</p>
+      <h3 class="contact-form-title">Tell Max what you're after.</h3>
+      <p class="contact-form-lede"><strong>Max prints from your <em>idea</em>, not from your photographs.</strong> Describe the subject in your own words — the species, the model, the dog's name. If you've seen a picture you like, you can attach it as a reference for inspiration only.</p>
+
+      <div class="contact-form-grid">
+        <label class="contact-field contact-field-full">
+          <span>What would you like? <em class="req">*</em></span>
+          <textarea name="subject" id="contactSubject" rows="3" required placeholder="e.g. a 1.4 m Spanish Mackerel taken off Cairns &mdash; side profile, with the silver-blue sheen"></textarea>
+        </label>
+
+        <label class="contact-field">
+          <span>Category</span>
+          <select name="category" id="contactCategory">
+            <option value="">Not sure yet</option>
+            <option value="saltwater">Saltwater fish</option>
+            <option value="freshwater">Freshwater fish</option>
+            <option value="cars">Cars</option>
+            <option value="animals">Animals</option>
+            <option value="birds">Birds</option>
+            <option value="other">Something else</option>
+          </select>
+        </label>
+
+        <label class="contact-field">
+          <span>Approximate size</span>
+          <select name="size" id="contactSize">
+            <option value="">No preference</option>
+            <option value="small">Small (≤ 50 cm)</option>
+            <option value="medium">Medium (50&ndash;80 cm)</option>
+            <option value="large">Large (80&ndash;100 cm)</option>
+            <option value="xl">XL (100 cm +)</option>
+          </select>
+        </label>
+
+        <label class="contact-field contact-field-full">
+          <span>Your name <em class="req">*</em></span>
+          <input type="text" name="name" id="contactName" required autocomplete="name" />
+        </label>
+
+        <label class="contact-field">
+          <span>Email <em class="req">*</em></span>
+          <input type="email" name="email" id="contactEmail" required autocomplete="email" />
+        </label>
+
+        <label class="contact-field">
+          <span>Phone (optional)</span>
+          <input type="tel" name="phone" id="contactPhone" autocomplete="tel" />
+        </label>
+
+        <div class="contact-field contact-field-full">
+          <span class="contact-field-label">Reference picture (optional)</span>
+          <div class="contact-photo">
+            <div class="contact-photo-preview" id="contactPhotoPreview">
+              <span class="contact-photo-empty">No reference attached</span>
+            </div>
+            <div class="contact-photo-actions">
+              <button class="btn btn-ghost btn-small" type="button" id="contactPhotoUpload">↑ Attach a reference photo</button>
+              <button class="btn btn-ghost btn-small" type="button" id="contactPhotoClear" hidden>× Remove</button>
+              <input type="file" id="contactPhotoFile" accept="image/png,image/jpeg,image/webp" hidden />
+              <small class="contact-photo-hint">Just for inspiration &mdash; Max won't print directly from your photo. Big files get auto-shrunk.</small>
+            </div>
+          </div>
+        </div>
+
+        <label class="contact-field contact-field-full">
+          <span>Anything else? (optional)</span>
+          <textarea name="notes" id="contactNotes" rows="3" placeholder="Particular angle, colour, deadline, gift occasion, timber preference&hellip;"></textarea>
+        </label>
+      </div>
+
+      <p class="contact-form-err" id="contactErr" hidden></p>
+      <div class="contact-form-actions">
+        <button class="btn btn-primary" type="submit" id="contactSubmit">Send request</button>
+        <small>No payment taken yet. Max will reply within a business day with a quote.</small>
+      </div>
+    </form>
+
+    <div class="contact-thanks" id="contactThanks" hidden>
+      <div class="contact-thanks-mark" aria-hidden="true">
+        <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="none" stroke="#3a8a4f" stroke-width="3"/><path d="M19 33 L28 42 L46 22" fill="none" stroke="#3a8a4f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3>Thanks &mdash; got it.</h3>
+      <p>Max will be in touch within a business day with a quote and timber options. Reference number <strong id="contactThanksId">&hellip;</strong> &mdash; pop that in any reply if you're emailing back.</p>
+      <button class="btn btn-ghost" type="button" id="contactThanksAnother">Send another request</button>
+    </div>
   </div>
 </section>
 
@@ -473,7 +562,7 @@
 <aside class="nav-drawer" id="navDrawer" aria-hidden="true" aria-label="Mobile navigation">
   <div class="nav-drawer-head">
     <span class="brand">
-      <span class="brand-mark"><img src="assets/logos/logo-mark-96.png?v=20260429-3" alt="Crystal Brook Wall Mounts emblem" width="64" height="64" style="display:block;border-radius:7px;" /></span>
+      <span class="brand-mark"><img src="assets/logos/logo-mark-96.png?v=20260429-4" alt="Crystal Brook Wall Mounts emblem" width="64" height="64" style="display:block;border-radius:7px;" /></span>
       <span class="brand-text">
         <span class="brand-name">Crystal Brook</span>
         <span class="brand-sub">Wall Mounts</span>
@@ -501,6 +590,6 @@
 <!-- ============ TOAST ============ -->
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/app.js?v=20260429-3"></script>
+<script src="assets/app.js?v=20260429-4"></script>
 </body>
 </html>

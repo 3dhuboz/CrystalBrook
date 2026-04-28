@@ -326,6 +326,96 @@ async function handlePutContent(request, env, key) {
 }
 
 
+// -------- /api/requests (quote / commission requests from the public site) --------
+
+const REQUEST_FIELDS = ['id','name','email','phone','subject','category','size','notes','photo_data_url','status','source','created_at'];
+const VALID_REQUEST_STATUSES = new Set(['new','quoted','in_progress','done','declined']);
+
+function rowToRequest(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    phone: row.phone,
+    subject: row.subject,
+    category: row.category,
+    size: row.size,
+    notes: row.notes,
+    photoDataUrl: row.photo_data_url,
+    status: row.status,
+    source: row.source,
+    createdAt: row.created_at,
+  };
+}
+
+async function handleCreateRequest(request, env) {
+  let body;
+  try { body = await request.json(); }
+  catch (_) { return errorResponse('invalid JSON body'); }
+
+  const name    = (body.name    || '').toString().trim();
+  const email   = (body.email   || '').toString().trim();
+  const phone   = (body.phone   || '').toString().trim().slice(0, 50) || null;
+  const subject = (body.subject || '').toString().trim();
+  const category = (body.category || '').toString().trim().slice(0, 32) || null;
+  const size    = (body.size    || '').toString().trim().slice(0, 32) || null;
+  const notes   = (body.notes   || '').toString().slice(0, 4000) || null;
+  const source  = (body.source  || 'unknown').toString().trim().slice(0, 32);
+  const photo   = (body.photoDataUrl || '').toString();
+
+  if (!name || name.length > 200)   return errorResponse('name required (≤ 200 chars)');
+  if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return errorResponse('valid email required');
+  if (!subject || subject.length > 1000) return errorResponse('subject required (≤ 1000 chars)');
+
+  // Photo size cap — request body in D1 must fit; 800KB data URL is plenty
+  // for a 1024px JPEG reference, and below the 1MB row limit.
+  let photoDataUrl = null;
+  if (photo) {
+    if (!photo.startsWith('data:image/')) return errorResponse('photo must be a data URL');
+    if (photo.length > 800_000) return errorResponse('photo too large (please re-attach a smaller one)');
+    photoDataUrl = photo;
+  }
+
+  const id = 'REQ-' + Math.random().toString(36).slice(2, 8).toUpperCase() + Date.now().toString(36).toUpperCase().slice(-4);
+
+  await env.DB.prepare(`
+    INSERT INTO requests (id, name, email, phone, subject, category, size, notes, photo_data_url, status, source)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?)
+  `).bind(id, name, email, phone, subject, category, size, notes, photoDataUrl, source).run();
+
+  return jsonResponse({ ok: true, id });
+}
+
+async function handleListRequests(request, env) {
+  if (!await isAuthorised(request, env)) return errorResponse('unauthorised', 401);
+  const result = await env.DB.prepare(
+    'SELECT * FROM requests ORDER BY created_at DESC LIMIT 200'
+  ).all();
+  return jsonResponse({ requests: (result.results || []).map(rowToRequest) });
+}
+
+async function handleUpdateRequestStatus(request, env, id) {
+  if (!await isAuthorised(request, env)) return errorResponse('unauthorised', 401);
+  let body;
+  try { body = await request.json(); }
+  catch (_) { return errorResponse('invalid JSON body'); }
+  const status = (body.status || '').toString().trim();
+  if (!VALID_REQUEST_STATUSES.has(status)) return errorResponse('invalid status');
+  const res = await env.DB.prepare(
+    'UPDATE requests SET status = ? WHERE id = ?'
+  ).bind(status, id).run();
+  if (!res.meta || !res.meta.changes) return errorResponse('not found', 404);
+  return jsonResponse({ ok: true, id, status });
+}
+
+async function handleDeleteRequest(request, env, id) {
+  if (!await isAuthorised(request, env)) return errorResponse('unauthorised', 401);
+  const res = await env.DB.prepare('DELETE FROM requests WHERE id = ?').bind(id).run();
+  if (!res.meta || !res.meta.changes) return errorResponse('not found', 404);
+  return jsonResponse({ ok: true, id });
+}
+
+
 // -------- main fetch handler --------
 
 export default {
@@ -361,6 +451,18 @@ export default {
         const contentMatch = path.match(/^\/api\/content\/([a-z][a-z0-9_]*)$/);
         if (contentMatch && request.method === 'PUT') {
           return await handlePutContent(request, env, contentMatch[1]);
+        }
+        if (path === '/api/requests' && request.method === 'POST') {
+          return await handleCreateRequest(request, env);
+        }
+        if (path === '/api/requests' && request.method === 'GET') {
+          return await handleListRequests(request, env);
+        }
+        const reqMatch = path.match(/^\/api\/requests\/([\w-]+)$/);
+        if (reqMatch) {
+          const id = reqMatch[1];
+          if (request.method === 'PATCH')  return await handleUpdateRequestStatus(request, env, id);
+          if (request.method === 'DELETE') return await handleDeleteRequest(request, env, id);
         }
         return errorResponse('not found', 404);
       } catch (err) {
