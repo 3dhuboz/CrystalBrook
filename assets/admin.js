@@ -2147,6 +2147,7 @@ function wireContentEditor(viewName, opts = {}) {
   });
 }
 
+wireContentEditor('homepage',    { statusElId: 'homepageSaveStatus',    saveAllBtnId: 'homepageSaveAll' });
 wireContentEditor('about',       { statusElId: 'aboutSaveStatus',       saveAllBtnId: 'aboutSaveAll' });
 wireContentEditor('shipping',    { statusElId: 'shippingSaveStatus',    saveAllBtnId: 'shippingSaveAll' });
 wireContentEditor('returns',     { statusElId: 'returnsSaveStatus',     saveAllBtnId: 'returnsSaveAll' });

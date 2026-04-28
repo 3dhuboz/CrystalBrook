@@ -7,10 +7,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="../assets/admin.css?v=20260428-11" />
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260428-11" />
-<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260428-11" />
-<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260428-11" />
+<link rel="stylesheet" href="../assets/admin.css?v=20260428-12" />
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260428-12" />
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260428-12" />
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260428-12" />
 <link rel="manifest" href="../manifest.webmanifest" />
 <meta name="theme-color" content="#1c130a" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -454,64 +454,93 @@
     <div class="v-head">
       <div>
         <h1>Homepage Editor</h1>
-        <p>Edit live content without touching code. Changes publish on save.</p>
+        <p>The hero, sections and customer-stories on <a href="../index.html" target="_blank" rel="noopener">the homepage</a>. Edits save automatically when you click out of a field — or press <strong>Save all</strong> to commit pending changes at once.</p>
       </div>
       <div class="v-head-actions">
-        <button class="btn btn-ghost">Preview</button>
-        <button class="btn btn-gold" id="publishBtn">Publish changes</button>
+        <span class="about-save-status" id="homepageSaveStatus" hidden>Saved ✓</span>
+        <button class="btn btn-gold" id="homepageSaveAll" type="button">Save all changes</button>
       </div>
     </div>
 
-    <div class="editor-grid">
-      <div class="card">
-        <div class="card-head"><h3>Hero section</h3><span class="badge">Live</span></div>
-        <div class="form">
-          <label><span>Eyebrow</span><input class="inp" value="Handcrafted in Queensland · Since 2019"/></label>
-          <label><span>Headline (line 1)</span><input class="inp" value="Bring the world"/></label>
-          <label><span>Headline (line 2)</span><input class="inp" value="to your walls."/></label>
-          <label><span>Lede</span><textarea class="inp" rows="3">Resin-coated cut-out archival images, mounted on timber and resin-sealed by hand. Saltwater and freshwater fish, classic cars, Aussie animals and birds — each piece one-of-a-kind.</textarea></label>
-          <div class="row-2">
-            <label><span>Primary CTA text</span><input class="inp" value="Shop the Collection"/></label>
-            <label><span>Primary CTA link</span><input class="inp" value="#shop"/></label>
-          </div>
-          <div class="row-2">
-            <label><span>Secondary CTA text</span><input class="inp" value="Commission a Custom Piece"/></label>
-            <label><span>Secondary CTA link</span><input class="inp" value="#custom"/></label>
-          </div>
-          <label class="drop-mini"><span>Background image</span>
-            <div class="mini-drop">Drop image or <em>browse</em> · recommended 2400 × 1400</div>
-          </label>
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Hero (top of the page)</h3></div>
+      <div class="form">
+        <label data-content-edit="home_hero_eyebrow"><span>Eyebrow</span><input class="inp" placeholder="Handcrafted in Queensland · Since 2019"/></label>
+        <div class="row-2">
+          <label data-content-edit="home_hero_title_main"><span>Headline (line 1)</span><input class="inp" placeholder="Crystal Brook"/></label>
+          <label data-content-edit="home_hero_title_em"><span>Headline (line 2 — italic)</span><input class="inp" placeholder="Wall Mounts"/></label>
         </div>
+        <label data-content-edit="home_hero_tagline"><span>Tagline</span><input class="inp" placeholder="Bring the world to your walls."/></label>
+        <label data-content-edit="home_hero_lede"><span>Lede paragraph</span><textarea class="inp" rows="3" placeholder="Hand-cut, hardwood-backed, sealed under jewellery-grade epoxy…"></textarea></label>
+        <label data-content-edit="home_hero_cta"><span>Button label</span><input class="inp" placeholder="Shop the Collection"/></label>
       </div>
+    </div>
 
-      <div class="card">
-        <div class="card-head"><h3>Featured products</h3></div>
-        <p class="card-note">Drag to reorder. First 8 appear on the homepage.</p>
-        <ul class="sortable" id="featSortable"></ul>
-        <button class="btn btn-ghost btn-block">+ Add product</button>
-      </div>
-
-      <div class="card">
-        <div class="card-head"><h3>About / Story</h3></div>
-        <div class="form">
-          <label><span>Headline</span><input class="inp" value="Built by hand, made to outlast us."/></label>
-          <label><span>Body</span><textarea class="inp" rows="5">Crystal Brook Wall Mounts began with a single coral trout and a stubborn idea — that a wall mount could feel as alive as the fish itself.</textarea></label>
-          <label><span>Steps (one per line)</span><textarea class="inp" rows="4">Archival print selected and sized to the piece
-Resin poured in stages, each set for 48 hours
-Timber torched, shaped and finished by hand
-Signed, numbered and wrapped for shipping</textarea></label>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-head"><h3>SEO &amp; social</h3></div>
-        <div class="form">
-          <label><span>Page title</span><input class="inp" value="Crystal Brook Wall Mounts — Bring the world to your walls"/></label>
-          <label><span>Meta description</span><textarea class="inp" rows="2">Resin-coated cut-out archival wall mounts on timber. Saltwater fish, freshwater fish, cars, animals and birds — handcrafted in Queensland.</textarea></label>
-          <label><span>Share image</span><div class="mini-drop">Drop image · 1200 × 630</div></label>
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>"Shop by category" section heading</h3></div>
+      <div class="form">
+        <div class="row-2">
+          <label data-content-edit="home_shop_eyebrow"><span>Eyebrow</span><input class="inp" placeholder="Shop by category"/></label>
+          <label data-content-edit="home_shop_h2" data-content-html><span>Heading (HTML allowed for line break)</span><input class="inp" placeholder="Six worlds,&lt;br/&gt;one wall."/></label>
         </div>
       </div>
     </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>"The Craft" section</h3></div>
+      <div class="form">
+        <div class="row-2">
+          <label data-content-edit="home_craft_eyebrow"><span>Eyebrow</span><input class="inp" placeholder="The Craft"/></label>
+          <label data-content-edit="home_craft_h2" data-content-html><span>Heading (HTML allowed)</span><input class="inp" placeholder="Built by hand,&lt;br/&gt;made to outlast us."/></label>
+        </div>
+        <label data-content-edit="home_craft_body"><span>Body paragraph</span><textarea class="inp" rows="5" placeholder="Every piece starts as an archival-grade print…"></textarea></label>
+        <label data-content-edit="home_craft_step1"><span>Step 01</span><input class="inp" placeholder="Archival print selected and sized to the piece"/></label>
+        <label data-content-edit="home_craft_step2"><span>Step 02</span><input class="inp" placeholder="Image hand-cut to shape and trimmed for depth"/></label>
+        <label data-content-edit="home_craft_step3"><span>Step 03</span><input class="inp" placeholder="Mounted onto Australian hardwood backing"/></label>
+        <label data-content-edit="home_craft_step4"><span>Step 04</span><input class="inp" placeholder="Resin poured in stages, set for 48 hours…"/></label>
+        <div class="row-2">
+          <label data-content-edit="home_craft_cta_about"><span>Button 1 label</span><input class="inp" placeholder="Meet Max →"/></label>
+          <label data-content-edit="home_craft_cta_shop"><span>Button 2 label</span><input class="inp" placeholder="Browse the collection →"/></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Customer stories — section header</h3></div>
+      <div class="form">
+        <div class="row-2">
+          <label data-content-edit="home_stories_eyebrow"><span>Eyebrow</span><input class="inp" placeholder="Stories from the wall"/></label>
+          <label data-content-edit="home_stories_h2"><span>Heading</span><input class="inp" placeholder="What customers are saying."/></label>
+        </div>
+        <label data-content-edit="home_stories_note"><span>Note (small grey text below the heading)</span><textarea class="inp" rows="2" placeholder="Placeholder reviews — these'll be replaced…"></textarea></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Customer story 1</h3></div>
+      <div class="form">
+        <label data-content-edit="home_stories_q1"><span>Quote</span><textarea class="inp" rows="3" placeholder="&quot;Honestly didn't expect the depth…&quot;"></textarea></label>
+        <label data-content-edit="home_stories_q1_attribution"><span>Attribution (the line under the quote)</span><input class="inp" placeholder="— Sarah · Cairns"/></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Customer story 2</h3></div>
+      <div class="form">
+        <label data-content-edit="home_stories_q2"><span>Quote</span><textarea class="inp" rows="3" placeholder="&quot;Max sent progress photos at every stage…&quot;"></textarea></label>
+        <label data-content-edit="home_stories_q2_attribution"><span>Attribution</span><input class="inp" placeholder="— Dave · Brisbane"/></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Customer story 3</h3></div>
+      <div class="form">
+        <label data-content-edit="home_stories_q3"><span>Quote</span><textarea class="inp" rows="3" placeholder="&quot;Commissioned a piece for Dad's 70th…&quot;"></textarea></label>
+        <label data-content-edit="home_stories_q3_attribution"><span>Attribution</span><input class="inp" placeholder="— Mitch · Townsville"/></label>
+      </div>
+    </div>
+
+    <p class="about-edit-hint">Tip: each field saves on its own when you click out of it. The two heading fields with "(HTML allowed)" accept <code>&lt;br/&gt;</code> for the line break — leave it in if you want the heading on two lines.</p>
   </section>
 
   <!-- ========= ABOUT PAGE ========= -->
@@ -1054,6 +1083,6 @@ Signed, numbered and wrapped for shipping</textarea></label>
   </div>
 </div>
 
-<script src="../assets/admin.js?v=20260428-11"></script>
+<script src="../assets/admin.js?v=20260428-12"></script>
 </body>
 </html>
