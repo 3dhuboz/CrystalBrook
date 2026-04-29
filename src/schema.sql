@@ -68,6 +68,15 @@ CREATE TABLE IF NOT EXISTS requests (
   photo_data_url  TEXT,                    -- optional reference image (data:image/…)
   status          TEXT NOT NULL DEFAULT 'new',  -- new | quoted | in_progress | done | declined
   source          TEXT,                    -- 'about_contact' | 'shop_request' | 'product_page'
+  -- Quote draft + customer-approval workflow:
+  quote_price            INTEGER,          -- whole AUD
+  quote_message          TEXT,             -- Max's note explaining the quote
+  quote_image_url        TEXT,             -- mockup data URL (≤ 800KB)
+  quote_token            TEXT,             -- random hex; gates the customer-facing /quote.html link
+  quote_sent_at          TEXT,             -- when the email went out
+  quote_response         TEXT,             -- 'approved' | 'changes_requested' | NULL
+  quote_response_at      TEXT,
+  quote_response_message TEXT,             -- what the customer wrote if they asked for changes
   created_at      TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_requests_created ON requests(created_at DESC);

@@ -563,6 +563,13 @@ table{ border-collapse: collapse; width:100%; }
   margin: 8px 0 0; font-size: .82rem; font-style: italic;
   color: var(--ink-mute); text-align: center; padding: 20px 0;
 }
+.t-empty{
+  text-align: center;
+  padding: 32px 24px !important;
+  color: var(--ink-mute);
+  font-style: italic;
+  font-size: .9rem;
+}
 
 /* === REQUEST DETAIL MODAL ============================== */
 .request-detail-modal{
@@ -630,6 +637,58 @@ table{ border-collapse: collapse; width:100%; }
   display: flex; gap: 10px; flex-wrap: wrap;
   padding-top: 14px;
   border-top: 1px solid var(--line);
+}
+
+/* Quote sub-section inside the request detail modal */
+.rd-quote-status{
+  display: grid; grid-template-columns: auto 1fr auto;
+  gap: 6px 14px;
+  padding: 14px 16px;
+  border-radius: var(--r-sm);
+  margin: 18px 0 16px;
+  align-items: center;
+  font-size: .92rem;
+}
+.rd-quote-status strong{ font-weight: 500; color: var(--ink); }
+.rd-quote-status span{ font-size: .82rem; color: var(--ink-mute); justify-self: end; }
+.rd-quote-status blockquote{
+  grid-column: 1 / -1;
+  margin: 8px 0 0;
+  padding: 10px 14px;
+  background: rgba(212, 176, 106, .12);
+  border-left: 3px solid var(--gold-deep);
+  font-size: .92rem; line-height: 1.5; color: var(--ink);
+  white-space: pre-wrap;
+}
+.rd-quote-status-ok{ background: rgba(58, 138, 79, .14); border: 1px solid rgba(58, 138, 79, .35); color: var(--ink); }
+.rd-quote-status-changes{ background: rgba(212, 176, 106, .15); border: 1px solid rgba(200, 163, 94, .45); }
+.rd-quote-status-sent{ background: var(--bg); border: 1px solid var(--line-2); }
+.rd-quote-link{
+  grid-column: 1 / -1;
+  font-size: .82rem; color: var(--gold-2);
+  margin-top: 4px;
+}
+
+.rd-quote-form-details{
+  margin: 16px 0 18px;
+  padding: 14px 16px;
+  background: var(--bg);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+}
+.rd-quote-form-details > summary{
+  cursor: pointer;
+  font-weight: 500;
+  padding: 4px 0;
+  color: var(--gold-2);
+  font-size: .95rem;
+}
+.rd-quote-form-details > summary:hover{ color: var(--gold-deep); }
+.rd-quote-form-details[open] > summary{ margin-bottom: 12px; }
+.rd-quote-form-details .form{ display: grid; gap: 14px; }
+.rd-quote-help{
+  margin: 4px 0 0; font-size: .8rem; color: var(--ink-mute);
+  line-height: 1.5; font-style: italic;
 }
 
 /* === ORDER DETAIL MODAL ================================ */

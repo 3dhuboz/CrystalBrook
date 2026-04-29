@@ -352,6 +352,14 @@ function rowToRequest(row) {
     status: row.status,
     source: row.source,
     createdAt: row.created_at,
+    quotePrice: row.quote_price,
+    quoteMessage: row.quote_message,
+    quoteImageUrl: row.quote_image_url,
+    quoteToken: row.quote_token,           // admin only — NEVER returned to public callers
+    quoteSentAt: row.quote_sent_at,
+    quoteResponse: row.quote_response,
+    quoteResponseAt: row.quote_response_at,
+    quoteResponseMessage: row.quote_response_message,
   };
 }
 
@@ -420,6 +428,214 @@ async function handleDeleteRequest(request, env, id) {
   const res = await env.DB.prepare('DELETE FROM requests WHERE id = ?').bind(id).run();
   if (!res.meta || !res.meta.changes) return errorResponse('not found', 404);
   return jsonResponse({ ok: true, id });
+}
+
+
+/* ---------- Quote draft / customer-approval workflow ----------
+ * Admin composes a quote (price + message + optional mockup), the
+ * Worker mints a random token + generates a customer-facing link,
+ * and emails the customer. Customer reviews on /quote.html?id=&token=,
+ * approves or asks for changes, and Max gets a notification email.
+ */
+function randomToken(byteLen = 16) {
+  const bytes = new Uint8Array(byteLen);
+  crypto.getRandomValues(bytes);
+  return bytesToHex(bytes);
+}
+
+async function handleSendQuote(request, env, id) {
+  if (!await isAuthorised(request, env)) return errorResponse('unauthorised', 401);
+  let body;
+  try { body = await request.json(); }
+  catch (_) { return errorResponse('invalid JSON body'); }
+
+  const price   = Number(body.price);
+  const message = (body.message || '').toString().trim();
+  const photo   = (body.imageDataUrl || '').toString();
+  if (!Number.isFinite(price) || price < 0 || price > 100000) {
+    return errorResponse('price must be a non-negative number under 100000');
+  }
+  if (!message || message.length > 4000) {
+    return errorResponse('message required (≤ 4000 chars)');
+  }
+  let imageUrl = null;
+  if (photo) {
+    if (!photo.startsWith('data:image/')) return errorResponse('image must be a data URL');
+    if (photo.length > 800_000) return errorResponse('image too large (please re-attach a smaller one)');
+    imageUrl = photo;
+  }
+
+  const row = await env.DB.prepare('SELECT * FROM requests WHERE id = ?').bind(id).first();
+  if (!row) return errorResponse('not found', 404);
+
+  // Rotate the token every send so an old quote link can't approve a
+  // re-quoted price. Also resets the response so the customer can
+  // approve the new version.
+  const token = randomToken(16);
+  await env.DB.prepare(`
+    UPDATE requests
+       SET quote_price = ?, quote_message = ?, quote_image_url = ?,
+           quote_token = ?, quote_sent_at = datetime('now'),
+           quote_response = NULL, quote_response_at = NULL, quote_response_message = NULL,
+           status = CASE WHEN status = 'new' THEN 'quoted' ELSE status END
+     WHERE id = ?
+  `).bind(price, message, imageUrl, token, id).run();
+
+  let emailSent = false;
+  try {
+    emailSent = await sendQuoteEmailToCustomer(env, { ...row, quote_price: price, quote_message: message, quote_image_url: imageUrl, quote_token: token });
+  } catch (err) {
+    console.error('Quote email failed:', err);
+  }
+  return jsonResponse({ ok: true, id, emailSent, token });
+}
+
+/* Public — fetch a quote by id + token. No admin auth; the token is the
+ * gate. Returns minimal customer-safe fields. */
+async function handleGetQuote(request, env) {
+  const url = new URL(request.url);
+  const id = url.searchParams.get('id') || '';
+  const token = url.searchParams.get('token') || '';
+  if (!id || !token) return errorResponse('id and token required');
+
+  const row = await env.DB.prepare(
+    'SELECT * FROM requests WHERE id = ? AND quote_token = ?'
+  ).bind(id, token).first();
+  if (!row) return errorResponse('not found or token mismatch', 404);
+  if (!row.quote_price || !row.quote_sent_at) return errorResponse('quote not yet sent', 404);
+
+  return jsonResponse({ quote: {
+    id: row.id,
+    name: row.name,
+    subject: row.subject,
+    category: row.category,
+    size: row.size,
+    photoDataUrl: row.photo_data_url,            // their original reference
+    quotePrice: row.quote_price,
+    quoteMessage: row.quote_message,
+    quoteImageUrl: row.quote_image_url,          // Max's mockup
+    quoteSentAt: row.quote_sent_at,
+    response: row.quote_response,                // null | approved | changes_requested
+    responseAt: row.quote_response_at,
+    responseMessage: row.quote_response_message,
+  }});
+}
+
+/* Public — record customer's response. */
+async function handleQuoteRespond(request, env) {
+  const url = new URL(request.url);
+  const id = url.searchParams.get('id') || '';
+  const token = url.searchParams.get('token') || '';
+  if (!id || !token) return errorResponse('id and token required');
+
+  let body;
+  try { body = await request.json(); }
+  catch (_) { return errorResponse('invalid JSON body'); }
+  const response = (body.response || '').toString().trim();
+  const message  = (body.message || '').toString().trim().slice(0, 4000);
+  if (response !== 'approved' && response !== 'changes_requested') {
+    return errorResponse('response must be "approved" or "changes_requested"');
+  }
+
+  const row = await env.DB.prepare(
+    'SELECT * FROM requests WHERE id = ? AND quote_token = ?'
+  ).bind(id, token).first();
+  if (!row) return errorResponse('not found or token mismatch', 404);
+  if (!row.quote_sent_at) return errorResponse('quote not yet sent', 400);
+
+  await env.DB.prepare(`
+    UPDATE requests
+       SET quote_response = ?, quote_response_at = datetime('now'),
+           quote_response_message = ?,
+           status = CASE WHEN ? = 'approved' THEN 'in_progress' ELSE status END
+     WHERE id = ?
+  `).bind(response, message || null, response, id).run();
+
+  // Notify Max — silent no-op if no admin notify email is configured.
+  let notified = false;
+  try {
+    notified = await sendQuoteResponseEmailToAdmin(env, row, response, message);
+  } catch (err) { console.error('Quote response notify failed:', err); }
+
+  return jsonResponse({ ok: true, response, notified });
+}
+
+function quoteCustomerEmailContent(row, baseUrl) {
+  const customerName = (row.name || '').split(' ')[0] || 'there';
+  const id = row.id;
+  const url = `${baseUrl}/quote.html?id=${encodeURIComponent(id)}&token=${encodeURIComponent(row.quote_token)}`;
+  const price = Number(row.quote_price) || 0;
+  const subject = `Your Crystal Brook quote · ${id}`;
+  const html = `<!doctype html><html><body style="margin:0;background:#f7f3ec;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1c130a;line-height:1.6;">
+    <div style="max-width:580px;margin:0 auto;padding:32px 24px;background:#fff;">
+      <p style="font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:#7a6e5c;margin:0 0 6px;">Crystal Brook Wall Mounts</p>
+      <h1 style="font-family:'Cormorant Garamond',serif;font-weight:500;font-size:1.7rem;margin:0 0 18px;color:#1c130a;">Your custom quote, ${escapeHtml(customerName)}.</h1>
+      <p style="font-size:1rem;margin:0 0 18px;">Max has put together a quote for ${escapeHtml(row.subject || 'your custom piece')}. Click through to see it — there's an approve / request-changes button at the bottom.</p>
+      <p style="margin:24px 0;text-align:center;">
+        <a href="${url}" style="display:inline-block;padding:14px 28px;background:#a9864b;color:#1c130a;font-weight:500;border-radius:4px;text-decoration:none;font-size:1.05rem;">Review your quote — $${price.toLocaleString()} →</a>
+      </p>
+      <p style="font-size:.85rem;color:#7a6e5c;margin:22px 0 0;border-top:1px solid #e8e1d2;padding-top:14px;">
+        Reference: <strong>${escapeHtml(id)}</strong><br/>
+        This link is private — please don't share it; it's how Max knows the response is from you.
+      </p>
+      <p style="font-size:.78rem;color:#9c8e76;margin:18px 0 0;">Crystal Brook Wall Mounts · Gordonvale, FNQ</p>
+    </div>
+  </body></html>`;
+  const text = `Hi ${customerName},\n\nMax has put together a quote for ${row.subject || 'your custom piece'}: $${price.toLocaleString()}\n\nReview and approve here:\n${url}\n\nReference: ${id}\nThis link is private — please don't share it.\n\n— Crystal Brook Wall Mounts`;
+  return { subject, html, text };
+}
+
+async function sendQuoteEmailToCustomer(env, row) {
+  const apiKey = env.RESEND_API_KEY;
+  const from   = env.MAIL_FROM;
+  if (!apiKey || !from || !row.email) return false;
+  // Build the customer URL using the request's host so links work in dev too.
+  // We don't have the request URL here so use a configured BASE_URL or default.
+  const baseUrl = env.SITE_BASE_URL || 'https://crystalbrook.steve-700.workers.dev';
+  const { subject, html, text } = quoteCustomerEmailContent(row, baseUrl);
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ from, to: row.email, subject, html, text }),
+  });
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '');
+    console.error('[email] quote-to-customer failed', res.status, errText.slice(0, 200));
+    return false;
+  }
+  return true;
+}
+
+async function sendQuoteResponseEmailToAdmin(env, row, response, message) {
+  const apiKey = env.RESEND_API_KEY;
+  const from   = env.MAIL_FROM;
+  const adminEmail = env.ADMIN_NOTIFY_EMAIL || env.MAIL_FROM_REPLY_TO;
+  if (!apiKey || !from || !adminEmail) {
+    console.log('[email] quote-response notify skipped — RESEND_API_KEY/MAIL_FROM/ADMIN_NOTIFY_EMAIL not all set');
+    return false;
+  }
+  const ok = response === 'approved';
+  const subject = ok
+    ? `${row.name} approved their quote (${row.id})`
+    : `${row.name} asked for changes on their quote (${row.id})`;
+  const baseUrl = env.SITE_BASE_URL || 'https://crystalbrook.steve-700.workers.dev';
+  const adminUrl = `${baseUrl}/admin/#custom`;
+  const html = `<!doctype html><html><body style="margin:0;background:#f7f3ec;font-family:-apple-system,BlinkMacSystemFont,sans-serif;color:#1c130a;line-height:1.6;">
+    <div style="max-width:540px;margin:0 auto;padding:28px 24px;background:#fff;">
+      <p style="font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:#7a6e5c;margin:0 0 6px;">Quote response</p>
+      <h1 style="font-family:'Cormorant Garamond',serif;font-weight:500;font-size:1.5rem;margin:0 0 14px;">${ok ? '✓ Approved' : '↺ Changes requested'} — ${escapeHtml(row.name)}</h1>
+      <p style="margin:0 0 14px;">Quote <strong>${escapeHtml(row.id)}</strong> for ${escapeHtml(row.subject || '')}.</p>
+      ${message ? `<div style="background:#faf6ee;border-left:3px solid #a9864b;padding:14px 18px;margin:18px 0;"><strong>Customer note:</strong><br/>${escapeHtml(message).replace(/\n/g, '<br/>')}</div>` : ''}
+      <p style="margin:24px 0;"><a href="${adminUrl}" style="display:inline-block;padding:11px 22px;background:#a9864b;color:#1c130a;font-weight:500;border-radius:4px;text-decoration:none;">Open Custom Orders →</a></p>
+    </div>
+  </body></html>`;
+  const text = `${ok ? 'Approved' : 'Changes requested'}: ${row.name} (${row.id})\nSubject: ${row.subject || ''}\n\n${message ? 'Customer note:\n' + message + '\n\n' : ''}${adminUrl}`;
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ from, to: adminEmail, subject, html, text }),
+  });
+  return res.ok;
 }
 
 
@@ -888,6 +1104,16 @@ export default {
           const id = reqMatch[1];
           if (request.method === 'PATCH')  return await handleUpdateRequestStatus(request, env, id);
           if (request.method === 'DELETE') return await handleDeleteRequest(request, env, id);
+        }
+        const quoteSendMatch = path.match(/^\/api\/requests\/([\w-]+)\/quote$/);
+        if (quoteSendMatch && request.method === 'POST') {
+          return await handleSendQuote(request, env, quoteSendMatch[1]);
+        }
+        if (path === '/api/quote' && request.method === 'GET') {
+          return await handleGetQuote(request, env);
+        }
+        if (path === '/api/quote/respond' && request.method === 'POST') {
+          return await handleQuoteRespond(request, env);
         }
         if (path === '/api/orders' && request.method === 'POST') {
           return await handleCreateOrder(request, env);

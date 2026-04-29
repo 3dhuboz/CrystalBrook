@@ -159,36 +159,13 @@ const PRODUCTS = [
   { id:'p-galah',    name:'Galah',                    cat:'Birds',          sku:'CBW-BD-005', price:375, size:'50 × 56 cm',  stock:8,  img:'G' },
 ];
 
-const ORDERS = [
-  { id:'#10482', cust:'Jack T.',      email:'jack@example.com',   items:'Coral Trout',                          total:485, status:'paid',      pay:'Stripe · Visa', date:'Today · 2:14pm' },
-  { id:'#10481', cust:'Sarah M.',     email:'sarah@example.com',  items:'Wedge-Tailed Eagle',                   total:620, status:'production',pay:'Stripe · MC',   date:'Today · 10:02am' },
-  { id:'#10480', cust:'Dave K.',      email:'dave@example.com',   items:'Blue Marlin',                          total:760, status:'shipped',   pay:'Stripe · AMEX', date:'Yest · 6:48pm' },
-  { id:'#10479', cust:'Louise B.',    email:'louise@example.com', items:'French Bulldog Puppy',                 total:425, status:'paid',      pay:'Stripe · Visa', date:'Yest · 1:20pm' },
-  { id:'#10478', cust:'Mitchell R.',  email:'mitch@example.com',  items:'1971 Mach-1 Mustang',                  total:625, status:'production',pay:'PayPal',        date:'2 days ago' },
-  { id:'#10477', cust:'Hayley W.',    email:'hay@example.com',    items:'Barramundi + Murray Cod',              total:1035,status:'shipped',   pay:'Stripe · Visa', date:'3 days ago' },
-  { id:'#10476', cust:'Tom P.',       email:'tom@example.com',    items:'Kangaroo',                             total:520, status:'shipped',   pay:'Stripe · Visa', date:'4 days ago' },
-  { id:'#10475', cust:'Renee J.',     email:'renee@example.com',  items:'Rainbow Lorikeet',                     total:385, status:'refunded',  pay:'Stripe · Visa', date:'5 days ago' },
-];
-
-const CUSTOM_ORDERS = {
-  'New': [
-    { name:'Ben Harrison',  subject:'Marlin caught at Fraser · 1.8m',  size:'XL', budget:'$1,500', due:'2 days ago' },
-    { name:'Chloe Davis',   subject:'Golden retriever memorial',       size:'M',  budget:'$700',  due:'Today' },
-    { name:'Paul Whitmore', subject:'1969 Torana GTR-X restoration',   size:'L',  budget:'$1,200', due:'Today' },
-  ],
-  'Quoted': [
-    { name:'Jess Kim',      subject:'Murray cod release shot',         size:'M',  budget:'$850',  due:'3 days left' },
-    { name:'Anton Liakos',  subject:'HSV Clubsport R8',                size:'L',  budget:'$1,100', due:'5 days left' },
-  ],
-  'In Production': [
-    { name:'Dean Walters',  subject:'Cobia 1.4m — Hervey Bay',         size:'L',  budget:'$1,100', due:'ETA 28 Apr' },
-    { name:'Karen Liu',     subject:'Blue Heeler · working dog',       size:'M',  budget:'$750',  due:'ETA 30 Apr' },
-  ],
-  'Completed': [
-    { name:'Steve Rowe',    subject:'Saratoga release shot',           size:'M',  budget:'$820',  due:'Shipped 18 Apr' },
-    { name:'Priya Nathan',  subject:'1967 Mustang Fastback',           size:'XL', budget:'$1,800', due:'Shipped 15 Apr' },
-  ],
-};
+// Real data lives in D1: ORDERS pulled by refreshOrdersFromAPI into
+// _ordersCache, custom orders pulled by refreshRequestsFromAPI into
+// _requestsCache. These two consts are kept as empty arrays so the
+// initial paint of the admin shows clean empty-state messaging
+// instead of fake demo rows from the prototype days.
+const ORDERS = [];
+const CUSTOM_ORDERS = { 'New': [], 'Quoted': [], 'In Production': [], 'Completed': [] };
 
 /* ---------- VIEW SWITCHING ---------- */
 const nav = document.getElementById('sideNav');
@@ -349,6 +326,10 @@ function renderRecentOrders(){
   const tb = document.getElementById('recentOrders');
   if (!tb) return;
   const orders = ordersForView();
+  if (!orders.length) {
+    tb.innerHTML = `<tr><td colspan="6" class="t-empty">No orders yet — once a customer checks out (or you punch one in via "+ Manual order") it'll show here.</td></tr>`;
+    return;
+  }
   tb.innerHTML = orders.slice(0,5).map(o=>{
     const st = orderStatus(o.status);
     return `<tr>
@@ -803,7 +784,12 @@ document.getElementById('prodCatFilter')?.addEventListener('change', _refreshSto
 /* ---------- ORDERS ---------- */
 function renderOrders(){
   const tb = document.getElementById('ordersBody'); if(!tb) return;
-  tb.innerHTML = ordersForView().map(o=>{
+  const orders = ordersForView();
+  if (!orders.length) {
+    tb.innerHTML = `<tr><td colspan="9" class="t-empty">No orders yet. When a customer checks out the row will appear here — for phone or in-person sales, hit "+ Manual order" up top.</td></tr>`;
+    return;
+  }
+  tb.innerHTML = orders.map(o=>{
     const st = orderStatus(o.status);
     return `<tr data-order-id="${o.id}" class="order-row">
       <td><input type="checkbox" onclick="event.stopPropagation()"/></td>
@@ -1325,6 +1311,34 @@ function openRequestDetail(id) {
   const photo = r.photoDataUrl
     ? `<div class="rd-photo"><img src="${r.photoDataUrl}" alt="Reference photo"/></div>`
     : '<div class="rd-photo rd-photo-empty">No reference photo attached</div>';
+
+  // ── Quote section markup. Three states:
+  //   1. Never quoted: empty form
+  //   2. Quote sent, awaiting response: shows "Sent X ago" + Resend / Edit buttons
+  //   3. Quote responded: shows the customer's response inline
+  let quoteSection = '';
+  if (r.quoteResponse === 'approved') {
+    quoteSection = `
+      <div class="rd-quote-status rd-quote-status-ok">
+        ✓ <strong>Customer approved this quote</strong>
+        <span>$${(r.quotePrice || 0).toLocaleString()} · ${relativeTime(r.quoteResponseAt) || 'just now'}</span>
+      </div>`;
+  } else if (r.quoteResponse === 'changes_requested') {
+    quoteSection = `
+      <div class="rd-quote-status rd-quote-status-changes">
+        ↺ <strong>Customer asked for changes</strong>
+        <span>$${(r.quotePrice || 0).toLocaleString()} · ${relativeTime(r.quoteResponseAt) || 'just now'}</span>
+        ${r.quoteResponseMessage ? `<blockquote>${(r.quoteResponseMessage).replace(/</g,'&lt;')}</blockquote>` : ''}
+      </div>`;
+  } else if (r.quoteSentAt) {
+    quoteSection = `
+      <div class="rd-quote-status rd-quote-status-sent">
+        ⌛ <strong>Quote sent — waiting on customer</strong>
+        <span>$${(r.quotePrice || 0).toLocaleString()} · ${relativeTime(r.quoteSentAt) || 'just now'}</span>
+        <a href="/quote.html?id=${encodeURIComponent(r.id)}&token=${encodeURIComponent(r.quoteToken || '')}" target="_blank" rel="noopener" class="rd-quote-link">View customer-facing quote →</a>
+      </div>`;
+  }
+
   modal.innerHTML = `
     <div class="rd-card">
       <button class="rd-close" type="button" aria-label="Close">×</button>
@@ -1343,14 +1357,97 @@ function openRequestDetail(id) {
         <div><dt>Source</dt><dd>${r.source || '—'}</dd></div>
         <div><dt>Status</dt><dd>${r.status}</dd></div>
       </dl>
+
+      ${quoteSection}
+
+      <details class="rd-quote-form-details" ${r.quoteSentAt && !r.quoteResponse ? '' : 'open'}>
+        <summary>${r.quoteSentAt ? 'Re-send quote (with edits)' : 'Compose quote for customer'}</summary>
+        <form id="rdQuoteForm" class="form" autocomplete="off">
+          <div class="row-2">
+            <label><span>Price ($AUD) *</span><input class="inp" name="price" type="number" min="0" step="1" required value="${r.quotePrice ?? ''}" placeholder="e.g. 850"/></label>
+            <label><span>Customer email</span><input class="inp" type="email" disabled value="${r.email || ''}"/></label>
+          </div>
+          <label><span>Message to the customer *</span><textarea class="inp" name="message" rows="4" required placeholder="Explain what's included, the timber/size you're recommending, lead time, anything that makes the quote feel personal.">${(r.quoteMessage || '').replace(/</g, '&lt;')}</textarea></label>
+          <div class="row-2" style="grid-template-columns: 1fr;">
+            <label style="display:block;">
+              <span>Mockup image (optional)</span>
+              <div class="contact-photo" style="margin-top:6px;">
+                <div class="contact-photo-preview" data-photo-preview>
+                  ${r.quoteImageUrl ? `<img src="${r.quoteImageUrl}" alt="Existing mockup"/>` : '<span class="contact-photo-empty">No mockup attached</span>'}
+                </div>
+                <div class="contact-photo-actions">
+                  <button class="btn btn-ghost btn-small" type="button" data-photo-upload>↑ Attach mockup</button>
+                  <button class="btn btn-ghost btn-small" type="button" data-photo-clear ${r.quoteImageUrl ? '' : 'hidden'}>× Remove</button>
+                  <input type="file" accept="image/png,image/jpeg,image/webp" hidden/>
+                  <small class="contact-photo-hint">Auto-shrunk to fit. Use the Image Builder to generate one if you don't have a mockup yet.</small>
+                </div>
+              </div>
+            </label>
+          </div>
+          <p class="newquote-err" id="rdQuoteErr" hidden style="color:#d9534f;margin:0;font-size:.9rem;"></p>
+          <div class="row-2" style="margin-top:6px;">
+            <button class="btn btn-gold" type="button" id="rdQuoteSend">${r.quoteSentAt ? 'Re-send quote' : 'Send quote to customer'}</button>
+            <button class="btn btn-ghost" type="button" id="rdQuoteSaveDraft" hidden>Save draft (don't send yet)</button>
+          </div>
+          <p class="rd-quote-help">Sending writes the quote to D1, mints a private link, and emails the customer. They'll see the price + mockup + message, with Approve / Request changes buttons.</p>
+        </form>
+      </details>
+
       <div class="rd-actions">
-        <a class="btn btn-gold" href="mailto:${r.email}?subject=${encodeURIComponent('Re: ' + r.subject.slice(0, 60))}&body=${encodeURIComponent('Hi ' + (r.name.split(' ')[0] || '') + ',\n\n')}">Reply by email →</a>
-        <button class="btn btn-ghost" type="button" data-rd-status="quoted">Mark as quoted</button>
-        <button class="btn btn-ghost" type="button" data-rd-status="declined">Decline</button>
+        <a class="btn btn-ghost" href="mailto:${r.email}?subject=${encodeURIComponent('Re: ' + (r.subject || '').slice(0, 60))}&body=${encodeURIComponent('Hi ' + ((r.name || '').split(' ')[0] || '') + ',\n\n')}">Reply by email →</a>
+        <button class="btn btn-ghost" type="button" data-rd-status="declined">Decline request</button>
       </div>
     </div>`;
   modal.hidden = false;
   modal.querySelector('.rd-close').addEventListener('click', () => modal.hidden = true);
+
+  // Wire the photo uploader inside this modal
+  const form = modal.querySelector('#rdQuoteForm');
+  const getPhoto = wireAdminPhotoUploader(form);
+  // If there's already an image, seed the closure so we don't lose it on re-send
+  // The wireAdminPhotoUploader returns null until the user picks a new one,
+  // so we capture the existing URL separately.
+  const existingMockup = r.quoteImageUrl || null;
+
+  modal.querySelector('#rdQuoteSend').addEventListener('click', async () => {
+    const errEl = modal.querySelector('#rdQuoteErr');
+    errEl.hidden = true;
+    const data = Object.fromEntries(new FormData(form).entries());
+    const price = Number(data.price);
+    if (!Number.isFinite(price) || price < 0) { errEl.textContent = 'Price required.'; errEl.hidden = false; return; }
+    if (!(data.message || '').trim()) { errEl.textContent = 'A message is required.'; errEl.hidden = false; return; }
+    const btn = modal.querySelector('#rdQuoteSend');
+    btn.disabled = true;
+    const original = btn.textContent;
+    btn.textContent = 'Sending…';
+    try {
+      const res = await fetch('/api/requests/' + encodeURIComponent(r.id) + '/quote', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', ...adminAuthHeaders() },
+        body: JSON.stringify({
+          price,
+          message: data.message.trim(),
+          imageDataUrl: getPhoto() || existingMockup || '',
+        }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j.error || 'send failed');
+      }
+      const result = await res.json();
+      toast(result.emailSent
+        ? `Quote emailed to ${r.email}`
+        : `Quote saved · email skipped (RESEND_API_KEY not set)`);
+      modal.hidden = true;
+      refreshRequestsFromAPI();
+    } catch (err) {
+      errEl.textContent = 'Send failed: ' + (err.message || 'try again');
+      errEl.hidden = false;
+      btn.disabled = false;
+      btn.textContent = original;
+    }
+  });
+
   modal.querySelectorAll('[data-rd-status]').forEach(btn => {
     btn.addEventListener('click', async () => {
       const status = btn.dataset.rdStatus;
