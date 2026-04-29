@@ -7,10 +7,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="../assets/admin.css?v=20260429-10" />
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260429-10" />
-<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260429-10" />
-<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260429-10" />
+<link rel="stylesheet" href="../assets/admin.css?v=20260429-11" />
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260429-11" />
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260429-11" />
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260429-11" />
 <link rel="manifest" href="../manifest.webmanifest" />
 <meta name="theme-color" content="#1c130a" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -423,16 +423,21 @@
         <p>Sales performance across products, categories and time.</p>
       </div>
       <div class="v-head-actions">
-        <select class="sel"><option>This year</option><option>Last 12 months</option><option>All time</option></select>
-        <button class="btn btn-ghost">Export PDF</button>
+        <select class="sel" id="revRange">
+          <option value="12m" selected>Last 12 months</option>
+          <option value="90d">Last 90 days</option>
+          <option value="30d">Last 30 days</option>
+          <option value="all">All time</option>
+        </select>
+        <button class="btn btn-ghost" id="revExport" type="button">Export CSV</button>
       </div>
     </div>
 
     <div class="kpis">
-      <div class="kpi"><span class="kpi-label">Gross revenue</span><strong class="kpi-value">$184,250</strong><span class="kpi-delta up">▲ 24% YoY</span></div>
-      <div class="kpi"><span class="kpi-label">Net after fees</span><strong class="kpi-value">$181,430</strong><span class="kpi-delta">1.5% processing</span></div>
-      <div class="kpi"><span class="kpi-label">Avg. order value</span><strong class="kpi-value">$524</strong><span class="kpi-delta up">▲ 8%</span></div>
-      <div class="kpi"><span class="kpi-label">Refunds</span><strong class="kpi-value">$620</strong><span class="kpi-delta">0.3% rate</span></div>
+      <div class="kpi"><span class="kpi-label">Gross revenue</span><strong class="kpi-value" data-rev-stat="gross">$0</strong><span class="kpi-delta" data-rev-stat="period_label">In the selected period</span></div>
+      <div class="kpi"><span class="kpi-label">Net after fees</span><strong class="kpi-value" data-rev-stat="net">$0</strong><span class="kpi-delta">Estimate at 1.5% processing</span></div>
+      <div class="kpi"><span class="kpi-label">Avg. order value</span><strong class="kpi-value" data-rev-stat="aov">$0</strong><span class="kpi-delta" data-rev-stat="aov_sub">0 orders</span></div>
+      <div class="kpi"><span class="kpi-label">Refunds</span><strong class="kpi-value" data-rev-stat="refunds">$0</strong><span class="kpi-delta" data-rev-stat="refund_rate">0.0% rate</span></div>
     </div>
 
     <div class="dash-grid">
@@ -1566,6 +1571,6 @@
   </div>
 </div>
 
-<script src="../assets/admin.js?v=20260429-10"></script>
+<script src="../assets/admin.js?v=20260429-11"></script>
 </body>
 </html>

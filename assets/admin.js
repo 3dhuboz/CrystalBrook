@@ -297,6 +297,7 @@ async function refreshOrdersFromAPI() {
     try { renderRecentOrders(); } catch (_) {}
     try { renderOrders(); } catch (_) {}
     try { renderDashboardStats(); } catch (_) {}
+    try { renderRevenueAll(); } catch (_) {}
   } catch (err) {
     console.warn('[orders] fetch failed', err);
   }
@@ -405,21 +406,101 @@ renderRevenueChart('revChart', {
 });
 
 /* Revenue bars chart */
+/* ---------- REVENUE PAGE — live from orders ----------
+ * KPIs, monthly bars, by-category, and top-products are computed from
+ * _ordersCache (populated by refreshOrdersFromAPI). The date-range
+ * selector filters the window. Everything re-renders together.
+ */
+const _REV_STATE = { range: '12m' };
+
+function _ordersInRange() {
+  const orders = (_ordersCache || []).map(o => o._raw).filter(Boolean);
+  const now = Date.now();
+  const ranges = { '30d': 30, '90d': 90, '12m': 365, 'all': Infinity };
+  const days = ranges[_REV_STATE.range] ?? 365;
+  if (!Number.isFinite(days)) return orders;
+  const cutoff = now - days * 86400_000;
+  return orders.filter(o => {
+    const t = o.createdAt ? new Date(o.createdAt.replace(' ', 'T') + 'Z').getTime() : 0;
+    return t >= cutoff;
+  });
+}
+
+function _orderTimestamp(o) {
+  return o.createdAt ? new Date(o.createdAt.replace(' ', 'T') + 'Z').getTime() : 0;
+}
+
+function renderRevenueKPIs() {
+  const orders = _ordersInRange();
+  let gross = 0, refunds = 0, paidCount = 0;
+  for (const o of orders) {
+    const total = Number(o.total) || 0;
+    if (o.status === 'refunded' || o.status === 'cancelled') {
+      refunds += total;
+    } else {
+      gross += total;
+      paidCount += 1;
+    }
+  }
+  const net = Math.round(gross * 0.985);  // ~1.5% Stripe fee estimate
+  const aov = paidCount ? Math.round(gross / paidCount) : 0;
+  const refundRate = orders.length ? (refunds / Math.max(1, gross + refunds)) * 100 : 0;
+  const set = (key, val) => {
+    const el = document.querySelector(`[data-rev-stat="${key}"]`);
+    if (el) el.textContent = val;
+  };
+  const periodLabel = ({ '30d': 'Last 30 days', '90d': 'Last 90 days', '12m': 'Last 12 months', 'all': 'All time' })[_REV_STATE.range];
+  set('gross',    '$' + gross.toLocaleString());
+  set('net',      '$' + net.toLocaleString());
+  set('aov',      '$' + aov.toLocaleString());
+  set('refunds',  '$' + refunds.toLocaleString());
+  set('aov_sub',  paidCount + (paidCount === 1 ? ' order' : ' orders'));
+  set('refund_rate', refundRate.toFixed(1) + '% rate');
+  set('period_label', periodLabel);
+}
+
 function renderRevenueBars(){
   const el = document.getElementById('revBars'); if(!el) return;
-  const data = [ 8400, 9200, 11100, 12400, 10500, 13800, 16200, 22400, 14800, 15600, 17200, 18420 ];
-  const labels = ['May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr'];
+  const orders = _ordersInRange();
+
+  // How many monthly buckets to render based on the active range
+  const months = _REV_STATE.range === '30d' ? 1
+              : _REV_STATE.range === '90d' ? 3
+              : 12;
+  const now = new Date();
+  const buckets = [];
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    buckets.push({
+      key:   d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'),
+      label: d.toLocaleDateString('en-AU', { month: 'short' }),
+      total: 0,
+    });
+  }
+  const idx = new Map(buckets.map((b, i) => [b.key, i]));
+  for (const o of orders) {
+    if (o.status === 'refunded' || o.status === 'cancelled') continue;
+    const t = _orderTimestamp(o);
+    if (!t) continue;
+    const d = new Date(t);
+    const k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    if (idx.has(k)) buckets[idx.get(k)].total += Number(o.total) || 0;
+  }
+
   const W = 800, H = 280, pad = 30;
-  const max = Math.max(...data);
-  const bw = (W - pad*2) / data.length * 0.65;
-  const step = (W - pad*2) / data.length;
-  const bars = data.map((v,i)=>{
-    const h = (v / max) * (H - pad*2);
+  const max = Math.max(1, ...buckets.map(b => b.total));
+  const step = (W - pad*2) / buckets.length;
+  const bw = step * 0.65;
+  const bars = buckets.map((b, i) => {
+    const h = (b.total / max) * (H - pad*2);
     const x = pad + i*step + (step - bw)/2;
     const y = H - pad - h;
+    const valLabel = b.total >= 1000 ? `$${(b.total/1000).toFixed(1)}k`
+                    : b.total > 0    ? `$${b.total}`
+                    : '';
     return `<rect x="${x}" y="${y}" width="${bw}" height="${h}" rx="3" fill="url(#barGrad)"/>
-            <text x="${x + bw/2}" y="${H-8}" fill="#7a6e5c" font-size="10" text-anchor="middle" font-family="Inter">${labels[i]}</text>
-            <text x="${x + bw/2}" y="${y - 6}" fill="#b8a989" font-size="10" text-anchor="middle" font-family="Inter">$${(v/1000).toFixed(1)}k</text>`;
+            <text x="${x + bw/2}" y="${H-8}" fill="#7a6e5c" font-size="10" text-anchor="middle" font-family="Inter">${b.label}</text>
+            <text x="${x + bw/2}" y="${y - 6}" fill="#b8a989" font-size="10" text-anchor="middle" font-family="Inter">${valLabel}</text>`;
   }).join('');
   el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
     <defs><linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
@@ -428,50 +509,109 @@ function renderRevenueBars(){
     ${bars}
   </svg>`;
 }
-renderRevenueBars();
 
-/* Category bars list */
 function renderCatBars(){
   const el = document.getElementById('catBars'); if(!el) return;
-  const cats = [
-    { name:'Saltwater Fish',  val:62400, pct:34 },
-    { name:'Freshwater Fish', val:38200, pct:21 },
-    { name:'Cars',            val:32800, pct:18 },
-    { name:'Animals',         val:26400, pct:14 },
-    { name:'Birds',           val:24450, pct:13 },
-  ];
-  el.innerHTML = cats.map(c=>`
-    <li>
-      <div class="bar-row"><span>${c.name}</span><strong>$${c.val.toLocaleString()} · ${c.pct}%</strong></div>
-      <div class="bar-track"><div class="bar-fill" style="width:${c.pct}%"></div></div>
-    </li>
-  `).join('');
-}
-renderCatBars();
+  const orders = _ordersInRange();
 
-/* Revenue products table */
+  // Build a product → category lookup. Falls back to "Other" when an item
+  // id doesn't match a known product (e.g. manual orders with id='manual').
+  const catOf = new Map((PRODUCTS || []).map(p => [p.id, (p.cat || '').toString()]));
+  const totals = new Map();
+  for (const o of orders) {
+    if (o.status === 'refunded' || o.status === 'cancelled') continue;
+    for (const it of (o.items || [])) {
+      const cat = catOf.get(it.id) || 'Other';
+      const lineRev = (Number(it.price) || 0) * (Number(it.qty) || 1);
+      totals.set(cat, (totals.get(cat) || 0) + lineRev);
+    }
+  }
+  const rows = Array.from(totals.entries())
+    .map(([name, val]) => ({ name, val }))
+    .sort((a, b) => b.val - a.val);
+  const grand = rows.reduce((s, r) => s + r.val, 0) || 1;
+  if (!rows.length) {
+    el.innerHTML = '<li class="bar-empty"><span>No orders yet in this period.</span></li>';
+    return;
+  }
+  el.innerHTML = rows.map(c => {
+    const pct = Math.round((c.val / grand) * 100);
+    return `
+      <li>
+        <div class="bar-row"><span>${c.name}</span><strong>$${c.val.toLocaleString()} · ${pct}%</strong></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+      </li>
+    `;
+  }).join('');
+}
+
 function renderRevProducts(){
   const tb = document.getElementById('revProducts'); if(!tb) return;
-  const rows = [
-    { name:'Coral Trout',            cat:'Saltwater Fish', units:34, rev:16490, mar:42 },
-    { name:'Murray Cod',             cat:'Freshwater Fish',units:18, rev: 9720, mar:44 },
-    { name:'Blue Marlin',            cat:'Saltwater Fish', units:10, rev: 7600, mar:41 },
-    { name:'1971 Mach-1 Mustang',    cat:'Cars',           units:12, rev: 7500, mar:44 },
-    { name:'French Bulldog Puppy',   cat:'Animals',        units:16, rev: 6800, mar:46 },
-    { name:'Wedge-Tailed Eagle',     cat:'Birds',          units: 9, rev: 5580, mar:40 },
-    { name:'Rainbow Lorikeet',       cat:'Birds',          units:14, rev: 5390, mar:48 },
-  ];
-  tb.innerHTML = rows.map(r=>`
+  const orders = _ordersInRange();
+
+  // Aggregate units + revenue per product id
+  const agg = new Map();
+  for (const o of orders) {
+    if (o.status === 'refunded' || o.status === 'cancelled') continue;
+    for (const it of (o.items || [])) {
+      const key = it.id || it.name;
+      const e = agg.get(key) || { id: it.id, name: it.name, units: 0, rev: 0 };
+      e.units += Number(it.qty) || 1;
+      e.rev   += (Number(it.price) || 0) * (Number(it.qty) || 1);
+      agg.set(key, e);
+    }
+  }
+  const catOf = new Map((PRODUCTS || []).map(p => [p.id, (p.cat || 'Other')]));
+  const rows = Array.from(agg.values())
+    .map(r => ({ ...r, cat: catOf.get(r.id) || '—' }))
+    .sort((a, b) => b.rev - a.rev)
+    .slice(0, 10);
+  if (!rows.length) {
+    tb.innerHTML = '<tr><td colspan="5" class="t-empty">No orders yet in this period.</td></tr>';
+    return;
+  }
+  tb.innerHTML = rows.map(r => `
     <tr>
       <td>${r.name}</td>
       <td><span class="status muted">${r.cat}</span></td>
       <td>${r.units}</td>
       <td>$${r.rev.toLocaleString()}</td>
-      <td>${r.mar}%</td>
+      <td>—</td>
     </tr>
   `).join('');
 }
-renderRevProducts();
+
+function renderRevenueAll() {
+  renderRevenueKPIs();
+  renderRevenueBars();
+  renderCatBars();
+  renderRevProducts();
+}
+renderRevenueAll();
+
+// Wire the date-range selector
+document.getElementById('revRange')?.addEventListener('change', e => {
+  _REV_STATE.range = e.target.value;
+  renderRevenueAll();
+});
+
+// Revenue → Export CSV
+document.getElementById('revExport')?.addEventListener('click', () => {
+  try {
+    const csv = exportRevenueCSV();
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `crystalbrook-revenue-${_REV_STATE.range}-${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    const months = csv.split('\n').length - 2;
+    toast(`✓ Exported ${months} month${months === 1 ? '' : 's'} of revenue`);
+  } catch (err) {
+    toast('Export failed — try again');
+  }
+});
 
 /* ---------- PRODUCTS / STOCKTAKE ---------- *
  * Each row's Price and Size are inline-editable. Hitting Save PUTs the
@@ -1245,6 +1385,94 @@ document.getElementById('publishBtn')?.addEventListener('click', ()=>{
   toast('Homepage changes published.');
 });
 
+/* ---------- CSV EXPORT BUILDERS ----------
+ * Real CSV exports for Stocktake (products), Orders, and Revenue.
+ * RFC 4180 quoting: wrap any field that contains commas/quotes/newlines
+ * in double-quotes and escape internal double-quotes by doubling them.
+ */
+function csvCell(v) {
+  if (v == null) return '';
+  const s = String(v);
+  if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+function csvRow(arr) { return arr.map(csvCell).join(','); }
+
+function exportProductsCSV() {
+  const headers = ['SKU','ID','Name','Category','Price (AUD)','Size','Status','Badge','Description'];
+  const lines = [csvRow(headers)];
+  for (const p of (PRODUCTS || [])) {
+    lines.push(csvRow([
+      p.sku || '',
+      p.id || '',
+      p.name || '',
+      p.cat || '',
+      p.price ?? '',
+      p.size || '',
+      p.draft ? 'Draft' : 'Live',
+      p.badge || '',
+      p.desc || p.description || '',
+    ]));
+  }
+  return lines.join('\n') + '\n';
+}
+
+function exportOrdersCSV() {
+  const headers = ['Order','Date','Customer','Email','Phone','Address','Suburb','State','Postcode','Items','Subtotal','Shipping','Total','Status','Source','Notes'];
+  const lines = [csvRow(headers)];
+  // Use _ordersCache when available, fall back to the static stub
+  const view = ordersForView();
+  for (const o of view) {
+    const r = o._raw || {};
+    const items = (r.items || []).map(i => `${i.name}${i.qty>1?' x'+i.qty:''}`).join('; ') || o.items || '';
+    lines.push(csvRow([
+      o.id || '',
+      r.createdAt || o.date || '',
+      r.name || o.fullName || o.cust || '',
+      r.email || o.email || '',
+      r.phone || '',
+      r.address || '',
+      r.suburb || '',
+      r.state || '',
+      r.postcode || '',
+      items,
+      r.subtotal ?? '',
+      r.shipping ?? '',
+      r.total ?? o.total ?? '',
+      o.status || '',
+      r.source || '',
+      r.notes || '',
+    ]));
+  }
+  return lines.join('\n') + '\n';
+}
+
+function exportRevenueCSV() {
+  // Use the same date-range filter the page is showing
+  const orders = (typeof _ordersInRange === 'function') ? _ordersInRange() : [];
+  const headers = ['Month','Gross revenue','Orders','Avg. order value','Refunds'];
+  // Bucket by year-month
+  const buckets = new Map();
+  for (const o of orders) {
+    const t = o.createdAt ? new Date(o.createdAt.replace(' ', 'T') + 'Z').getTime() : 0;
+    if (!t) continue;
+    const d = new Date(t);
+    const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    const e = buckets.get(key) || { key, gross: 0, refunds: 0, count: 0 };
+    const total = Number(o.total) || 0;
+    if (o.status === 'refunded' || o.status === 'cancelled') e.refunds += total;
+    else { e.gross += total; e.count += 1; }
+    buckets.set(key, e);
+  }
+  const rows = Array.from(buckets.values()).sort((a, b) => a.key.localeCompare(b.key));
+  const lines = [csvRow(headers)];
+  for (const r of rows) {
+    const aov = r.count ? Math.round(r.gross / r.count) : 0;
+    lines.push(csvRow([r.key, r.gross, r.count, aov, r.refunds]));
+  }
+  return lines.join('\n') + '\n';
+}
+
 /* ---------- TOP-OF-VIEW ACTION BUTTONS (Import/Export/+ New …) ---------- */
 (() => {
   document.querySelectorAll('.v-head-actions .btn').forEach(btn => {
@@ -1286,31 +1514,41 @@ function handleAdminAction(label, view, btn){
     input.click();
     return;
   }
-  // Export → fake CSV download
-  if (l.includes('export')){
+  // Export → real CSV download
+  if (l.includes('export') && !l.includes('pdf')){
     const orig = btn.textContent;
     btn.disabled = true;
     btn.textContent = 'Exporting…';
-    setTimeout(() => {
-      const headers = view === 'orders'
-        ? 'Order,Customer,Items,Total,Status,Date'
-        : view === 'revenue'
-        ? 'Month,Revenue,Orders,AOV'
-        : 'SKU,Name,Category,Price,Stock';
-      const csv = headers + '\n';
-      const blob = new Blob([csv], { type: 'text/csv' });
+    try {
+      let csv;
+      let filenamePart = view;
+      if (view === 'orders') {
+        csv = exportOrdersCSV();
+        filenamePart = 'orders';
+      } else if (view === 'revenue') {
+        csv = exportRevenueCSV();
+        filenamePart = 'revenue';
+      } else {
+        csv = exportProductsCSV();
+        filenamePart = 'products';
+      }
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `crystalbrook-${view}-${new Date().toISOString().slice(0,10)}.csv`;
+      a.download = `crystalbrook-${filenamePart}-${new Date().toISOString().slice(0,10)}.csv`;
       document.body.appendChild(a);
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      btn.disabled = false;
-      btn.textContent = orig;
-      toast(`✓ Exported ${view} CSV`);
-    }, 700);
+      const rowCount = csv.split('\n').length - 2;  // minus header + trailing newline
+      toast(`✓ Exported ${rowCount} ${filenamePart} row${rowCount === 1 ? '' : 's'}`);
+    } catch (err) {
+      console.error('export failed', err);
+      toast('Export failed — try again');
+    }
+    btn.disabled = false;
+    btn.textContent = orig;
     return;
   }
   // "+ New quote" on Custom Orders → real form that creates a request in D1
