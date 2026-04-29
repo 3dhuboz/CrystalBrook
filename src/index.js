@@ -574,6 +574,7 @@ function quoteCustomerEmailContent(row, baseUrl) {
       <p style="margin:24px 0;text-align:center;">
         <a href="${url}" style="display:inline-block;padding:14px 28px;background:#a9864b;color:#1c130a;font-weight:500;border-radius:4px;text-decoration:none;font-size:1.05rem;">Review your quote — $${price.toLocaleString()} →</a>
       </p>
+      <p style="font-size:.78rem;color:#9c8e76;margin:8px 0 18px;text-align:center;">If the button doesn't open, copy this link into your browser:<br/><span style="word-break:break-all;color:#7a6e5c;">${url}</span></p>
       <p style="font-size:.85rem;color:#7a6e5c;margin:22px 0 0;border-top:1px solid #e8e1d2;padding-top:14px;">
         Reference: <strong>${escapeHtml(id)}</strong><br/>
         This link is private — please don't share it; it's how Max knows the response is from you.
@@ -586,31 +587,18 @@ function quoteCustomerEmailContent(row, baseUrl) {
 }
 
 async function sendQuoteEmailToCustomer(env, row) {
-  const apiKey = env.RESEND_API_KEY;
-  const from   = env.MAIL_FROM;
-  if (!apiKey || !from || !row.email) return false;
-  // Build the customer URL using the request's host so links work in dev too.
-  // We don't have the request URL here so use a configured BASE_URL or default.
+  const from = env.MAIL_FROM;
+  if (!env.RESEND_API_KEY || !from || !row.email) return false;
   const baseUrl = env.SITE_BASE_URL || 'https://crystalbrook.steve-700.workers.dev';
   const { subject, html, text } = quoteCustomerEmailContent(row, baseUrl);
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from, to: row.email, subject, html, text }),
-  });
-  if (!res.ok) {
-    const errText = await res.text().catch(() => '');
-    console.error('[email] quote-to-customer failed', res.status, errText.slice(0, 200));
-    return false;
-  }
-  return true;
+  const result = await sendViaResend(env, { from, to: row.email, subject, html, text });
+  return result.ok;
 }
 
 async function sendQuoteResponseEmailToAdmin(env, row, response, message) {
-  const apiKey = env.RESEND_API_KEY;
-  const from   = env.MAIL_FROM;
+  const from = env.MAIL_FROM;
   const adminEmail = env.ADMIN_NOTIFY_EMAIL || env.MAIL_FROM_REPLY_TO;
-  if (!apiKey || !from || !adminEmail) {
+  if (!env.RESEND_API_KEY || !from || !adminEmail) {
     console.log('[email] quote-response notify skipped — RESEND_API_KEY/MAIL_FROM/ADMIN_NOTIFY_EMAIL not all set');
     return false;
   }
@@ -627,15 +615,12 @@ async function sendQuoteResponseEmailToAdmin(env, row, response, message) {
       <p style="margin:0 0 14px;">Quote <strong>${escapeHtml(row.id)}</strong> for ${escapeHtml(row.subject || '')}.</p>
       ${message ? `<div style="background:#faf6ee;border-left:3px solid #a9864b;padding:14px 18px;margin:18px 0;"><strong>Customer note:</strong><br/>${escapeHtml(message).replace(/\n/g, '<br/>')}</div>` : ''}
       <p style="margin:24px 0;"><a href="${adminUrl}" style="display:inline-block;padding:11px 22px;background:#a9864b;color:#1c130a;font-weight:500;border-radius:4px;text-decoration:none;">Open Custom Orders →</a></p>
+      <p style="font-size:.78rem;color:#9c8e76;margin:8px 0 0;">If the button doesn't open, copy this link:<br/><span style="word-break:break-all;color:#7a6e5c;">${adminUrl}</span></p>
     </div>
   </body></html>`;
   const text = `${ok ? 'Approved' : 'Changes requested'}: ${row.name} (${row.id})\nSubject: ${row.subject || ''}\n\n${message ? 'Customer note:\n' + message + '\n\n' : ''}${adminUrl}`;
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from, to: adminEmail, subject, html, text }),
-  });
-  return res.ok;
+  const result = await sendViaResend(env, { from, to: adminEmail, subject, html, text });
+  return result.ok;
 }
 
 
@@ -881,6 +866,7 @@ function orderStatusEmailContent(orderRow, newStatus) {
       <h1 style="font-family:'Cormorant Garamond',serif;font-weight:500;font-size:1.7rem;margin:0 0 18px;color:#1c130a;">${escapeHtml(m.heading)}</h1>
       <p style="font-size:1rem;margin:0 0 22px;">${escapeHtml(m.body)}</p>
       <p style="margin:22px 0;"><a href="${trackUrl}" style="display:inline-block;padding:11px 22px;background:#a9864b;color:#1c130a;font-weight:500;border-radius:4px;text-decoration:none;">Track your order →</a></p>
+      <p style="font-size:.78rem;color:#9c8e76;margin:14px 0 0;">If the button doesn't open, copy this link into your browser:<br/><span style="word-break:break-all;color:#7a6e5c;">${trackUrl}</span></p>
       <p style="font-size:.85rem;color:#7a6e5c;margin:22px 0 0;border-top:1px solid #e8e1d2;padding-top:14px;">Order reference: <strong>${escapeHtml(id)}</strong></p>
       <p style="font-size:.78rem;color:#9c8e76;margin:18px 0 0;">Crystal Brook Wall Mounts · Gordonvale, FNQ</p>
     </div>
@@ -889,10 +875,33 @@ function orderStatusEmailContent(orderRow, newStatus) {
   return { subject: m.subject, html, text };
 }
 
-async function sendOrderStatusEmail(env, orderRow, newStatus) {
+async function sendViaResend(env, payload) {
   const apiKey = env.RESEND_API_KEY;
-  const from   = env.MAIL_FROM;
-  if (!apiKey || !from) {
+  if (!apiKey) return { ok: false, reason: 'no_api_key' };
+  // tracking:false asks Resend not to wrap links via resend-clicks.com.
+  // Officially that's a per-domain dashboard setting, but some users
+  // report the per-email field is respected. Even if it's silently
+  // ignored, our templates also include the raw URL as plain text
+  // beneath each CTA so customers can copy-paste if the click-tracking
+  // redirect fails to resolve (which it does on plenty of corporate
+  // networks and ad-blocker-heavy DNS resolvers).
+  const body = { ...payload, tracking: { click: false, open: false } };
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '');
+    console.error('[email] Resend send failed', res.status, errText.slice(0, 200));
+    return { ok: false, reason: 'send_failed', detail: errText.slice(0, 200) };
+  }
+  return { ok: true };
+}
+
+async function sendOrderStatusEmail(env, orderRow, newStatus) {
+  const from = env.MAIL_FROM;
+  if (!env.RESEND_API_KEY || !from) {
     console.log('[email] skipping send — RESEND_API_KEY or MAIL_FROM not set');
     return false;
   }
@@ -900,20 +909,8 @@ async function sendOrderStatusEmail(env, orderRow, newStatus) {
   if (!to) return false;
 
   const { subject, html, text } = orderStatusEmailContent(orderRow, newStatus);
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ from, to, subject, html, text }),
-  });
-  if (!res.ok) {
-    const errText = await res.text().catch(() => '');
-    console.error('[email] Resend send failed', res.status, errText.slice(0, 200));
-    return false;
-  }
-  return true;
+  const result = await sendViaResend(env, { from, to, subject, html, text });
+  return result.ok;
 }
 
 /* ---------- Customer invoice email ----------
@@ -1013,23 +1010,17 @@ ${addr ? 'Shipping to:\n' + (orderRow.name || '') + '\n' + addr + '\n\n' : ''}�
 }
 
 async function sendOrderInvoice(env, orderRow) {
-  const apiKey = env.RESEND_API_KEY;
-  const from   = env.MAIL_FROM;
-  if (!apiKey || !from) {
+  const from = env.MAIL_FROM;
+  if (!env.RESEND_API_KEY || !from) {
     return { sent: false, reason: 'email_not_configured' };
   }
   const to = orderRow.email;
   if (!to) return { sent: false, reason: 'no_recipient' };
 
   const { subject, html, text } = orderInvoiceContent(orderRow);
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from, to, subject, html, text }),
-  });
-  if (!res.ok) {
-    const errText = await res.text().catch(() => '');
-    return { sent: false, reason: 'resend_error', detail: errText.slice(0, 200) };
+  const result = await sendViaResend(env, { from, to, subject, html, text });
+  if (!result.ok) {
+    return { sent: false, reason: 'resend_error', detail: result.detail };
   }
   return { sent: true };
 }
