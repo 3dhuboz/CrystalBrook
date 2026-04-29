@@ -409,18 +409,40 @@ async function handleListRequests(request, env) {
   return jsonResponse({ requests: (result.results || []).map(rowToRequest) });
 }
 
+// Whitelist of fields admin can edit on a request via PATCH. Quote fields
+// (price/message/image/token) are managed only via the dedicated /quote
+// endpoints so we can rotate the token + send the email correctly.
+const REQUEST_PATCHABLE_FIELDS = new Set([
+  'name', 'email', 'phone', 'subject', 'category', 'size', 'notes', 'status',
+]);
+
 async function handleUpdateRequestStatus(request, env, id) {
   if (!await isAuthorised(request, env)) return errorResponse('unauthorised', 401);
   let body;
   try { body = await request.json(); }
   catch (_) { return errorResponse('invalid JSON body'); }
-  const status = (body.status || '').toString().trim();
-  if (!VALID_REQUEST_STATUSES.has(status)) return errorResponse('invalid status');
+
+  const sets = [];
+  const params = [];
+  for (const [key, raw] of Object.entries(body || {})) {
+    if (!REQUEST_PATCHABLE_FIELDS.has(key)) continue;
+    const val = (raw == null) ? null : String(raw).trim();
+    if (key === 'status' && val && !VALID_REQUEST_STATUSES.has(val)) {
+      return errorResponse('invalid status');
+    }
+    if (key === 'email' && val && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(val)) {
+      return errorResponse('invalid email');
+    }
+    sets.push(`${key} = ?`);
+    params.push(val);
+  }
+  if (!sets.length) return errorResponse('no editable fields supplied');
+
   const res = await env.DB.prepare(
-    'UPDATE requests SET status = ? WHERE id = ?'
-  ).bind(status, id).run();
+    `UPDATE requests SET ${sets.join(', ')} WHERE id = ?`
+  ).bind(...params, id).run();
   if (!res.meta || !res.meta.changes) return errorResponse('not found', 404);
-  return jsonResponse({ ok: true, id, status });
+  return jsonResponse({ ok: true, id });
 }
 
 async function handleDeleteRequest(request, env, id) {

@@ -773,8 +773,22 @@ table{ border-collapse: collapse; width:100%; }
   white-space: pre-wrap;
 }
 
-/* Hover affordance for clickable order rows */
-.t .order-row:hover{ background: rgba(212, 176, 106, .08); }
+/* Hover affordance for clickable order + request rows */
+.t .order-row:hover,
+.t .request-row:hover{ background: rgba(212, 176, 106, .08); }
+
+/* Inline pill in the request table column when a reference photo is attached */
+.cell-photo-pill{
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(212, 176, 106, .12);
+  border: 1px solid rgba(200, 163, 94, .35);
+  color: var(--ink-mute);
+  font-size: .68rem;
+  vertical-align: 1px;
+}
 
 /* === HOLIDAY MODE CARD =================================== */
 .holiday-card .card-head { display:flex; align-items:center; justify-content:space-between; gap:12px; }

@@ -1216,64 +1216,94 @@ function relativeTime(iso) {
 
 let _requestsCache = [];
 
-// Map request status → kanban column. 'declined' rows are hidden (Max can
-// always see them via the per-card detail modal once we wire a Closed
-// column; for now they stay out of the active board to keep it tidy).
-const REQUEST_STATUS_TO_COLUMN = {
-  new:          'New',
-  quoted:       'Quoted',
-  in_progress:  'In Production',
-  done:         'Completed',
+const REQUEST_STATUS_LABELS = {
+  new:         { cls: 'info',  label: 'New' },
+  quoted:      { cls: 'warn',  label: 'Quote sent' },
+  in_progress: { cls: 'warn',  label: 'In production' },
+  done:        { cls: 'ok',    label: 'Completed' },
+  declined:    { cls: 'muted', label: 'Declined' },
 };
 
-function _requestToCard(r) {
-  return {
-    id:       r.id,
-    name:     r.name || 'Anonymous',
-    subject:  r.subject || '(no subject)',
-    size:     r.size ? r.size.toUpperCase() : '—',
-    budget:   r.status === 'new' ? 'Awaiting quote' : '',
-    due:      relativeTime(r.createdAt),
-    isRequest: true,
-    hasPhoto: !!r.photoDataUrl,
-  };
+const REQUEST_STATUS_FLOW = [
+  { key: 'new',         label: 'New',           emoji: '📥' },
+  { key: 'quoted',      label: 'Quote sent',    emoji: '✉' },
+  { key: 'in_progress', label: 'In production', emoji: '🪚' },
+  { key: 'done',        label: 'Completed',     emoji: '✅' },
+  { key: 'declined',    label: 'Declined',      emoji: '✕' },
+];
+
+function requestStatusPill(status) {
+  return REQUEST_STATUS_LABELS[status] || { cls: 'muted', label: status || 'Unknown' };
 }
 
-function renderKanban(){
-  const kb = document.getElementById('kanban'); if(!kb) return;
-
-  // Distribute every live request into its right column based on status.
-  // Was: only `new` requests merged into the New column → marking a
-  // request as "quoted" made it disappear off the board entirely.
-  const cols = { New: [], Quoted: [], 'In Production': [], Completed: [] };
-  for (const r of _requestsCache) {
-    const col = REQUEST_STATUS_TO_COLUMN[r.status];
-    if (col && cols[col]) cols[col].push(_requestToCard(r));
+function renderRequestsTable(){
+  const tb = document.getElementById('requestsBody'); if(!tb) return;
+  if (!_requestsCache.length) {
+    tb.innerHTML = `<tr><td colspan="7" class="t-empty">No custom-order requests yet. When a customer fills the about-page form (or you punch one in via "+ New quote") it'll show here.</td></tr>`;
+    return;
   }
-
-  kb.innerHTML = Object.entries(cols).map(([title, cards])=>`
-    <div class="kcol">
-      <div class="kcol-head"><strong>${title}</strong><span>${cards.length}</span></div>
-      ${cards.length ? cards.map(c=>`
-        <div class="kcard is-request"${c.id ? ` data-request-id="${c.id}"` : ''} draggable="true">
-          <span class="kcard-pill">Request</span>
-          ${c.hasPhoto  ? '<span class="kcard-photo-pill" title="Reference photo attached">📎 photo</span>' : ''}
-          <div class="kcard-name">${c.name}</div>
-          <div class="kcard-sub">${c.subject}</div>
-          <div class="kcard-row">
-            <span class="kcard-tag">${c.size}${c.budget ? ' · ' + c.budget : ''}</span>
-            <span>${c.due}</span>
-          </div>
+  // Sort by created_at descending so newest are at the top
+  const rows = [..._requestsCache].sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+  tb.innerHTML = rows.map(r => {
+    const st = requestStatusPill(r.status);
+    const subj = (r.subject || '(no subject)').replace(/</g, '&lt;');
+    const subjShort = subj.length > 60 ? subj.slice(0, 60) + '…' : subj;
+    const quoteCell = r.quotePrice
+      ? '$' + Number(r.quotePrice).toLocaleString()
+      : '<span class="cell-sub">—</span>';
+    const responsePill = r.quoteResponse === 'approved'
+      ? ' <span class="status ok" style="margin-left:6px;">✓ approved</span>'
+      : r.quoteResponse === 'changes_requested'
+      ? ' <span class="status warn" style="margin-left:6px;">↺ changes</span>'
+      : '';
+    const photoBadge = r.photoDataUrl ? ' <span class="cell-photo-pill" title="Reference photo attached">📎</span>' : '';
+    return `<tr data-request-id="${r.id}" class="request-row">
+      <td><strong>${r.id}</strong></td>
+      <td>${(r.name || '').replace(/</g, '&lt;')}<span class="cell-sub">${(r.email || '').replace(/</g, '&lt;')}</span></td>
+      <td>${subjShort}${photoBadge}</td>
+      <td>${quoteCell}${responsePill}</td>
+      <td><span class="status ${st.cls}">${st.label}</span></td>
+      <td>${relativeTime(r.createdAt)}</td>
+      <td>
+        <div class="row-act">
+          <button class="iact" title="View / change status" data-act="view" data-request-id="${r.id}">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+          <button class="iact iact-edit" title="Edit customer details" data-act="edit" data-request-id="${r.id}">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          </button>
+          <button class="iact iact-delete" title="Delete this request" data-act="delete" data-request-id="${r.id}">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
+          </button>
         </div>
-      `).join('') : '<p class="kcol-empty">Nothing here yet.</p>'}
-    </div>
-  `).join('');
+      </td>
+    </tr>`;
+  }).join('');
 
-  kb.querySelectorAll('[data-request-id]').forEach(card => {
-    card.addEventListener('click', () => openRequestDetail(card.dataset.requestId));
+  tb.querySelectorAll('[data-act]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const id = btn.dataset.requestId;
+      if (btn.dataset.act === 'edit') openRequestEdit(id);
+      else if (btn.dataset.act === 'delete') confirmDeleteRequest(id);
+      else openRequestDetail(id);
+    });
+  });
+
+  tb.querySelectorAll('.request-row').forEach(tr => {
+    tr.style.cursor = 'pointer';
+    tr.addEventListener('click', e => {
+      if (e.target.closest('[data-act]')) return;
+      openRequestDetail(tr.dataset.requestId);
+    });
   });
 }
-renderKanban();
+
+// Compatibility shim — refreshRequestsFromAPI calls renderKanban() in
+// existing code paths. Make it forward to the new table renderer.
+function renderKanban() { renderRequestsTable(); }
+
+renderRequestsTable();
 
 async function refreshRequestsFromAPI() {
   try {
@@ -1393,9 +1423,23 @@ function openRequestDetail(id) {
         </form>
       </details>
 
+      <div class="od-section">
+        <h3 class="od-h3">Request status</h3>
+        <p class="od-status-help">Click a status to update the request. Useful for moving from "In production" to "Completed" once Max has finished the piece, or declining if something falls through.</p>
+        <div class="od-status-grid" id="rdStatusGrid">
+          ${REQUEST_STATUS_FLOW.map(s => {
+            const isCurrent = s.key === r.status;
+            return `<button type="button" class="od-status-btn${isCurrent ? ' is-current' : ''}" data-rd-status="${s.key}">
+              <span class="od-status-emoji">${s.emoji}</span>
+              <span class="od-status-label">${s.label}</span>
+            </button>`;
+          }).join('')}
+        </div>
+        <p class="od-status-saving" id="rdStatusSaving" hidden>Saving…</p>
+      </div>
+
       <div class="rd-actions">
-        <a class="btn btn-ghost" href="mailto:${r.email}?subject=${encodeURIComponent('Re: ' + (r.subject || '').slice(0, 60))}&body=${encodeURIComponent('Hi ' + ((r.name || '').split(' ')[0] || '') + ',\n\n')}">Reply by email →</a>
-        <button class="btn btn-ghost" type="button" data-rd-status="declined">Decline request</button>
+        <a class="btn btn-gold" href="mailto:${r.email}?subject=${encodeURIComponent('Re: ' + (r.subject || '').slice(0, 60))}&body=${encodeURIComponent('Hi ' + ((r.name || '').split(' ')[0] || '') + ',\n\n')}">Reply by email →</a>
       </div>
     </div>`;
   modal.hidden = false;
@@ -1448,10 +1492,15 @@ function openRequestDetail(id) {
     }
   });
 
-  modal.querySelectorAll('[data-rd-status]').forEach(btn => {
+  // Status grid — same pattern as the order-detail modal
+  const grid = modal.querySelector('#rdStatusGrid');
+  const saving = modal.querySelector('#rdStatusSaving');
+  grid?.querySelectorAll('[data-rd-status]').forEach(btn => {
     btn.addEventListener('click', async () => {
       const status = btn.dataset.rdStatus;
-      btn.disabled = true;
+      if (status === r.status) return;
+      grid.querySelectorAll('[data-rd-status]').forEach(b => b.disabled = true);
+      saving.hidden = false;
       try {
         const res = await fetch('/api/requests/' + encodeURIComponent(r.id), {
           method: 'PATCH',
@@ -1459,14 +1508,168 @@ function openRequestDetail(id) {
           body: JSON.stringify({ status }),
         });
         if (!res.ok) throw new Error('save failed');
-        toast('Marked ' + status);
+        const label = (REQUEST_STATUS_FLOW.find(s => s.key === status) || {}).label || status;
+        toast('Marked · ' + label);
         modal.hidden = true;
         refreshRequestsFromAPI();
       } catch (err) {
         toast('Save failed — try again');
-        btn.disabled = false;
+        grid.querySelectorAll('[data-rd-status]').forEach(b => b.disabled = false);
+      } finally {
+        saving.hidden = true;
       }
     });
+  });
+}
+
+/* ---------- REQUEST EDIT MODAL — customer-detail edits ----------
+ * Pencil icon → edit name/email/phone/subject/category/size/notes.
+ * Doesn't touch quote fields or status (those have their own UI).
+ */
+function openRequestEdit(id) {
+  const r = _requestsCache.find(x => x.id === id);
+  if (!r) { toast('Couldn\'t find that request — try refreshing.'); return; }
+
+  let modal = document.getElementById('requestEditModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'requestEditModal';
+    modal.className = 'request-detail-modal';
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.hidden = true; });
+  }
+  const sel = (val, opts) => opts.map(([v, l]) =>
+    `<option value="${v}"${r[val] === v ? ' selected' : ''}>${l}</option>`).join('');
+  modal.innerHTML = `
+    <div class="rd-card">
+      <button class="rd-close" type="button" aria-label="Close">×</button>
+      <p class="rd-eyebrow">${r.id} · edit request</p>
+      <h2 class="rd-name">Edit ${r.name || 'request'}</h2>
+      <p class="rd-meta">Typo fixes, subject tweaks, internal notes. Status changes (quote/in production/completed) live in the View screen.</p>
+
+      <form id="requestEditForm" class="form" autocomplete="off">
+        <label><span>Customer name *</span><input class="inp" name="name" required value="${(r.name || '').replace(/"/g, '&quot;')}"/></label>
+        <div class="row-2">
+          <label><span>Email *</span><input class="inp" name="email" type="email" required value="${(r.email || '').replace(/"/g, '&quot;')}"/></label>
+          <label><span>Phone</span><input class="inp" name="phone" type="tel" value="${(r.phone || '').replace(/"/g, '&quot;')}"/></label>
+        </div>
+        <label><span>What they want *</span><textarea class="inp" name="subject" rows="3" required>${(r.subject || '').replace(/</g, '&lt;')}</textarea></label>
+        <div class="row-2">
+          <label><span>Category</span>
+            <select class="inp" name="category">
+              ${sel('category', [['', '—'], ['saltwater','Saltwater fish'], ['freshwater','Freshwater fish'], ['cars','Cars'], ['animals','Animals'], ['birds','Birds'], ['other','Something else']])}
+            </select>
+          </label>
+          <label><span>Size</span>
+            <select class="inp" name="size">
+              ${sel('size', [['', '—'], ['small','Small (≤ 50 cm)'], ['medium','Medium (50–80 cm)'], ['large','Large (80–100 cm)'], ['xl','XL (100 cm +)']])}
+            </select>
+          </label>
+        </div>
+        <label><span>Notes (admin)</span><textarea class="inp" name="notes" rows="3">${(r.notes || '').replace(/</g, '&lt;')}</textarea></label>
+        <p class="newquote-err" id="requestEditErr" hidden style="color:#d9534f;margin:0;font-size:.9rem;"></p>
+      </form>
+
+      <div class="rd-actions">
+        <button class="btn btn-gold" type="button" id="requestEditSave">Save changes</button>
+        <button class="btn btn-ghost" type="button" id="requestEditCancel">Cancel</button>
+      </div>
+    </div>`;
+  modal.hidden = false;
+  modal.querySelector('.rd-close').addEventListener('click', () => modal.hidden = true);
+  modal.querySelector('#requestEditCancel').addEventListener('click', () => modal.hidden = true);
+
+  const form = modal.querySelector('#requestEditForm');
+  const errEl = modal.querySelector('#requestEditErr');
+  const saveBtn = modal.querySelector('#requestEditSave');
+
+  saveBtn.addEventListener('click', async () => {
+    errEl.hidden = true;
+    const data = Object.fromEntries(new FormData(form).entries());
+    if (!(data.name || '').trim()) { errEl.textContent = 'Name is required.'; errEl.hidden = false; return; }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test((data.email || '').trim())) { errEl.textContent = 'Valid email required.'; errEl.hidden = false; return; }
+    if (!(data.subject || '').trim()) { errEl.textContent = 'Subject is required.'; errEl.hidden = false; return; }
+    saveBtn.disabled = true;
+    const original = saveBtn.textContent;
+    saveBtn.textContent = 'Saving…';
+    try {
+      const res = await fetch('/api/requests/' + encodeURIComponent(id), {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json', ...adminAuthHeaders() },
+        body: JSON.stringify({
+          name: data.name.trim(),
+          email: data.email.trim(),
+          phone: (data.phone || '').trim(),
+          subject: data.subject.trim(),
+          category: data.category || '',
+          size: data.size || '',
+          notes: (data.notes || '').trim(),
+        }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j.error || 'save failed');
+      }
+      modal.hidden = true;
+      toast('Saved · ' + id);
+      refreshRequestsFromAPI();
+    } catch (err) {
+      errEl.textContent = 'Couldn\'t save: ' + (err.message || 'try again');
+      errEl.hidden = false;
+      saveBtn.disabled = false;
+      saveBtn.textContent = original;
+    }
+  });
+
+  setTimeout(() => form.querySelector('[name="name"]')?.focus(), 50);
+}
+
+/* ---------- REQUEST DELETE CONFIRM ---------- */
+function confirmDeleteRequest(id) {
+  const r = _requestsCache.find(x => x.id === id);
+  const label = r ? `${r.id} (${r.name || 'customer'})` : id;
+
+  let modal = document.getElementById('requestDeleteModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'requestDeleteModal';
+    modal.className = 'request-detail-modal';
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.hidden = true; });
+  }
+  modal.innerHTML = `
+    <div class="rd-card" style="max-width: 480px;">
+      <button class="rd-close" type="button" aria-label="Close">×</button>
+      <p class="rd-eyebrow">Delete request</p>
+      <h2 class="rd-name">Delete ${label}?</h2>
+      <p class="rd-meta">This permanently removes the row from your records — it can't be undone. The customer won't be told.</p>
+      <p class="rd-meta" style="color:#b14a3a;font-weight:500;">If a quote was already sent, the customer's review link will stop working.</p>
+      <div class="rd-actions">
+        <button class="btn btn-danger" type="button" id="requestDeleteOk">Delete request</button>
+        <button class="btn btn-ghost" type="button" id="requestDeleteCancel">Cancel</button>
+      </div>
+    </div>`;
+  modal.hidden = false;
+  modal.querySelector('.rd-close').addEventListener('click', () => modal.hidden = true);
+  modal.querySelector('#requestDeleteCancel').addEventListener('click', () => modal.hidden = true);
+  modal.querySelector('#requestDeleteOk').addEventListener('click', async () => {
+    const btn = modal.querySelector('#requestDeleteOk');
+    btn.disabled = true;
+    btn.textContent = 'Deleting…';
+    try {
+      const res = await fetch('/api/requests/' + encodeURIComponent(id), {
+        method: 'DELETE',
+        headers: { ...adminAuthHeaders() },
+      });
+      if (!res.ok) throw new Error('delete failed');
+      modal.hidden = true;
+      toast('Deleted · ' + id);
+      refreshRequestsFromAPI();
+    } catch (err) {
+      toast('Delete failed — try again');
+      btn.disabled = false;
+      btn.textContent = 'Delete request';
+    }
   });
 }
 

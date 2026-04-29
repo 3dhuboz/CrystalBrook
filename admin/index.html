@@ -7,10 +7,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="../assets/admin.css?v=20260429-18" />
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260429-18" />
-<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260429-18" />
-<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260429-18" />
+<link rel="stylesheet" href="../assets/admin.css?v=20260429-19" />
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260429-19" />
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260429-19" />
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260429-19" />
 <link rel="manifest" href="../manifest.webmanifest" />
 <meta name="theme-color" content="#1c130a" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -307,15 +307,28 @@
     <div class="v-head">
       <div>
         <h1>Custom Orders</h1>
-        <p>Requests from the custom order form.</p>
+        <p>Requests from the custom order form. Click a row to view + change status; the pencil edits customer details, the trash deletes.</p>
       </div>
       <div class="v-head-actions">
         <button class="btn btn-gold">+ New quote</button>
       </div>
     </div>
 
-    <div class="kanban" id="kanban">
-      <!-- columns injected by admin.js -->
+    <div class="card card-flush">
+      <table class="t t-grid" id="requestsTable">
+        <thead>
+          <tr>
+            <th>Ref</th>
+            <th>Customer</th>
+            <th>Subject</th>
+            <th>Quote</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="requestsBody"><!-- injected by admin.js --></tbody>
+      </table>
     </div>
   </section>
 
@@ -1613,6 +1626,6 @@
   </div>
 </div>
 
-<script src="../assets/admin.js?v=20260429-18"></script>
+<script src="../assets/admin.js?v=20260429-19"></script>
 </body>
 </html>
