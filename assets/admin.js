@@ -3040,6 +3040,7 @@ const _drawer = {
 
 let _drawerCurrentProduct = null;
 let _drawerMode = 'edit';
+let _drawerGallery = [];   // [{ src, label }] — additional photos beyond the main one
 
 function openProductDrawer(product, opts = {}) {
   const mode = opts.mode || 'edit';
@@ -3067,11 +3068,83 @@ function openProductDrawer(product, opts = {}) {
   form.querySelector('[name="description"]').value = product?.desc || product?.description || '';
   form.querySelector('[name="draft"]').checked = !!product?.draft;
 
+  // Hydrate the additional-photos list. The data shape is whatever the API
+  // returned: an array of {src, alt, label} or null. Filter out the main
+  // image so it isn't shown twice — the gallery only holds extras.
+  const apiGallery = Array.isArray(product?.gallery) ? product.gallery : [];
+  const mainImage = product?.image || '';
+  _drawerGallery = apiGallery
+    .filter(g => g && g.src && g.src !== mainImage)
+    .map(g => ({ src: g.src, label: g.label || g.alt || '' }));
+  renderGalleryEditor();
+
   drawer.hidden = false;
   drawer.setAttribute('aria-hidden', 'false');
   _drawer.scrim().hidden = false;
   document.body.style.overflow = 'hidden';
   setTimeout(() => form.querySelector('[name="name"]')?.focus(), 50);
+}
+
+/* Gallery editor — renders _drawerGallery into the drawer's list and
+ * wires per-row label/remove + drag-to-reorder. Called whenever the
+ * underlying array changes (add/remove/reorder/label-edit). */
+function renderGalleryEditor() {
+  const list = document.getElementById('pdfGalleryList');
+  if (!list) return;
+  if (!_drawerGallery.length) {
+    list.innerHTML = '<li class="pdf-gallery-empty">No extra photos yet — the main photo above is all the customer will see.</li>';
+    return;
+  }
+  list.innerHTML = _drawerGallery.map((g, i) => `
+    <li class="pdf-gallery-item" draggable="true" data-idx="${i}">
+      <span class="pdf-gallery-handle" aria-hidden="true" title="Drag to reorder">⋮⋮</span>
+      <span class="pdf-gallery-thumb"><img src="${g.src}" alt=""/></span>
+      <input class="inp pdf-gallery-label" type="text" placeholder="Label (e.g. Front, Hunter pose, On the wall)" value="${(g.label || '').replace(/"/g, '&quot;')}" data-label-idx="${i}"/>
+      <button class="iact iact-delete" type="button" title="Remove this photo" data-remove-idx="${i}">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
+      </button>
+    </li>
+  `).join('');
+
+  // Label edit on blur
+  list.querySelectorAll('[data-label-idx]').forEach(inp => {
+    inp.addEventListener('change', e => {
+      const idx = +e.target.dataset.labelIdx;
+      _drawerGallery[idx].label = e.target.value.trim();
+    });
+  });
+
+  // Remove
+  list.querySelectorAll('[data-remove-idx]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = +btn.dataset.removeIdx;
+      _drawerGallery.splice(idx, 1);
+      renderGalleryEditor();
+    });
+  });
+
+  // Drag-to-reorder
+  let dragged = null;
+  list.querySelectorAll('.pdf-gallery-item').forEach(li => {
+    li.addEventListener('dragstart', () => { dragged = li; li.style.opacity = '0.4'; });
+    li.addEventListener('dragend',   () => {
+      li.style.opacity = '1';
+      if (!dragged) return;
+      // Sync the array order from current DOM order
+      const newOrder = Array.from(list.querySelectorAll('[data-idx]')).map(n => _drawerGallery[+n.dataset.idx]);
+      _drawerGallery = newOrder;
+      dragged = null;
+      renderGalleryEditor();
+    });
+    li.addEventListener('dragover', e => e.preventDefault());
+    li.addEventListener('drop', e => {
+      e.preventDefault();
+      if (!dragged || dragged === li) return;
+      const rect = li.getBoundingClientRect();
+      const after = (e.clientY - rect.top) > rect.height / 2;
+      list.insertBefore(dragged, after ? li.nextSibling : li);
+    });
+  });
 }
 
 function closeProductDrawer() {
@@ -3087,6 +3160,19 @@ function closeProductDrawer() {
 function readDrawerForm() {
   const form = _drawer.form();
   const fd = new FormData(form);
+  // Build the gallery payload the API expects: array of {src, alt, label}
+  // with the main image NOT included (it's the `image` field). Empty
+  // labels become null so the array is clean. If there are no extras at
+  // all, send null so the gallery clears.
+  const extras = _drawerGallery.filter(g => g && g.src);
+  const gallery = extras.length
+    ? extras.map(g => ({
+        src: g.src,
+        alt: g.label || '',
+        label: g.label || '',
+      }))
+    : null;
+
   const out = {
     id: (fd.get('id') || '').trim(),
     name: (fd.get('name') || '').trim(),
@@ -3098,6 +3184,7 @@ function readDrawerForm() {
     meta: (fd.get('meta') || '').trim() || null,
     description: (fd.get('description') || '').trim(),
     draft: !!fd.get('draft'),
+    gallery,
   };
   return out;
 }
@@ -3217,6 +3304,36 @@ async function shrinkImageFile(file, maxEdge = 1024, quality = 0.85) {
     previewProductImage('');
   });
   imageInput?.addEventListener('input', () => previewProductImage(imageInput.value));
+
+  // Gallery (additional photos) — "+ Add another photo" button → file
+  // picker → resize → push to _drawerGallery → re-render.
+  const galleryAddBtn  = document.getElementById('pdfGalleryAdd');
+  const galleryFile    = document.getElementById('pdfGalleryFile');
+  galleryAddBtn?.addEventListener('click', () => galleryFile?.click());
+  galleryFile?.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!/^image\//.test(file.type)) {
+      toast('That doesn\'t look like a photo. Try a JPG, PNG or WebP.');
+      return;
+    }
+    galleryAddBtn.disabled = true;
+    const originalLabel = galleryAddBtn.textContent;
+    galleryAddBtn.textContent = 'Resizing…';
+    try {
+      const dataUrl = await shrinkImageFile(file);
+      _drawerGallery.push({ src: dataUrl, label: '' });
+      renderGalleryEditor();
+      toast('Added — give it a label and hit Save to keep.');
+    } catch (err) {
+      console.error('gallery photo upload failed', err);
+      toast('Couldn\'t read that file. Try a JPG or PNG.');
+    } finally {
+      galleryAddBtn.disabled = false;
+      galleryAddBtn.textContent = originalLabel;
+      galleryFile.value = '';
+    }
+  });
 
   _drawer.saveBtn()?.addEventListener('click', async () => {
     const data = readDrawerForm();
