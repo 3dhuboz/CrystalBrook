@@ -559,6 +559,10 @@ table{ border-collapse: collapse; width:100%; }
   background: rgba(255,255,255,0.04); border: 1px solid rgba(212,176,106,0.4);
   color: var(--ink-mute); font-size:.62rem; letter-spacing:.12em;
 }
+.kcol-empty{
+  margin: 8px 0 0; font-size: .82rem; font-style: italic;
+  color: var(--ink-mute); text-align: center; padding: 20px 0;
+}
 
 /* === REQUEST DETAIL MODAL ============================== */
 .request-detail-modal{
@@ -700,6 +704,11 @@ table{ border-collapse: collapse; width:100%; }
   margin: 12px 0 0; font-size: .82rem; color: var(--ink-mute);
   font-style: italic;
 }
+.od-tracking-row{
+  display: flex; gap: 8px; align-items: center;
+}
+.od-tracking-row input{ flex: 1; }
+.od-tracking-row .btn-small{ padding: 8px 14px; }
 .od-notes{
   margin: 0; font-size: .92rem; line-height: 1.55; color: var(--ink);
   white-space: pre-wrap;

@@ -97,6 +97,7 @@ CREATE TABLE IF NOT EXISTS orders (
   source        TEXT,                    -- 'checkout' | 'manual_admin'
   notes         TEXT,                    -- admin-only notes (used for manual orders)
   photo_data_url TEXT,                   -- optional reference for manual orders
+  tracking_number TEXT,                  -- e.g. Aus Post tracking; included in shipped-status email
   created_at    TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
 );

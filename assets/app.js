@@ -2044,6 +2044,7 @@ document.addEventListener('keydown', e=>{
         shipping: api.shipping,
         total: api.total,
         status: api.status,
+        trackingNumber: api.trackingNumber,
         createdAt: api.createdAt
           ? new Date(api.createdAt.replace(' ', 'T') + 'Z').getTime()
           : (cached?.createdAt || Date.now()),
@@ -2124,13 +2125,17 @@ document.addEventListener('keydown', e=>{
       }).join('');
     }
 
-    // ETA estimate — 4-6 weeks from order date
+    // ETA estimate — 4-6 weeks from order date. When tracking number is set
+    // (status=shipped) we show that instead so the customer can paste it
+    // into Aus Post.
     const etaEl = document.getElementById('orderEta');
     if (etaEl) {
       if (isRefunded) {
         etaEl.textContent = status === 'refunded'
           ? 'This order was refunded.'
           : 'This order was cancelled.';
+      } else if (status === 'shipped' && order.trackingNumber) {
+        etaEl.innerHTML = `Tracking number: <strong>${order.trackingNumber.replace(/[^A-Za-z0-9 \-]/g, '')}</strong> · expected delivery 3–5 business days`;
       } else if (stageIdx >= STAGES.length - 1) {
         etaEl.textContent = '✓ Delivered. Hope it looks great on your wall.';
       } else {

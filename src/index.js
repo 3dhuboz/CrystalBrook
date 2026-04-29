@@ -448,6 +448,7 @@ function rowToOrder(row) {
     source:    row.source,
     notes:     row.notes,
     photoDataUrl: row.photo_data_url,
+    trackingNumber: row.tracking_number,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -533,43 +534,73 @@ async function handleGetOrder(request, env, id) {
     return jsonResponse({ order: {
       id: order.id, items: order.items, subtotal: order.subtotal,
       shipping: order.shipping, total: order.total, status: order.status,
+      trackingNumber: order.trackingNumber,
       createdAt: order.createdAt,
     }});
   }
   return jsonResponse({ order });
 }
 
+// Whitelist of fields admin can edit on an order via PATCH. Items / totals /
+// payment_ref / source are deliberately not patchable — those reflect the
+// original sale event and shouldn't be quietly mutated. To re-do an order
+// at a different total, refund + create new.
+const ORDER_PATCHABLE_FIELDS = new Set([
+  'name', 'email', 'phone', 'address', 'suburb', 'state', 'postcode',
+  'notes', 'status', 'tracking_number',
+]);
+
 async function handleUpdateOrderStatus(request, env, id) {
   if (!await isAuthorised(request, env)) return errorResponse('unauthorised', 401);
   let body;
   try { body = await request.json(); }
   catch (_) { return errorResponse('invalid JSON body'); }
-  const status = (body.status || '').toString().trim();
-  if (!VALID_ORDER_STATUSES.has(status)) return errorResponse('invalid status');
 
-  // Pull the current row so we can email the customer about the change.
+  // Build the SET list from the body, only allowing whitelisted fields.
+  // Track every change as a {col, val} pair so we can merge them onto the
+  // before-row when firing the customer email (otherwise the email would
+  // use stale tracking_number / etc. for a multi-field PATCH).
+  const sets = [];
+  const params = [];
+  const patches = {};
+  let nextStatus = null;
+  for (const [key, raw] of Object.entries(body || {})) {
+    if (!ORDER_PATCHABLE_FIELDS.has(key)) continue;
+    const val = (raw == null) ? null : String(raw).trim();
+    if (key === 'status') {
+      if (val && !VALID_ORDER_STATUSES.has(val)) return errorResponse('invalid status');
+      nextStatus = val;
+    } else if (key === 'email' && val && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(val)) {
+      return errorResponse('invalid email');
+    }
+    sets.push(`${key} = ?`);
+    params.push(val);
+    patches[key] = val;
+  }
+  if (!sets.length) return errorResponse('no editable fields supplied');
+
   const before = await env.DB.prepare('SELECT * FROM orders WHERE id = ?').bind(id).first();
   if (!before) return errorResponse('not found', 404);
-  if (before.status === status) {
-    return jsonResponse({ ok: true, id, status, emailSent: false, unchanged: true });
-  }
 
+  sets.push('updated_at = datetime(\'now\')');
   await env.DB.prepare(
-    'UPDATE orders SET status = ?, updated_at = datetime(\'now\') WHERE id = ?'
-  ).bind(status, id).run();
+    `UPDATE orders SET ${sets.join(', ')} WHERE id = ?`
+  ).bind(...params, id).run();
 
-  // Fire customer notification — silent no-op when RESEND_API_KEY isn't
-  // configured (Steve will set the secret + sending domain when Max is ready
-  // to go live with email). Wrapped so a send failure never blocks the status
-  // update.
+  // Email only when status actually changes. Pass the merged row (before +
+  // patch) so the template sees the latest tracking_number / customer name
+  // / etc., even when both were updated in a single PATCH.
   let emailSent = false;
-  try {
-    emailSent = await sendOrderStatusEmail(env, before, status);
-  } catch (err) {
-    console.error('Order status email failed:', err);
+  if (nextStatus && nextStatus !== before.status) {
+    const merged = { ...before, ...patches };
+    try {
+      emailSent = await sendOrderStatusEmail(env, merged, nextStatus);
+    } catch (err) {
+      console.error('Order status email failed:', err);
+    }
   }
 
-  return jsonResponse({ ok: true, id, status, emailSent });
+  return jsonResponse({ ok: true, id, status: nextStatus || before.status, emailSent });
 }
 
 /* ---------- Customer order-status emails (Resend) ----------
@@ -607,7 +638,9 @@ function orderStatusEmailContent(orderRow, newStatus) {
     shipped: {
       subject: `Order ${id} — shipped!`,
       heading: `On its way, ${customerName}.`,
-      body: `Your order — ${itemList} — has just been packed and posted via Australia Post. Tracking will land in a separate email from Aus Post within a few hours. Expected delivery: 3–5 business days for metro, a touch longer for regional.`,
+      body: orderRow.tracking_number
+        ? `Your order — ${itemList} — has just been packed and posted via Australia Post. Tracking number: ${orderRow.tracking_number}. Expected delivery: 3–5 business days for metro, a touch longer for regional.`
+        : `Your order — ${itemList} — has just been packed and posted via Australia Post. Tracking will land in a separate email from Aus Post within a few hours. Expected delivery: 3–5 business days for metro, a touch longer for regional.`,
     },
     delivered: {
       subject: `Order ${id} — delivered`,
@@ -665,6 +698,139 @@ async function sendOrderStatusEmail(env, orderRow, newStatus) {
     return false;
   }
   return true;
+}
+
+/* ---------- Customer invoice email ----------
+ * Sent on demand from the admin Orders detail modal. Useful for manual
+ * orders (cash/phone sales) where the customer wants a record, and for
+ * confirmed online orders if Max wants to re-send the receipt.
+ */
+function orderInvoiceContent(orderRow) {
+  const customerName = orderRow.name || 'there';
+  const id = orderRow.id;
+  let items = [];
+  try { items = JSON.parse(orderRow.items || '[]'); } catch (_) {}
+  const created = orderRow.created_at
+    ? new Date(orderRow.created_at.replace(' ', 'T') + 'Z')
+    : new Date();
+  const dateLabel = created.toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  const itemRowsHtml = items.map(i => {
+    const lineTotal = (Number(i.price) || 0) * (Number(i.qty) || 1);
+    return `<tr>
+      <td style="padding:10px 0;border-bottom:1px solid #e8e1d2;">${escapeHtml(i.name)}</td>
+      <td style="padding:10px 0;border-bottom:1px solid #e8e1d2;text-align:center;color:#7a6e5c;">×${i.qty || 1}</td>
+      <td style="padding:10px 0;border-bottom:1px solid #e8e1d2;text-align:right;">$${lineTotal.toLocaleString()}</td>
+    </tr>`;
+  }).join('');
+  const itemRowsText = items.map(i =>
+    `  ${i.name}  ×${i.qty || 1}    $${((Number(i.price) || 0) * (Number(i.qty) || 1)).toLocaleString()}`
+  ).join('\n');
+
+  const addr = [
+    orderRow.address, orderRow.suburb,
+    [orderRow.state, orderRow.postcode].filter(Boolean).join(' ')
+  ].filter(Boolean).join(', ');
+
+  const subtotal = orderRow.subtotal || 0;
+  const shipping = orderRow.shipping || 0;
+  const total    = orderRow.total || (subtotal + shipping);
+
+  const html = `<!doctype html><html><body style="margin:0;background:#f7f3ec;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1c130a;line-height:1.55;">
+    <div style="max-width:580px;margin:0 auto;padding:32px 24px;background:#fff;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:24px;">
+        <div>
+          <p style="font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:#7a6e5c;margin:0 0 4px;">Crystal Brook Wall Mounts</p>
+          <h1 style="font-family:'Cormorant Garamond',serif;font-weight:500;font-size:1.7rem;margin:0;color:#1c130a;">Invoice ${escapeHtml(id)}</h1>
+        </div>
+        <p style="margin:0;color:#7a6e5c;font-size:.9rem;">${dateLabel}</p>
+      </div>
+
+      <p style="margin:0 0 22px;">Hi ${escapeHtml(customerName.split(' ')[0])} — here's your receipt for the order below. Hold onto it for your records.</p>
+
+      <h2 style="font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;color:#7a6e5c;margin:0 0 8px;">Items</h2>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:18px;">
+        ${itemRowsHtml}
+      </table>
+
+      <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
+        <tr>
+          <td style="padding:6px 0;color:#7a6e5c;">Subtotal</td>
+          <td style="padding:6px 0;text-align:right;">$${subtotal.toLocaleString()}</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 0;color:#7a6e5c;">Shipping</td>
+          <td style="padding:6px 0;text-align:right;">${shipping ? '$' + shipping.toLocaleString() : 'Free'}</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 0 6px;border-top:1px dashed #e8e1d2;font-weight:500;">Total</td>
+          <td style="padding:10px 0 6px;border-top:1px dashed #e8e1d2;text-align:right;font-weight:600;color:#a9864b;font-size:1.1rem;">$${total.toLocaleString()}</td>
+        </tr>
+      </table>
+
+      ${addr ? `<h2 style="font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;color:#7a6e5c;margin:0 0 6px;">Shipping to</h2>
+      <p style="margin:0 0 22px;">${escapeHtml(orderRow.name || '')}<br/>${escapeHtml(addr)}</p>` : ''}
+
+      <p style="font-size:.85rem;color:#7a6e5c;margin:24px 0 0;border-top:1px solid #e8e1d2;padding-top:14px;">
+        Crystal Brook Wall Mounts · Gordonvale, FNQ<br/>
+        Questions? Reply to this email and Max will get back to you within a business day.
+      </p>
+    </div>
+  </body></html>`;
+
+  const text = `Crystal Brook Wall Mounts
+Invoice ${id}
+${dateLabel}
+
+Hi ${customerName.split(' ')[0]} — here's your receipt.
+
+ITEMS
+${itemRowsText}
+
+Subtotal:  $${subtotal.toLocaleString()}
+Shipping:  ${shipping ? '$' + shipping.toLocaleString() : 'Free'}
+Total:     $${total.toLocaleString()}
+
+${addr ? 'Shipping to:\n' + (orderRow.name || '') + '\n' + addr + '\n\n' : ''}— Crystal Brook Wall Mounts, Gordonvale FNQ`;
+
+  return { subject: `Crystal Brook invoice ${id}`, html, text };
+}
+
+async function sendOrderInvoice(env, orderRow) {
+  const apiKey = env.RESEND_API_KEY;
+  const from   = env.MAIL_FROM;
+  if (!apiKey || !from) {
+    return { sent: false, reason: 'email_not_configured' };
+  }
+  const to = orderRow.email;
+  if (!to) return { sent: false, reason: 'no_recipient' };
+
+  const { subject, html, text } = orderInvoiceContent(orderRow);
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ from, to, subject, html, text }),
+  });
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '');
+    return { sent: false, reason: 'resend_error', detail: errText.slice(0, 200) };
+  }
+  return { sent: true };
+}
+
+async function handleSendOrderInvoice(request, env, id) {
+  if (!await isAuthorised(request, env)) return errorResponse('unauthorised', 401);
+  const row = await env.DB.prepare('SELECT * FROM orders WHERE id = ?').bind(id).first();
+  if (!row) return errorResponse('not found', 404);
+  const result = await sendOrderInvoice(env, row);
+  if (!result.sent) {
+    if (result.reason === 'email_not_configured') {
+      return errorResponse('Email isn\'t set up yet — set RESEND_API_KEY and MAIL_FROM as Worker secrets.', 503);
+    }
+    if (result.reason === 'no_recipient') return errorResponse('Order has no customer email');
+    return errorResponse('Failed to send invoice: ' + (result.detail || 'unknown'), 502);
+  }
+  return jsonResponse({ ok: true, id, sent: true });
 }
 
 async function handleDeleteOrder(request, env, id) {
@@ -735,6 +901,10 @@ export default {
           if (request.method === 'GET')    return await handleGetOrder(request, env, id);
           if (request.method === 'PATCH')  return await handleUpdateOrderStatus(request, env, id);
           if (request.method === 'DELETE') return await handleDeleteOrder(request, env, id);
+        }
+        const invoiceMatch = path.match(/^\/api\/orders\/([\w-]+)\/send-invoice$/);
+        if (invoiceMatch && request.method === 'POST') {
+          return await handleSendOrderInvoice(request, env, invoiceMatch[1]);
         }
         return errorResponse('not found', 404);
       } catch (err) {

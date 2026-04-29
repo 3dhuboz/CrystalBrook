@@ -814,16 +814,39 @@ function renderOrders(){
       <td><span class="status ${st.cls}">${st.label}</span></td>
       <td>${o.pay}</td>
       <td>${o.date}</td>
-      <td><div class="row-act"><button class="iact" title="View order details" data-view-order="${o.id}"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div></td>
+      <td>
+        <div class="row-act">
+          <button class="iact" title="View / change status" data-act="view" data-order-id="${o.id}">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+          <button class="iact iact-edit" title="Edit customer details" data-act="edit" data-order-id="${o.id}">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          </button>
+          <button class="iact iact-delete" title="Delete this order" data-act="delete" data-order-id="${o.id}">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
+          </button>
+        </div>
+      </td>
     </tr>`;
   }).join('');
 
-  // Whole-row click → open detail modal (the eye icon is just a visual hint)
+  // Action buttons (event-stop so the row click doesn't fire too)
+  tb.querySelectorAll('[data-act]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const id = btn.dataset.orderId;
+      if (btn.dataset.act === 'edit')   openOrderEdit(id);
+      else if (btn.dataset.act === 'delete') confirmDeleteOrder(id);
+      else openOrderDetail(id);
+    });
+  });
+
+  // Whole-row click → open the view/status modal (covers most clicks)
   tb.querySelectorAll('.order-row').forEach(tr => {
     tr.style.cursor = 'pointer';
     tr.addEventListener('click', e => {
-      // Skip if clicking the checkbox or its td
       if (e.target.closest('input[type="checkbox"]')) return;
+      if (e.target.closest('[data-act]')) return;
       openOrderDetail(tr.dataset.orderId);
     });
   });
@@ -912,15 +935,86 @@ function openOrderDetail(id) {
         <p class="od-status-saving" id="odStatusSaving" hidden>Saving + sending notification…</p>
       </div>
 
+      <div class="od-section">
+        <h3 class="od-h3">Tracking number</h3>
+        <p class="od-status-help">Enter the Australia Post tracking number once you've shipped it. If the order's status is "Shipped", the customer's email will include this number.</p>
+        <div class="od-tracking-row">
+          <input class="inp" id="odTracking" type="text" placeholder="e.g. 33ABXX1234567" value="${(o.trackingNumber || '').replace(/"/g, '&quot;')}"/>
+          <button class="btn btn-gold btn-small" type="button" id="odTrackingSave">Save</button>
+        </div>
+        <p class="od-status-saving" id="odTrackingSaved" hidden>Saved ✓</p>
+      </div>
+
       ${o.notes ? `<div class="od-section"><h3 class="od-h3">Notes</h3><p class="od-notes">${o.notes.replace(/</g,'&lt;')}</p></div>` : ''}
 
       <div class="rd-actions">
-        <a class="btn btn-gold" href="mailto:${o.email}?subject=${encodeURIComponent('Your Crystal Brook order ' + o.id)}&body=${encodeURIComponent('Hi ' + ((o.name || 'there').split(' ')[0]) + ',\n\n')}">Reply by email →</a>
+        <button class="btn btn-gold" type="button" id="odSendInvoice">Email invoice to customer</button>
+        <a class="btn btn-ghost" href="mailto:${o.email}?subject=${encodeURIComponent('Your Crystal Brook order ' + o.id)}&body=${encodeURIComponent('Hi ' + ((o.name || 'there').split(' ')[0]) + ',\n\n')}">Reply by email →</a>
         <a class="btn btn-ghost" href="../order.html?id=${o.id}" target="_blank" rel="noopener">View customer-facing tracking →</a>
       </div>
     </div>`;
   modal.hidden = false;
   modal.querySelector('.rd-close').addEventListener('click', () => modal.hidden = true);
+
+  // Tracking number save
+  const trackingInput = modal.querySelector('#odTracking');
+  const trackingSave  = modal.querySelector('#odTrackingSave');
+  const trackingDone  = modal.querySelector('#odTrackingSaved');
+  trackingSave?.addEventListener('click', async () => {
+    const newVal = trackingInput.value.trim();
+    if ((newVal || '') === (o.trackingNumber || '')) {
+      trackingDone.textContent = 'No change';
+      trackingDone.hidden = false;
+      setTimeout(() => trackingDone.hidden = true, 1500);
+      return;
+    }
+    trackingSave.disabled = true;
+    trackingSave.textContent = 'Saving…';
+    try {
+      const res = await fetch('/api/orders/' + encodeURIComponent(id), {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json', ...adminAuthHeaders() },
+        body: JSON.stringify({ tracking_number: newVal }),
+      });
+      if (!res.ok) throw new Error('save failed');
+      o.trackingNumber = newVal;
+      const cached = _ordersCache.find(x => x.id === id);
+      if (cached?._raw) cached._raw.trackingNumber = newVal;
+      trackingDone.textContent = 'Saved ✓ — included in the next "Shipped" email if status changes';
+      trackingDone.hidden = false;
+      setTimeout(() => trackingDone.hidden = true, 3000);
+      refreshOrdersFromAPI();
+    } catch (err) {
+      trackingDone.textContent = 'Save failed — try again';
+      trackingDone.hidden = false;
+    } finally {
+      trackingSave.disabled = false;
+      trackingSave.textContent = 'Save';
+    }
+  });
+
+  // Send invoice
+  const sendInvBtn = modal.querySelector('#odSendInvoice');
+  sendInvBtn?.addEventListener('click', async () => {
+    if (!o.email) { toast('No customer email on this order — can\'t send invoice.'); return; }
+    sendInvBtn.disabled = true;
+    const original = sendInvBtn.textContent;
+    sendInvBtn.textContent = 'Sending…';
+    try {
+      const res = await fetch('/api/orders/' + encodeURIComponent(id) + '/send-invoice', {
+        method: 'POST',
+        headers: { ...adminAuthHeaders() },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'send failed');
+      toast(`Invoice emailed to ${o.email}`);
+    } catch (err) {
+      toast('Couldn\'t send invoice: ' + (err.message || 'try again'));
+    } finally {
+      sendInvBtn.disabled = false;
+      sendInvBtn.textContent = original;
+    }
+  });
 
   // Status toggle clicks → PATCH /api/orders/:id
   const grid    = modal.querySelector('#odStatusGrid');
@@ -964,6 +1058,157 @@ function openOrderDetail(id) {
   });
 }
 
+/* ---------- ORDER EDIT MODAL — customer details + notes ----------
+ * Opens via the pencil icon on each order row. PATCHes /api/orders/:id
+ * with whitelisted fields (name/email/phone/address/suburb/state/
+ * postcode/notes). Status changes still go through the view modal so
+ * the email-fire path is explicit.
+ */
+function openOrderEdit(id) {
+  const view = _ordersCache.find(x => x.id === id);
+  if (!view) { toast('Couldn\'t find that order — try refreshing.'); return; }
+  const o = view._raw || view;
+
+  let modal = document.getElementById('orderEditModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'orderEditModal';
+    modal.className = 'request-detail-modal';
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.hidden = true; });
+  }
+  modal.innerHTML = `
+    <div class="rd-card">
+      <button class="rd-close" type="button" aria-label="Close">×</button>
+      <p class="rd-eyebrow">${o.id} · edit customer details</p>
+      <h2 class="rd-name">Edit ${o.name || 'order'}</h2>
+      <p class="rd-meta">Typo fixes, address corrections, internal notes. Status changes (paid → shipped etc.) still happen on the View screen so the customer email fires correctly.</p>
+
+      <form id="orderEditForm" class="form" autocomplete="off">
+        <label><span>Customer name *</span><input class="inp" name="name" required value="${(o.name || '').replace(/"/g, '&quot;')}"/></label>
+        <div class="row-2">
+          <label><span>Email *</span><input class="inp" name="email" type="email" required value="${(o.email || '').replace(/"/g, '&quot;')}"/></label>
+          <label><span>Phone</span><input class="inp" name="phone" type="tel" value="${(o.phone || '').replace(/"/g, '&quot;')}"/></label>
+        </div>
+        <label><span>Street address</span><input class="inp" name="address" value="${(o.address || '').replace(/"/g, '&quot;')}"/></label>
+        <div class="row-2">
+          <label><span>Suburb</span><input class="inp" name="suburb" value="${(o.suburb || '').replace(/"/g, '&quot;')}"/></label>
+          <label><span>State</span>
+            <select class="inp" name="state">
+              <option value="">—</option>
+              ${['QLD','NSW','VIC','WA','SA','TAS','ACT','NT'].map(s =>
+                `<option value="${s}"${o.state === s ? ' selected' : ''}>${s}</option>`).join('')}
+            </select>
+          </label>
+        </div>
+        <label><span>Postcode</span><input class="inp" name="postcode" value="${(o.postcode || '').replace(/"/g, '&quot;')}"/></label>
+        <label><span>Notes (admin only)</span><textarea class="inp" name="notes" rows="3">${(o.notes || '').replace(/</g, '&lt;')}</textarea></label>
+        <p class="newquote-err" id="orderEditErr" hidden style="color:#d9534f;margin:0;font-size:.9rem;"></p>
+      </form>
+
+      <div class="rd-actions">
+        <button class="btn btn-gold" type="button" id="orderEditSave">Save changes</button>
+        <button class="btn btn-ghost" type="button" id="orderEditCancel">Cancel</button>
+      </div>
+    </div>`;
+  modal.hidden = false;
+  modal.querySelector('.rd-close').addEventListener('click', () => modal.hidden = true);
+  modal.querySelector('#orderEditCancel').addEventListener('click', () => modal.hidden = true);
+
+  const form = modal.querySelector('#orderEditForm');
+  const errEl = modal.querySelector('#orderEditErr');
+  const saveBtn = modal.querySelector('#orderEditSave');
+
+  saveBtn.addEventListener('click', async () => {
+    errEl.hidden = true;
+    const data = Object.fromEntries(new FormData(form).entries());
+    if (!(data.name || '').trim()) { errEl.textContent = 'Name is required.'; errEl.hidden = false; return; }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test((data.email || '').trim())) { errEl.textContent = 'Valid email required.'; errEl.hidden = false; return; }
+    saveBtn.disabled = true;
+    const original = saveBtn.textContent;
+    saveBtn.textContent = 'Saving…';
+    try {
+      const res = await fetch('/api/orders/' + encodeURIComponent(id), {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json', ...adminAuthHeaders() },
+        body: JSON.stringify({
+          name: data.name.trim(),
+          email: data.email.trim(),
+          phone: (data.phone || '').trim(),
+          address: (data.address || '').trim(),
+          suburb: (data.suburb || '').trim(),
+          state: data.state || '',
+          postcode: (data.postcode || '').trim(),
+          notes: (data.notes || '').trim(),
+        }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j.error || 'save failed');
+      }
+      modal.hidden = true;
+      toast('Saved · ' + id);
+      refreshOrdersFromAPI();
+    } catch (err) {
+      errEl.textContent = 'Couldn\'t save: ' + (err.message || 'try again');
+      errEl.hidden = false;
+      saveBtn.disabled = false;
+      saveBtn.textContent = original;
+    }
+  });
+
+  setTimeout(() => form.querySelector('[name="name"]')?.focus(), 50);
+}
+
+/* ---------- ORDER DELETE CONFIRM ---------- */
+function confirmDeleteOrder(id) {
+  const view = _ordersCache.find(x => x.id === id);
+  const label = view ? `${view.id} (${view.fullName || view.cust || 'customer'}, $${view.total})` : id;
+
+  let modal = document.getElementById('orderDeleteModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'orderDeleteModal';
+    modal.className = 'request-detail-modal';
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.hidden = true; });
+  }
+  modal.innerHTML = `
+    <div class="rd-card" style="max-width: 480px;">
+      <button class="rd-close" type="button" aria-label="Close">×</button>
+      <p class="rd-eyebrow">Delete order</p>
+      <h2 class="rd-name">Delete ${label}?</h2>
+      <p class="rd-meta">This permanently removes the row from your records — it can't be undone. The customer won't be told (no email fires from delete).</p>
+      <p class="rd-meta" style="color:#b14a3a;font-weight:500;">If they're owed a refund, mark it <strong>Refunded</strong> first (that fires the customer email), then delete.</p>
+      <div class="rd-actions">
+        <button class="btn btn-danger" type="button" id="orderDeleteOk">Delete order</button>
+        <button class="btn btn-ghost" type="button" id="orderDeleteCancel">Cancel</button>
+      </div>
+    </div>`;
+  modal.hidden = false;
+  modal.querySelector('.rd-close').addEventListener('click', () => modal.hidden = true);
+  modal.querySelector('#orderDeleteCancel').addEventListener('click', () => modal.hidden = true);
+  modal.querySelector('#orderDeleteOk').addEventListener('click', async () => {
+    const btn = modal.querySelector('#orderDeleteOk');
+    btn.disabled = true;
+    btn.textContent = 'Deleting…';
+    try {
+      const res = await fetch('/api/orders/' + encodeURIComponent(id), {
+        method: 'DELETE',
+        headers: { ...adminAuthHeaders() },
+      });
+      if (!res.ok) throw new Error('delete failed');
+      modal.hidden = true;
+      toast('Deleted · ' + id);
+      refreshOrdersFromAPI();
+    } catch (err) {
+      toast('Delete failed — try again');
+      btn.disabled = false;
+      btn.textContent = 'Delete order';
+    }
+  });
+}
+
 /* ---------- CUSTOM ORDERS KANBAN ---------- *
  * Live requests come from D1 via GET /api/requests (admin auth). We
  * render the static CUSTOM_ORDERS stub columns alongside so the page
@@ -985,35 +1230,56 @@ function relativeTime(iso) {
 
 let _requestsCache = [];
 
-function renderKanban(){
-  const kb = document.getElementById('kanban'); if(!kb) return;
-  const reqCards = _requestsCache.filter(r => r.status === 'new').map(r => ({
+// Map request status → kanban column. 'declined' rows are hidden (Max can
+// always see them via the per-card detail modal once we wire a Closed
+// column; for now they stay out of the active board to keep it tidy).
+const REQUEST_STATUS_TO_COLUMN = {
+  new:          'New',
+  quoted:       'Quoted',
+  in_progress:  'In Production',
+  done:         'Completed',
+};
+
+function _requestToCard(r) {
+  return {
     id:       r.id,
     name:     r.name || 'Anonymous',
     subject:  r.subject || '(no subject)',
     size:     r.size ? r.size.toUpperCase() : '—',
-    budget:   'Awaiting quote',
+    budget:   r.status === 'new' ? 'Awaiting quote' : '',
     due:      relativeTime(r.createdAt),
     isRequest: true,
     hasPhoto: !!r.photoDataUrl,
-  }));
-  const merged = { ...CUSTOM_ORDERS, New: [...reqCards, ...CUSTOM_ORDERS.New] };
+  };
+}
 
-  kb.innerHTML = Object.entries(merged).map(([title, cards])=>`
+function renderKanban(){
+  const kb = document.getElementById('kanban'); if(!kb) return;
+
+  // Distribute every live request into its right column based on status.
+  // Was: only `new` requests merged into the New column → marking a
+  // request as "quoted" made it disappear off the board entirely.
+  const cols = { New: [], Quoted: [], 'In Production': [], Completed: [] };
+  for (const r of _requestsCache) {
+    const col = REQUEST_STATUS_TO_COLUMN[r.status];
+    if (col && cols[col]) cols[col].push(_requestToCard(r));
+  }
+
+  kb.innerHTML = Object.entries(cols).map(([title, cards])=>`
     <div class="kcol">
       <div class="kcol-head"><strong>${title}</strong><span>${cards.length}</span></div>
-      ${cards.map(c=>`
-        <div class="kcard${c.isRequest ? ' is-request' : ''}"${c.id ? ` data-request-id="${c.id}"` : ''} draggable="true">
-          ${c.isRequest ? '<span class="kcard-pill">Request</span>' : ''}
+      ${cards.length ? cards.map(c=>`
+        <div class="kcard is-request"${c.id ? ` data-request-id="${c.id}"` : ''} draggable="true">
+          <span class="kcard-pill">Request</span>
           ${c.hasPhoto  ? '<span class="kcard-photo-pill" title="Reference photo attached">📎 photo</span>' : ''}
           <div class="kcard-name">${c.name}</div>
           <div class="kcard-sub">${c.subject}</div>
           <div class="kcard-row">
-            <span class="kcard-tag">${c.size} · ${c.budget}</span>
+            <span class="kcard-tag">${c.size}${c.budget ? ' · ' + c.budget : ''}</span>
             <span>${c.due}</span>
           </div>
         </div>
-      `).join('')}
+      `).join('') : '<p class="kcol-empty">Nothing here yet.</p>'}
     </div>
   `).join('');
 
