@@ -628,6 +628,86 @@ table{ border-collapse: collapse; width:100%; }
   border-top: 1px solid var(--line);
 }
 
+/* === ORDER DETAIL MODAL ================================ */
+.od-card{ max-width: 640px; }
+.od-section{
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.od-section:first-of-type{ border-top: none; padding-top: 0; }
+.od-h3{
+  font-size: .68rem; letter-spacing: .18em; text-transform: uppercase;
+  color: var(--ink-mute); margin: 0 0 12px;
+}
+.od-items{ list-style: none; padding: 0; margin: 0; }
+.od-item{
+  display: grid; grid-template-columns: 1fr auto auto; gap: 14px; align-items: baseline;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.od-item:last-child{ border-bottom: none; }
+.od-item-name{ font-size: .95rem; color: var(--ink); }
+.od-item-qty{ color: var(--ink-mute); font-size: .85rem; }
+.od-item-price{ font-weight: 500; color: var(--ink); }
+.od-totals{
+  margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line);
+  display: grid; gap: 6px;
+}
+.od-totals > div{
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: .92rem; color: var(--ink-mute);
+}
+.od-totals strong{ color: var(--ink); font-weight: 500; }
+.od-totals .od-grand{ font-size: 1rem; padding-top: 6px; }
+.od-totals .od-grand strong{ color: var(--gold-2); font-size: 1.05rem; }
+
+.od-status-help{
+  margin: 0 0 14px; font-size: .85rem; color: var(--ink-mute); line-height: 1.5;
+}
+.od-status-grid{
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+}
+@media (max-width: 600px) {
+  .od-status-grid{ grid-template-columns: repeat(2, 1fr); }
+}
+.od-status-btn{
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 14px 10px;
+  background: var(--bg);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, transform .15s ease;
+}
+.od-status-btn:hover:not(:disabled){
+  background: rgba(212, 176, 106, .12);
+  border-color: rgba(200, 163, 94, .55);
+  transform: translateY(-1px);
+}
+.od-status-btn.is-current{
+  background: rgba(212, 176, 106, .18);
+  border-color: var(--gold-deep);
+  color: var(--ink);
+  box-shadow: 0 0 0 2px rgba(212, 176, 106, .35) inset;
+  cursor: default;
+}
+.od-status-btn:disabled{ opacity: .5; cursor: progress; }
+.od-status-emoji{ font-size: 1.3rem; line-height: 1; }
+.od-status-label{ font-size: .82rem; font-weight: 500; letter-spacing: .02em; }
+.od-status-saving{
+  margin: 12px 0 0; font-size: .82rem; color: var(--ink-mute);
+  font-style: italic;
+}
+.od-notes{
+  margin: 0; font-size: .92rem; line-height: 1.55; color: var(--ink);
+  white-space: pre-wrap;
+}
+
+/* Hover affordance for clickable order rows */
+.t .order-row:hover{ background: rgba(212, 176, 106, .08); }
+
 /* === HOLIDAY MODE CARD =================================== */
 .holiday-card .card-head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
 .holiday-status {

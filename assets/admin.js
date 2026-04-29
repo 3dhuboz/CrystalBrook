@@ -805,8 +805,8 @@ function renderOrders(){
   const tb = document.getElementById('ordersBody'); if(!tb) return;
   tb.innerHTML = ordersForView().map(o=>{
     const st = orderStatus(o.status);
-    return `<tr>
-      <td><input type="checkbox"/></td>
+    return `<tr data-order-id="${o.id}" class="order-row">
+      <td><input type="checkbox" onclick="event.stopPropagation()"/></td>
       <td><strong>${o.id}</strong></td>
       <td>${o.cust}<span class="cell-sub">${o.email}</span></td>
       <td>${o.items}</td>
@@ -814,13 +814,155 @@ function renderOrders(){
       <td><span class="status ${st.cls}">${st.label}</span></td>
       <td>${o.pay}</td>
       <td>${o.date}</td>
-      <td><div class="row-act"><button class="iact" title="View"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div></td>
+      <td><div class="row-act"><button class="iact" title="View order details" data-view-order="${o.id}"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div></td>
     </tr>`;
   }).join('');
+
+  // Whole-row click → open detail modal (the eye icon is just a visual hint)
+  tb.querySelectorAll('.order-row').forEach(tr => {
+    tr.style.cursor = 'pointer';
+    tr.addEventListener('click', e => {
+      // Skip if clicking the checkbox or its td
+      if (e.target.closest('input[type="checkbox"]')) return;
+      openOrderDetail(tr.dataset.orderId);
+    });
+  });
 }
 renderOrders();
 // Pull live orders from D1 — repopulates the table + dashboard once it lands.
 refreshOrdersFromAPI();
+
+/* ---------- ORDER DETAIL MODAL — status toggle + send email ----------
+ * Click an order row → modal shows the full row + a status toggle bar.
+ * Picking a new status PATCHes /api/orders/:id; the Worker fires a
+ * customer email (when RESEND_API_KEY is configured) so the customer
+ * gets "we've shipped it" / "your order's been refunded" notifications.
+ */
+const ORDER_STATUS_FLOW = [
+  { key: 'paid',          label: 'Paid',           emoji: '💳' },
+  { key: 'in_production', label: 'In production',  emoji: '🪚' },
+  { key: 'shipped',       label: 'Shipped',        emoji: '📦' },
+  { key: 'delivered',     label: 'Delivered',      emoji: '🏠' },
+  { key: 'refunded',      label: 'Refunded',       emoji: '↩' },
+  { key: 'cancelled',     label: 'Cancelled',      emoji: '✕' },
+];
+
+function openOrderDetail(id) {
+  const view = _ordersCache.find(x => x.id === id);
+  if (!view) { toast('Couldn\'t find that order — try refreshing the page.'); return; }
+  const o = view._raw || view;
+
+  let modal = document.getElementById('orderDetailModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'orderDetailModal';
+    modal.className = 'request-detail-modal';   // reuse styling
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.hidden = true; });
+  }
+
+  const itemRows = (o.items || []).map(i => `
+    <li class="od-item">
+      <span class="od-item-name">${i.name || 'Item'}</span>
+      <span class="od-item-qty">×${i.qty || 1}</span>
+      <span class="od-item-price">$${((i.price || 0) * (i.qty || 1)).toLocaleString()}</span>
+    </li>
+  `).join('') || '<li class="od-item"><span>No items</span></li>';
+
+  const photo = o.photoDataUrl
+    ? `<div class="rd-photo"><img src="${o.photoDataUrl}" alt="Reference"/></div>`
+    : '';
+
+  const statusButtons = ORDER_STATUS_FLOW.map(s => {
+    const isCurrent = s.key === o.status;
+    return `<button type="button" class="od-status-btn${isCurrent ? ' is-current' : ''}" data-status="${s.key}">
+      <span class="od-status-emoji">${s.emoji}</span>
+      <span class="od-status-label">${s.label}</span>
+    </button>`;
+  }).join('');
+
+  const addr = [o.address, o.suburb, [o.state, o.postcode].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+
+  modal.innerHTML = `
+    <div class="rd-card od-card">
+      <button class="rd-close" type="button" aria-label="Close">×</button>
+      <p class="rd-eyebrow">${o.id} · ${formatOrderDate(o.createdAt) || 'Just placed'}</p>
+      <h2 class="rd-name">${o.name || 'Customer'}</h2>
+      <p class="rd-meta">
+        <a href="mailto:${o.email}">${o.email || ''}</a>
+        ${o.phone ? ` · <a href="tel:${o.phone}">${o.phone}</a>` : ''}
+        ${addr ? ` · ${addr}` : ''}
+      </p>
+      ${photo}
+
+      <div class="od-section">
+        <h3 class="od-h3">Items</h3>
+        <ul class="od-items">${itemRows}</ul>
+        <div class="od-totals">
+          <div><span>Subtotal</span><strong>$${(o.subtotal || 0).toLocaleString()}</strong></div>
+          <div><span>Shipping</span><strong>${o.shipping ? '$' + o.shipping.toLocaleString() : 'Free'}</strong></div>
+          <div class="od-grand"><span>Total</span><strong>$${(o.total || 0).toLocaleString()}</strong></div>
+        </div>
+      </div>
+
+      <div class="od-section">
+        <h3 class="od-h3">Order status</h3>
+        <p class="od-status-help">Click a status to update the order. The customer gets an email letting them know.</p>
+        <div class="od-status-grid" id="odStatusGrid">${statusButtons}</div>
+        <p class="od-status-saving" id="odStatusSaving" hidden>Saving + sending notification…</p>
+      </div>
+
+      ${o.notes ? `<div class="od-section"><h3 class="od-h3">Notes</h3><p class="od-notes">${o.notes.replace(/</g,'&lt;')}</p></div>` : ''}
+
+      <div class="rd-actions">
+        <a class="btn btn-gold" href="mailto:${o.email}?subject=${encodeURIComponent('Your Crystal Brook order ' + o.id)}&body=${encodeURIComponent('Hi ' + ((o.name || 'there').split(' ')[0]) + ',\n\n')}">Reply by email →</a>
+        <a class="btn btn-ghost" href="../order.html?id=${o.id}" target="_blank" rel="noopener">View customer-facing tracking →</a>
+      </div>
+    </div>`;
+  modal.hidden = false;
+  modal.querySelector('.rd-close').addEventListener('click', () => modal.hidden = true);
+
+  // Status toggle clicks → PATCH /api/orders/:id
+  const grid    = modal.querySelector('#odStatusGrid');
+  const saving  = modal.querySelector('#odStatusSaving');
+  grid.querySelectorAll('.od-status-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const newStatus = btn.dataset.status;
+      if (newStatus === o.status) return;
+      grid.querySelectorAll('.od-status-btn').forEach(b => b.disabled = true);
+      saving.hidden = false;
+      try {
+        const res = await fetch('/api/orders/' + encodeURIComponent(id), {
+          method: 'PATCH',
+          headers: { 'content-type': 'application/json', ...adminAuthHeaders() },
+          body: JSON.stringify({ status: newStatus }),
+        });
+        if (!res.ok) throw new Error('save failed');
+        const result = await res.json();
+        // Update the cached row + UI
+        const cached = _ordersCache.find(x => x.id === id);
+        if (cached) cached.status = newStatus;
+        if (cached && cached._raw) cached._raw.status = newStatus;
+        toast(result.emailSent
+          ? `Marked ${ORDER_STATUS_FLOW.find(s => s.key === newStatus)?.label} · email sent to ${o.email}`
+          : `Marked ${ORDER_STATUS_FLOW.find(s => s.key === newStatus)?.label}`);
+        // Re-render the modal with the new active status, plus the table
+        modal.hidden = true;
+        renderOrders();
+        renderRecentOrders();
+        renderDashboardStats();
+        renderRevenueAll();
+        // Reopen so Max sees the updated state
+        setTimeout(() => openOrderDetail(id), 50);
+      } catch (err) {
+        toast('Status update failed — try again');
+        grid.querySelectorAll('.od-status-btn').forEach(b => b.disabled = false);
+      } finally {
+        saving.hidden = true;
+      }
+    });
+  });
+}
 
 /* ---------- CUSTOM ORDERS KANBAN ---------- *
  * Live requests come from D1 via GET /api/requests (admin auth). We

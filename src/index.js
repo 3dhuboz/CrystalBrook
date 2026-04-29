@@ -546,11 +546,125 @@ async function handleUpdateOrderStatus(request, env, id) {
   catch (_) { return errorResponse('invalid JSON body'); }
   const status = (body.status || '').toString().trim();
   if (!VALID_ORDER_STATUSES.has(status)) return errorResponse('invalid status');
-  const res = await env.DB.prepare(
+
+  // Pull the current row so we can email the customer about the change.
+  const before = await env.DB.prepare('SELECT * FROM orders WHERE id = ?').bind(id).first();
+  if (!before) return errorResponse('not found', 404);
+  if (before.status === status) {
+    return jsonResponse({ ok: true, id, status, emailSent: false, unchanged: true });
+  }
+
+  await env.DB.prepare(
     'UPDATE orders SET status = ?, updated_at = datetime(\'now\') WHERE id = ?'
   ).bind(status, id).run();
-  if (!res.meta || !res.meta.changes) return errorResponse('not found', 404);
-  return jsonResponse({ ok: true, id, status });
+
+  // Fire customer notification — silent no-op when RESEND_API_KEY isn't
+  // configured (Steve will set the secret + sending domain when Max is ready
+  // to go live with email). Wrapped so a send failure never blocks the status
+  // update.
+  let emailSent = false;
+  try {
+    emailSent = await sendOrderStatusEmail(env, before, status);
+  } catch (err) {
+    console.error('Order status email failed:', err);
+  }
+
+  return jsonResponse({ ok: true, id, status, emailSent });
+}
+
+/* ---------- Customer order-status emails (Resend) ----------
+ * Configured via two Worker secrets:
+ *   RESEND_API_KEY  — Resend API key (https://resend.com)
+ *   MAIL_FROM       — verified sending address, e.g. "Max <hello@crystalbrook.com.au>"
+ * If either is missing, sendOrderStatusEmail returns false (the status
+ * update still succeeds — the customer just doesn't get the email).
+ */
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function orderStatusEmailContent(orderRow, newStatus) {
+  const customerName = (orderRow.name || '').split(' ')[0] || 'there';
+  const id = orderRow.id;
+  const trackUrl = `https://crystalbrook.steve-700.workers.dev/order.html?id=${encodeURIComponent(id)}`;
+  let items = [];
+  try { items = JSON.parse(orderRow.items || '[]'); } catch (_) {}
+  const itemList = items.map(i => `${i.name}${i.qty > 1 ? ` ×${i.qty}` : ''}`).join(', ') || 'your order';
+
+  const messages = {
+    paid: {
+      subject: `Order ${id} confirmed`,
+      heading: `Thanks ${customerName} — your order's in.`,
+      body: `Max has received your order for ${itemList} and will start production within a couple of days. He'll email progress photos before the resin pour, and again before shipping. Total expected delivery: 4–6 weeks.`,
+    },
+    in_production: {
+      subject: `Order ${id} — now in production`,
+      heading: `Your piece is underway, ${customerName}.`,
+      body: `Max has started the production run for ${itemList}. The print's been pulled, the timber chosen, and we're now into the resin stage. You'll get one more email when it ships.`,
+    },
+    shipped: {
+      subject: `Order ${id} — shipped!`,
+      heading: `On its way, ${customerName}.`,
+      body: `Your order — ${itemList} — has just been packed and posted via Australia Post. Tracking will land in a separate email from Aus Post within a few hours. Expected delivery: 3–5 business days for metro, a touch longer for regional.`,
+    },
+    delivered: {
+      subject: `Order ${id} — delivered`,
+      heading: `Hope it looks great on the wall, ${customerName}.`,
+      body: `Aus Post has logged your order — ${itemList} — as delivered. If anything's not quite right, drop us a line within 72 hours and we'll sort it.`,
+    },
+    refunded: {
+      subject: `Order ${id} — refund processed`,
+      heading: `Your refund's gone through, ${customerName}.`,
+      body: `Refund for ${itemList} has been processed back to your original payment. Allow 3–5 business days for it to appear on your statement. Sorry it didn't work out — give Max a shout if you'd like to look at something different down the track.`,
+    },
+    cancelled: {
+      subject: `Order ${id} — cancelled`,
+      heading: `Your order's been cancelled, ${customerName}.`,
+      body: `As requested, your order for ${itemList} has been cancelled. If a deposit was taken it'll be refunded within 3–5 business days. Drop Max a line if you'd like to revisit it later.`,
+    },
+  };
+  const m = messages[newStatus] || messages.paid;
+  const html = `<!doctype html><html><body style="margin:0;background:#f7f3ec;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1c130a;line-height:1.6;">
+    <div style="max-width:560px;margin:0 auto;padding:32px 24px;background:#fff;">
+      <p style="font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:#7a6e5c;margin:0 0 6px;">Crystal Brook Wall Mounts</p>
+      <h1 style="font-family:'Cormorant Garamond',serif;font-weight:500;font-size:1.7rem;margin:0 0 18px;color:#1c130a;">${escapeHtml(m.heading)}</h1>
+      <p style="font-size:1rem;margin:0 0 22px;">${escapeHtml(m.body)}</p>
+      <p style="margin:22px 0;"><a href="${trackUrl}" style="display:inline-block;padding:11px 22px;background:#a9864b;color:#1c130a;font-weight:500;border-radius:4px;text-decoration:none;">Track your order →</a></p>
+      <p style="font-size:.85rem;color:#7a6e5c;margin:22px 0 0;border-top:1px solid #e8e1d2;padding-top:14px;">Order reference: <strong>${escapeHtml(id)}</strong></p>
+      <p style="font-size:.78rem;color:#9c8e76;margin:18px 0 0;">Crystal Brook Wall Mounts · Gordonvale, FNQ</p>
+    </div>
+  </body></html>`;
+  const text = `${m.heading}\n\n${m.body}\n\nTrack your order: ${trackUrl}\n\nOrder reference: ${id}\n\n— Crystal Brook Wall Mounts`;
+  return { subject: m.subject, html, text };
+}
+
+async function sendOrderStatusEmail(env, orderRow, newStatus) {
+  const apiKey = env.RESEND_API_KEY;
+  const from   = env.MAIL_FROM;
+  if (!apiKey || !from) {
+    console.log('[email] skipping send — RESEND_API_KEY or MAIL_FROM not set');
+    return false;
+  }
+  const to = orderRow.email;
+  if (!to) return false;
+
+  const { subject, html, text } = orderStatusEmailContent(orderRow, newStatus);
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ from, to, subject, html, text }),
+  });
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '');
+    console.error('[email] Resend send failed', res.status, errText.slice(0, 200));
+    return false;
+  }
+  return true;
 }
 
 async function handleDeleteOrder(request, env, id) {
