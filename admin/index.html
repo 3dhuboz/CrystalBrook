@@ -7,10 +7,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="../assets/admin.css?v=20260429-11" />
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260429-11" />
-<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260429-11" />
-<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260429-11" />
+<link rel="stylesheet" href="../assets/admin.css?v=20260429-12" />
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260429-12" />
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260429-12" />
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260429-12" />
 <link rel="manifest" href="../manifest.webmanifest" />
 <meta name="theme-color" content="#1c130a" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -606,7 +606,34 @@
       </div>
     </div>
 
-    <p class="about-edit-hint">Tip: the per-category CTA copy (the version that swaps in when you click "Saltwater", "Cars" etc.) lives in <code>app.js</code> and isn't editable from here yet — what you can edit above is the default fallback shown on first load and on the "All" tab.</p>
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Per-category CTA copy</h3></div>
+      <p class="card-note" style="margin: 0 0 14px;">When a customer clicks one of the category tabs (Saltwater, Freshwater, Cars, Animals, Birds, Montages) the request CTA changes its title + sub-line to match. Edit each below.</p>
+      <div class="form">
+        <label data-content-edit="cta_saltwater_title"><span>Saltwater — title</span><input class="inp" value="Don't see your fish?"/></label>
+        <label data-content-edit="cta_saltwater_sub"><span>Saltwater — sub-line</span><input class="inp" value="Request a saltwater piece — name the species and Max will reply with a quote."/></label>
+
+        <label data-content-edit="cta_freshwater_title"><span>Freshwater — title</span><input class="inp" value="Don't see your fish?"/></label>
+        <label data-content-edit="cta_freshwater_sub"><span>Freshwater — sub-line</span><input class="inp" value="Request a freshwater piece — name the species and Max will reply with a quote."/></label>
+
+        <label data-content-edit="cta_cars_title"><span>Cars — title</span><input class="inp" value="Don't see your car?"/></label>
+        <label data-content-edit="cta_cars_sub"><span>Cars — sub-line</span><input class="inp" value="Request a custom car piece — make, model, year, and Max will quote it for you."/></label>
+
+        <label data-content-edit="cta_animals_title"><span>Animals — title</span><input class="inp" value="Don't see your animal?"/></label>
+        <label data-content-edit="cta_animals_sub"><span>Animals — sub-line</span><input class="inp" value="Request a custom animal or pet piece — Max will quote off your description."/></label>
+
+        <label data-content-edit="cta_birds_title"><span>Birds — title</span><input class="inp" value="Don't see your bird?"/></label>
+        <label data-content-edit="cta_birds_sub"><span>Birds — sub-line</span><input class="inp" value="Request a custom bird piece — Max will quote off your description."/></label>
+
+        <label data-content-edit="cta_montages_title"><span>Montages — title</span><input class="inp" value="Want a custom montage?"/></label>
+        <label data-content-edit="cta_montages_sub"><span>Montages — sub-line</span><input class="inp" value="Tell Max which subjects you want mounted on Australia or Queensland — he'll quote it."/></label>
+
+        <label data-content-edit="cta_all_title"><span>Default ("All" tab) — title</span><input class="inp" value="Don't see what you're after?"/></label>
+        <label data-content-edit="cta_all_sub"><span>Default ("All" tab) — sub-line</span><input class="inp" value="Tell Max which fish, car or critter and he'll come back with a quote."/></label>
+      </div>
+    </div>
+
+    <p class="about-edit-hint">Tip: per-category copy now lives in D1 too — edit any of the rows above and the CTA on the matching shop tab will reflect your wording on next page load.</p>
   </section>
 
   <!-- ========= PRODUCT PAGE ========= -->
@@ -1571,6 +1598,6 @@
   </div>
 </div>
 
-<script src="../assets/admin.js?v=20260429-11"></script>
+<script src="../assets/admin.js?v=20260429-12"></script>
 </body>
 </html>

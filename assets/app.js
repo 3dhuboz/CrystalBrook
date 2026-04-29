@@ -1956,7 +1956,15 @@ document.addEventListener('keydown', e=>{
   });
 })();
 
-/* ---------- ORDER TRACKING PAGE (order.html) ---------- */
+/* ---------- ORDER TRACKING PAGE (order.html) ----------
+ * Reads first from localStorage cache (instant render after checkout
+ * on the same device), then falls back to GET /api/orders/:id so
+ * the tracking link works from any device, including the email
+ * link on a phone the customer didn't checkout from.
+ *
+ * Stage progression now driven by the real order.status set by Max
+ * in admin, not a fake time-based timer.
+ */
 (() => {
   const heroInner = document.getElementById('orderHeroInner');
   if (!heroInner) return;
@@ -1964,146 +1972,226 @@ document.addEventListener('keydown', e=>{
   const params = new URLSearchParams(location.search);
   const id = (params.get('id') || '').trim();
 
-  let orders = [];
-  try { orders = JSON.parse(localStorage.getItem('cbwm_orders') || '[]'); } catch(_) {}
-  const order = id ? orders.find(o => o.id === id) : null;
+  const STAGES = [
+    { key: 'received',  label: 'Order received',         blurb: 'We\'ve got it. Confirmation emailed.' },
+    { key: 'printing',  label: 'Archival print',          blurb: 'Pigment ink laid on cotton-rag.' },
+    { key: 'cut',       label: 'Hand-cut to silhouette',  blurb: 'Each piece traced and cut by hand.' },
+    { key: 'mount',     label: 'Mounted to timber',       blurb: 'Bonded to your chosen Australian hardwood.' },
+    { key: 'resin',     label: 'Resin pour',              blurb: 'Jewellery-grade epoxy poured in stages.' },
+    { key: 'cure',      label: 'Curing',                  blurb: '48 hours under glass-clear resin.' },
+    { key: 'shipped',   label: 'Shipped',                 blurb: 'Tracking number on the way to your inbox.' },
+    { key: 'delivered', label: 'Delivered',               blurb: 'On your wall.' },
+  ];
 
-  if (!order){
+  // Order status maps to a stage index. Production has multiple sub-stages
+  // in the UI (printing → cut → mount → resin → cure) — when admin marks
+  // 'in_production', we plant the cursor in the middle (resin pour) so the
+  // earlier stages show as done. Once it's shipped or delivered, the
+  // cursor advances cleanly.
+  function stageIndexFor(status) {
+    switch (status) {
+      case 'paid':          return 0;
+      case 'in_production': return 4;  // resin pour
+      case 'shipped':       return 6;
+      case 'delivered':     return 7;
+      case 'refunded':
+      case 'cancelled':     return -1;  // special-cased below
+      default:              return 0;
+    }
+  }
+
+  function show404(reason){
     heroInner.innerHTML = `
       <div class="order-404">
         <p class="eyebrow">Lost order</p>
         <h1>Couldn't find that order.</h1>
-        <p class="order-404-lede">${id ? `No record of order <em>${id}</em> on this device.` : 'No order ID was provided.'} If you placed an order on a different browser, the tracking link in your confirmation email will open it. Otherwise, drop us a line.</p>
+        <p class="order-404-lede">${reason} If the tracking link came from your confirmation email, double-check the order number — otherwise drop us a line and we'll find it.</p>
         <div class="order-404-ctas">
           <a class="btn btn-primary" href="shop.html">Browse the collection →</a>
-          <a class="btn btn-ghost" href="index.html#contact">Contact Max →</a>
+          <a class="btn btn-ghost" href="about.html#contact">Contact Max →</a>
         </div>
       </div>`;
-    return;
   }
 
-  // Title
-  document.title = `Order ${order.id} · Crystal Brook Wall Mounts`;
+  if (!id) { show404('No order ID was provided.'); return; }
 
-  const STAGES = [
-    { key: 'received', label: 'Order received',     blurb: 'We\'ve got it. Confirmation emailed.' },
-    { key: 'printing', label: 'Archival print',     blurb: 'Pigment ink laid on cotton-rag.' },
-    { key: 'cut',      label: 'Hand-cut to silhouette', blurb: 'Each piece traced and cut by hand.' },
-    { key: 'mount',    label: 'Mounted to timber',  blurb: 'Bonded to your chosen Australian hardwood.' },
-    { key: 'resin',    label: 'Resin pour',         blurb: 'Jewellery-grade epoxy poured in stages.' },
-    { key: 'cure',     label: 'Curing',             blurb: '48 hours under glass-clear resin.' },
-    { key: 'shipped',  label: 'Shipped',            blurb: 'Tracking number on the way to your inbox.' },
-    { key: 'delivered',label: 'Delivered',          blurb: 'On your wall.' },
-  ];
+  // Try the cache first for instant render; fall back to API
+  let cached = null;
+  try {
+    const orders = JSON.parse(localStorage.getItem('cbwm_orders') || '[]');
+    cached = orders.find(o => o.id === id) || null;
+  } catch(_) {}
+  if (cached) renderOrder(cached);
 
-  // For the mockup we accelerate the 4-6 wk schedule to 8 minutes so
-  // the demo is observable. Each stage = 1 minute. Real backend will
-  // replace this with actual progress events from D1.
-  const STAGE_MINS = 1;
-  const elapsedMin = (Date.now() - order.createdAt) / 60000;
-  const stageIdx = Math.min(STAGES.length - 1, Math.floor(elapsedMin / STAGE_MINS));
+  // Fetch fresh from D1 — this updates the page if status has changed
+  // since the customer last viewed it. The Worker returns a minimal,
+  // non-PII subset for non-admin callers (no email/address/phone).
+  fetch('/api/orders/' + encodeURIComponent(id), { cache: 'no-store' })
+    .then(r => r.ok ? r.json() : null)
+    .then(data => {
+      if (!data || !data.order) {
+        if (!cached) show404(`No record of order <em>${id}</em>.`);
+        return;
+      }
+      // Merge API data over the cache (API has authoritative status).
+      // Cache might still have ship details (from this device's checkout).
+      const api = data.order;
+      const merged = {
+        ...(cached || {}),
+        id: api.id,
+        items: api.items,
+        subtotal: api.subtotal,
+        shipping: api.shipping,
+        total: api.total,
+        status: api.status,
+        createdAt: api.createdAt
+          ? new Date(api.createdAt.replace(' ', 'T') + 'Z').getTime()
+          : (cached?.createdAt || Date.now()),
+      };
+      renderOrder(merged);
+      // Update the local cache so the next visit gets the new status without waiting
+      try {
+        const all = JSON.parse(localStorage.getItem('cbwm_orders') || '[]');
+        const idx = all.findIndex(o => o.id === id);
+        if (idx >= 0) { all[idx] = { ...all[idx], ...merged }; localStorage.setItem('cbwm_orders', JSON.stringify(all)); }
+      } catch (_) {}
+    })
+    .catch(() => { if (!cached) show404(`Couldn't reach the server.`); });
 
-  // Header
-  const created = new Date(order.createdAt);
-  const piecesCount = order.items.reduce((s, i) => s + i.qty, 0);
-  const stagePill = STAGES[stageIdx].label;
-  heroInner.innerHTML = `
-    <div class="order-hero-grid">
-      <div class="order-hero-meta">
-        <p class="eyebrow">Tracking your order</p>
-        <h1>${order.id}</h1>
-        <p class="order-hero-sub">
-          Placed ${created.toLocaleDateString(undefined, { day:'numeric', month:'short', year:'numeric' })}
-          · ${piecesCount} piece${piecesCount === 1 ? '' : 's'}
-          · $${order.total.toLocaleString()}
-        </p>
-        <span class="order-status-pill status-${STAGES[stageIdx].key}">${stagePill}</span>
-      </div>
-      <div class="order-hero-mark" aria-hidden="true">
-        <svg viewBox="0 0 200 200">
-          <circle cx="100" cy="100" r="92" fill="none" stroke="#d4b06a" stroke-width="1.2" opacity=".5"/>
-          <circle cx="100" cy="100" r="74" fill="none" stroke="#d4b06a" stroke-width=".5" opacity=".4"/>
-          <g transform="translate(100 90)" stroke="#d4b06a" stroke-linecap="round" fill="none">
-            <path d="M -22 -4 Q -11 -12 0 -4 Q 11 4 22 -4" stroke-width="2"/>
-            <path d="M -22 4 Q -11 -4 0 4 Q 11 12 22 4" stroke-width="1.7" opacity=".75"/>
-            <path d="M -22 12 Q -11 4 0 12 Q 11 20 22 12" stroke-width="1.4" opacity=".5"/>
-          </g>
-          <text x="100" y="130" text-anchor="middle" font-family="Cormorant Garamond, serif" font-style="italic" font-size="14" fill="#d4b06a">in progress</text>
-        </svg>
-      </div>
-    </div>`;
+  function renderOrder(order) {
+    document.title = `Order ${order.id} · Crystal Brook Wall Mounts`;
 
-  // Reveal the body section
-  const body = document.getElementById('orderBody');
-  body.hidden = false;
+    const status = order.status || 'paid';
+    const stageIdx = stageIndexFor(status);
+    const isRefunded = status === 'refunded' || status === 'cancelled';
 
-  // Timeline
-  const tl = document.getElementById('orderTimeline');
-  tl.innerHTML = STAGES.map((s, i) => {
-    const isDone = i < stageIdx;
-    const isCurrent = i === stageIdx;
-    const cls = isDone ? 'is-done' : isCurrent ? 'is-current' : '';
-    const dotIcon = isDone
-      ? `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 5 5L20 7"/></svg>`
-      : isCurrent
-      ? `<span class="order-pulse"></span>`
-      : '';
-    return `
-      <li class="${cls}">
-        <span class="order-tl-dot">${dotIcon}</span>
-        <div>
-          <strong>${s.label}</strong>
-          <span>${s.blurb}</span>
+    const created = new Date(order.createdAt);
+    const piecesCount = (order.items || []).reduce((s, i) => s + (i.qty || 1), 0);
+    const stagePill = isRefunded
+      ? (status === 'refunded' ? 'Refunded' : 'Cancelled')
+      : STAGES[stageIdx].label;
+    const pillKey = isRefunded ? status : STAGES[stageIdx].key;
+
+    heroInner.innerHTML = `
+      <div class="order-hero-grid">
+        <div class="order-hero-meta">
+          <p class="eyebrow">Tracking your order</p>
+          <h1>${order.id}</h1>
+          <p class="order-hero-sub">
+            Placed ${created.toLocaleDateString(undefined, { day:'numeric', month:'short', year:'numeric' })}
+            · ${piecesCount} piece${piecesCount === 1 ? '' : 's'}
+            · $${(order.total || 0).toLocaleString()}
+          </p>
+          <span class="order-status-pill status-${pillKey}">${stagePill}</span>
         </div>
-      </li>`;
-  }).join('');
-
-  // ETA estimate — 4-6 weeks from order date is the real schedule
-  const etaEl = document.getElementById('orderEta');
-  if (stageIdx >= STAGES.length - 1){
-    etaEl.textContent = '✓ Delivered. Hope it looks great on your wall.';
-  } else {
-    const start = new Date(order.createdAt + 28 * 24 * 60 * 60 * 1000);
-    const end   = new Date(order.createdAt + 42 * 24 * 60 * 60 * 1000);
-    const fmt = (d) => d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
-    etaEl.textContent = `Expected delivery: ${fmt(start)} – ${fmt(end)}`;
-  }
-
-  // Items
-  const itemsEl = document.getElementById('orderItems');
-  itemsEl.innerHTML = order.items.map(i => {
-    const p = PRODUCTS.find(x => x.id === i.id);
-    const thumb = p?.image
-      ? `<img src="${p.image}" alt=""/>`
-      : `<span class="order-item-mark">${shortName(i.name)}</span>`;
-    return `
-      <div class="order-item">
-        <a class="order-item-thumb stage-${p?.cat || 'animals'}" href="product.html?id=${i.id}">${thumb}</a>
-        <div class="order-item-meta">
-          <a href="product.html?id=${i.id}">${i.name}</a>
-          <span>${p?.size || ''}${p?.size && p?.cat ? ' · ' : ''}${CAT_LABELS[p?.cat] || ''}</span>
-          <span class="order-item-qty">Qty ${i.qty}</span>
+        <div class="order-hero-mark" aria-hidden="true">
+          <svg viewBox="0 0 200 200">
+            <circle cx="100" cy="100" r="92" fill="none" stroke="#d4b06a" stroke-width="1.2" opacity=".5"/>
+            <circle cx="100" cy="100" r="74" fill="none" stroke="#d4b06a" stroke-width=".5" opacity=".4"/>
+            <g transform="translate(100 90)" stroke="#d4b06a" stroke-linecap="round" fill="none">
+              <path d="M -22 -4 Q -11 -12 0 -4 Q 11 4 22 -4" stroke-width="2"/>
+              <path d="M -22 4 Q -11 -4 0 4 Q 11 12 22 4" stroke-width="1.7" opacity=".75"/>
+              <path d="M -22 12 Q -11 4 0 12 Q 11 20 22 12" stroke-width="1.4" opacity=".5"/>
+            </g>
+            <text x="100" y="130" text-anchor="middle" font-family="Cormorant Garamond, serif" font-style="italic" font-size="14" fill="#d4b06a">${isRefunded ? 'closed' : (stageIdx >= 7 ? 'delivered' : 'in progress')}</text>
+          </svg>
         </div>
-        <div class="order-item-price">$${(i.price * i.qty).toLocaleString()}</div>
       </div>`;
-  }).join('');
 
-  // Totals
-  document.getElementById('orderSubtotal').textContent = '$' + order.subtotal.toLocaleString();
-  document.getElementById('orderShipping').textContent = order.shipping === 0 ? 'Free' : '$' + order.shipping.toLocaleString();
-  document.getElementById('orderTotal').textContent    = '$' + order.total.toLocaleString();
+    const body = document.getElementById('orderBody');
+    if (body) body.hidden = false;
 
-  // Customer
-  const ship = order.ship || {};
-  document.getElementById('orderShipBlock').innerHTML = `
-    <strong>${ship.name || ''}</strong><br/>
-    ${ship.address || ''}<br/>
-    ${ship.city || ''}${ship.city && ship.state ? ', ' : ''}${ship.state || ''} ${ship.postcode || ''}<br/>
-    ${ship.email ? `<a href="mailto:${ship.email}">${ship.email}</a>` : ''}
-    ${ship.phone ? ` · <a href="tel:${ship.phone}">${ship.phone}</a>` : ''}
-  `;
-  document.getElementById('orderPaymentLine').textContent =
-    order.payment?.last4 ? `Paid with card ending •••• ${order.payment.last4}` : '';
+    // Timeline
+    const tl = document.getElementById('orderTimeline');
+    if (tl) {
+      tl.innerHTML = STAGES.map((s, i) => {
+        const isDone = !isRefunded && i < stageIdx;
+        const isCurrent = !isRefunded && i === stageIdx;
+        const cls = isRefunded ? 'is-skipped' : (isDone ? 'is-done' : isCurrent ? 'is-current' : '');
+        const dotIcon = isDone
+          ? `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 5 5L20 7"/></svg>`
+          : isCurrent
+          ? `<span class="order-pulse"></span>`
+          : '';
+        return `
+          <li class="${cls}">
+            <span class="order-tl-dot">${dotIcon}</span>
+            <div>
+              <strong>${s.label}</strong>
+              <span>${s.blurb}</span>
+            </div>
+          </li>`;
+      }).join('');
+    }
+
+    // ETA estimate — 4-6 weeks from order date
+    const etaEl = document.getElementById('orderEta');
+    if (etaEl) {
+      if (isRefunded) {
+        etaEl.textContent = status === 'refunded'
+          ? 'This order was refunded.'
+          : 'This order was cancelled.';
+      } else if (stageIdx >= STAGES.length - 1) {
+        etaEl.textContent = '✓ Delivered. Hope it looks great on your wall.';
+      } else {
+        const start = new Date(order.createdAt + 28 * 24 * 60 * 60 * 1000);
+        const end   = new Date(order.createdAt + 42 * 24 * 60 * 60 * 1000);
+        const fmt = (d) => d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+        etaEl.textContent = `Expected delivery: ${fmt(start)} – ${fmt(end)}`;
+      }
+    }
+
+    // Items
+    const itemsEl = document.getElementById('orderItems');
+    if (itemsEl) {
+      itemsEl.innerHTML = (order.items || []).map(i => {
+        const p = PRODUCTS.find(x => x.id === i.id);
+        const thumb = p?.image
+          ? `<img src="${p.image}" alt=""/>`
+          : `<span class="order-item-mark">${shortName(i.name)}</span>`;
+        return `
+          <div class="order-item">
+            <a class="order-item-thumb stage-${p?.cat || 'animals'}" href="product.html?id=${i.id}">${thumb}</a>
+            <div class="order-item-meta">
+              <a href="product.html?id=${i.id}">${i.name}</a>
+              <span>${p?.size || ''}${p?.size && p?.cat ? ' · ' : ''}${CAT_LABELS[p?.cat] || ''}</span>
+              <span class="order-item-qty">Qty ${i.qty}</span>
+            </div>
+            <div class="order-item-price">$${((i.price || 0) * (i.qty || 1)).toLocaleString()}</div>
+          </div>`;
+      }).join('');
+    }
+
+    // Totals
+    const sub = document.getElementById('orderSubtotal');
+    const ship = document.getElementById('orderShipping');
+    const tot = document.getElementById('orderTotal');
+    if (sub)  sub.textContent  = '$' + (order.subtotal || 0).toLocaleString();
+    if (ship) ship.textContent = order.shipping === 0 ? 'Free' : '$' + (order.shipping || 0).toLocaleString();
+    if (tot)  tot.textContent  = '$' + (order.total || 0).toLocaleString();
+
+    // Customer block — only populated when localStorage has the ship details
+    // (from this device's checkout). API doesn't return PII to public callers.
+    const shipBlock = document.getElementById('orderShipBlock');
+    if (shipBlock) {
+      const s = order.ship || {};
+      if (s.name || s.email) {
+        shipBlock.innerHTML = `
+          <strong>${s.name || ''}</strong><br/>
+          ${s.address || ''}<br/>
+          ${s.city || ''}${s.city && s.state ? ', ' : ''}${s.state || ''} ${s.postcode || ''}<br/>
+          ${s.email ? `<a href="mailto:${s.email}">${s.email}</a>` : ''}
+          ${s.phone ? ` · <a href="tel:${s.phone}">${s.phone}</a>` : ''}
+        `;
+      } else {
+        shipBlock.innerHTML = `<em>Shipping details on file with Max — drop a message if you need to update them.</em>`;
+      }
+    }
+    const payLine = document.getElementById('orderPaymentLine');
+    if (payLine) {
+      payLine.textContent = order.payment?.last4 ? `Paid with card ending •••• ${order.payment.last4}` : '';
+    }
+  }
 })();
 
 /* ---------- PRODUCT DETAIL PAGE (product.html) ----------
@@ -2645,6 +2733,10 @@ async function submitQuoteRequest(payload) {
   const catEl    = document.getElementById('requestCategory');
   if (!cta || !modal || !form) return;
 
+  // Default copy — used as fallback if /api/content keys don't exist.
+  // Live values override these via cta_<cat>_title / cta_<cat>_sub keys
+  // (placeholders stay in JS since Max is unlikely to customize the
+  // "e.g. a Murray Cod" hint per category).
   const COPY = {
     all:        { t: "Don't see what you're after?",     s: 'Tell Max which fish, car or critter and he\'ll come back with a quote.', subjPh: 'e.g. a Murray Cod from the Macquarie River' },
     saltwater:  { t: "Don't see your fish?",             s: 'Request a saltwater piece — name the species and Max will reply with a quote.',   subjPh: 'e.g. a 1.4 m Spanish Mackerel taken off Cairns' },
@@ -2654,6 +2746,21 @@ async function submitQuoteRequest(payload) {
     birds:      { t: "Don't see your bird?",             s: 'Request a custom bird piece — Max will quote off your description.',              subjPh: 'e.g. a wedge-tailed eagle in flight' },
     montages:   { t: "Want a custom montage?",           s: 'Tell Max which subjects you want mounted on Australia or Queensland — he\'ll quote it.',  subjPh: 'e.g. coral trout + barra + mahi on Queensland-shaped wood' },
   };
+
+  // Pull live overrides from /api/content. If a key is set in D1, use it;
+  // otherwise the JS default above wins.
+  fetch('/api/content', { cache: 'no-store' })
+    .then(r => r.ok ? r.json() : null)
+    .then(data => {
+      const c = data && data.content;
+      if (!c) return;
+      for (const cat of Object.keys(COPY)) {
+        if (c['cta_' + cat + '_title'] !== undefined) COPY[cat].t = c['cta_' + cat + '_title'];
+        if (c['cta_' + cat + '_sub']   !== undefined) COPY[cat].s = c['cta_' + cat + '_sub'];
+      }
+      refreshCta();
+    })
+    .catch(() => {});
 
   function activeCat(){
     return document.querySelector('#catTabs .cat-tab.is-active')?.dataset.cat || 'all';
