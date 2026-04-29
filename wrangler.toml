@@ -23,6 +23,13 @@ binding = "DB"
 database_name = "crystalbrook"
 database_id = "5b43ae6e-915e-48a7-8193-7b3cf86a5623"
 
+# R2 bucket for binary uploads too big for D1 (notably product videos —
+# a 30-second 1080p MP4 is easily 10+MB, well past D1's 1MB row limit).
+# Served back through the Worker at /uploads/<filename>.
+[[r2_buckets]]
+binding = "UPLOADS"
+bucket_name = "crystalbrook-uploads"
+
 [observability]
 enabled = true
 

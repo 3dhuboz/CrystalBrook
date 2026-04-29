@@ -3069,13 +3069,17 @@ function openProductDrawer(product, opts = {}) {
   form.querySelector('[name="draft"]').checked = !!product?.draft;
 
   // Hydrate the additional-photos list. The data shape is whatever the API
-  // returned: an array of {src, alt, label} or null. Filter out the main
-  // image so it isn't shown twice — the gallery only holds extras.
+  // returned: an array of {src, alt, label, type?} or null. Filter out the
+  // main image so it isn't shown twice — the gallery only holds extras.
   const apiGallery = Array.isArray(product?.gallery) ? product.gallery : [];
   const mainImage = product?.image || '';
   _drawerGallery = apiGallery
     .filter(g => g && g.src && g.src !== mainImage)
-    .map(g => ({ src: g.src, label: g.label || g.alt || '' }));
+    .map(g => ({
+      src: g.src,
+      label: g.label || g.alt || '',
+      type: g.type === 'video' ? 'video' : 'image',
+    }));
   renderGalleryEditor();
 
   drawer.hidden = false;
@@ -3095,16 +3099,21 @@ function renderGalleryEditor() {
     list.innerHTML = '<li class="pdf-gallery-empty">No extra photos yet — the main photo above is all the customer will see.</li>';
     return;
   }
-  list.innerHTML = _drawerGallery.map((g, i) => `
-    <li class="pdf-gallery-item" draggable="true" data-idx="${i}">
-      <span class="pdf-gallery-handle" aria-hidden="true" title="Drag to reorder">⋮⋮</span>
-      <span class="pdf-gallery-thumb"><img src="${g.src}" alt=""/></span>
-      <input class="inp pdf-gallery-label" type="text" placeholder="Label (e.g. Front, Hunter pose, On the wall)" value="${(g.label || '').replace(/"/g, '&quot;')}" data-label-idx="${i}"/>
-      <button class="iact iact-delete" type="button" title="Remove this photo" data-remove-idx="${i}">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
-      </button>
-    </li>
-  `).join('');
+  list.innerHTML = _drawerGallery.map((g, i) => {
+    const isVideo = g.type === 'video';
+    const thumb = isVideo
+      ? `<span class="pdf-gallery-thumb pdf-gallery-thumb-video" title="Video"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>`
+      : `<span class="pdf-gallery-thumb"><img src="${g.src}" alt=""/></span>`;
+    return `
+      <li class="pdf-gallery-item${isVideo ? ' is-video' : ''}" draggable="true" data-idx="${i}">
+        <span class="pdf-gallery-handle" aria-hidden="true" title="Drag to reorder">⋮⋮</span>
+        ${thumb}
+        <input class="inp pdf-gallery-label" type="text" placeholder="${isVideo ? 'Video label (e.g. Resin pour, On the wall)' : 'Label (e.g. Front, Hunter pose, On the wall)'}" value="${(g.label || '').replace(/"/g, '&quot;')}" data-label-idx="${i}"/>
+        <button class="iact iact-delete" type="button" title="Remove this ${isVideo ? 'video' : 'photo'}" data-remove-idx="${i}">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
+        </button>
+      </li>`;
+  }).join('');
 
   // Label edit on blur
   list.querySelectorAll('[data-label-idx]').forEach(inp => {
@@ -3160,17 +3169,17 @@ function closeProductDrawer() {
 function readDrawerForm() {
   const form = _drawer.form();
   const fd = new FormData(form);
-  // Build the gallery payload the API expects: array of {src, alt, label}
-  // with the main image NOT included (it's the `image` field). Empty
-  // labels become null so the array is clean. If there are no extras at
-  // all, send null so the gallery clears.
+  // Build the gallery payload the API expects: array of {src, alt, label, type?}
+  // with the main image NOT included (it's the `image` field). Empty labels
+  // become empty strings; type is only included on videos. If there are
+  // no extras at all, send null so the gallery clears.
   const extras = _drawerGallery.filter(g => g && g.src);
   const gallery = extras.length
-    ? extras.map(g => ({
-        src: g.src,
-        alt: g.label || '',
-        label: g.label || '',
-      }))
+    ? extras.map(g => {
+        const out = { src: g.src, alt: g.label || '', label: g.label || '' };
+        if (g.type === 'video') out.type = 'video';
+        return out;
+      })
     : null;
 
   const out = {
@@ -3322,7 +3331,7 @@ async function shrinkImageFile(file, maxEdge = 1024, quality = 0.85) {
     galleryAddBtn.textContent = 'Resizing…';
     try {
       const dataUrl = await shrinkImageFile(file);
-      _drawerGallery.push({ src: dataUrl, label: '' });
+      _drawerGallery.push({ src: dataUrl, label: '', type: 'image' });
       renderGalleryEditor();
       toast('Added — give it a label and hit Save to keep.');
     } catch (err) {
@@ -3332,6 +3341,51 @@ async function shrinkImageFile(file, maxEdge = 1024, quality = 0.85) {
       galleryAddBtn.disabled = false;
       galleryAddBtn.textContent = originalLabel;
       galleryFile.value = '';
+    }
+  });
+
+  // Video upload — same UX but uploads via /api/upload to R2 (videos are
+  // way too big for D1 row data URLs). Returns a URL like /uploads/<key>
+  // which the storefront <video> tag can stream from.
+  const videoBtn  = document.getElementById('pdfGalleryAddVideo');
+  const videoFile = document.getElementById('pdfGalleryVideoFile');
+  videoBtn?.addEventListener('click', () => videoFile?.click());
+  videoFile?.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!/^video\//.test(file.type)) {
+      toast('That doesn\'t look like a video. Try MP4, MOV or WebM.');
+      return;
+    }
+    const MAX_BYTES = 50 * 1024 * 1024;
+    if (file.size > MAX_BYTES) {
+      toast('Video is over 50MB. Try a shorter clip or compress it.');
+      return;
+    }
+    videoBtn.disabled = true;
+    const originalLabel = videoBtn.textContent;
+    videoBtn.textContent = `Uploading ${(file.size / 1024 / 1024).toFixed(1)}MB…`;
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'content-type': file.type, ...adminAuthHeaders() },
+        body: file,
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j.error || 'upload failed');
+      }
+      const { url } = await res.json();
+      _drawerGallery.push({ src: url, label: '', type: 'video' });
+      renderGalleryEditor();
+      toast('Video uploaded — give it a label and hit Save to keep.');
+    } catch (err) {
+      console.error('video upload failed', err);
+      toast('Video upload failed: ' + (err.message || 'try again'));
+    } finally {
+      videoBtn.disabled = false;
+      videoBtn.textContent = originalLabel;
+      videoFile.value = '';
     }
   });
 

@@ -1048,6 +1048,71 @@ async function handleDeleteOrder(request, env, id) {
 }
 
 
+// -------- /uploads (R2-backed video + binary uploads) --------
+
+const UPLOAD_MAX_BYTES = 50 * 1024 * 1024;  // 50MB cap — fine for short product videos
+const UPLOAD_ALLOWED_TYPES = new Set([
+  'video/mp4', 'video/quicktime', 'video/webm',
+  'image/png', 'image/jpeg', 'image/webp',
+]);
+
+async function handleUpload(request, env) {
+  if (!await isAuthorised(request, env)) return errorResponse('unauthorised', 401);
+  if (!env.UPLOADS) return errorResponse('R2 binding missing', 503);
+
+  const ct = request.headers.get('content-type') || '';
+  if (!UPLOAD_ALLOWED_TYPES.has(ct.split(';')[0].trim())) {
+    return errorResponse('Unsupported file type. Try MP4, MOV or WebM for video; PNG/JPEG/WebP for images.');
+  }
+
+  const lengthHeader = request.headers.get('content-length');
+  if (lengthHeader && Number(lengthHeader) > UPLOAD_MAX_BYTES) {
+    return errorResponse(`File too large (max ${Math.floor(UPLOAD_MAX_BYTES / 1024 / 1024)}MB)`);
+  }
+
+  // Random filename keyed by mime + timestamp + random hex. Keeps URLs
+  // unguessable and avoids collisions when admin re-uploads.
+  const ext = ({
+    'video/mp4': 'mp4', 'video/quicktime': 'mov', 'video/webm': 'webm',
+    'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp',
+  })[ct.split(';')[0].trim()] || 'bin';
+  const key = `${Date.now().toString(36)}-${randomToken(8)}.${ext}`;
+
+  // Stream the body straight to R2. Cap mid-stream by reading into a buffer
+  // and bailing if it's over the cap (Workers don't expose a streaming size
+  // check on R2 put, so we buffer once).
+  const buf = await request.arrayBuffer();
+  if (buf.byteLength > UPLOAD_MAX_BYTES) {
+    return errorResponse(`File too large (max ${Math.floor(UPLOAD_MAX_BYTES / 1024 / 1024)}MB)`);
+  }
+
+  await env.UPLOADS.put(key, buf, {
+    httpMetadata: { contentType: ct },
+  });
+
+  const url = `/uploads/${key}`;
+  return jsonResponse({ ok: true, key, url, contentType: ct, size: buf.byteLength });
+}
+
+async function handleServeUpload(request, env, key) {
+  if (!env.UPLOADS) return errorResponse('R2 binding missing', 503);
+  // Defensive — strip slashes and dots so we can't escape the bucket.
+  if (!/^[\w.-]+$/.test(key)) return errorResponse('not found', 404);
+
+  const obj = await env.UPLOADS.get(key);
+  if (!obj) return errorResponse('not found', 404);
+
+  const headers = new Headers();
+  if (obj.httpMetadata?.contentType) {
+    headers.set('content-type', obj.httpMetadata.contentType);
+  }
+  // Long browser cache — content-addressed by random key, never changes.
+  headers.set('cache-control', 'public, max-age=31536000, immutable');
+  headers.set('accept-ranges', 'bytes');
+  return new Response(obj.body, { headers });
+}
+
+
 // -------- main fetch handler --------
 
 export default {
@@ -1123,9 +1188,23 @@ export default {
         if (invoiceMatch && request.method === 'POST') {
           return await handleSendOrderInvoice(request, env, invoiceMatch[1]);
         }
+        if (path === '/api/upload' && request.method === 'POST') {
+          return await handleUpload(request, env);
+        }
         return errorResponse('not found', 404);
       } catch (err) {
         console.error('API error', err);
+        return errorResponse('internal error', 500);
+      }
+    }
+
+    // R2-served uploads (videos, images): /uploads/<key>
+    const uploadMatch = path.match(/^\/uploads\/([\w.-]+)$/);
+    if (uploadMatch) {
+      try {
+        return await handleServeUpload(request, env, uploadMatch[1]);
+      } catch (err) {
+        console.error('Upload serve error', err);
         return errorResponse('internal error', 500);
       }
     }
