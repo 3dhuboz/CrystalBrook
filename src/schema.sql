@@ -72,3 +72,33 @@ CREATE TABLE IF NOT EXISTS requests (
 );
 CREATE INDEX IF NOT EXISTS idx_requests_created ON requests(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_requests_status  ON requests(status);
+
+
+-- Confirmed orders. Created by the storefront checkout flow (POST /api/orders)
+-- and by the admin "+ Manual order" form. Each row stores the line items as
+-- JSON in the items column — no separate order_items table because the
+-- storefront cart is small (typically 1-3 pieces) and pieces are immutable
+-- once an order is placed.
+CREATE TABLE IF NOT EXISTS orders (
+  id            TEXT PRIMARY KEY,        -- 'CB-001234'
+  name          TEXT NOT NULL,
+  email         TEXT NOT NULL,
+  phone         TEXT,
+  address       TEXT,                    -- street address (one line)
+  suburb        TEXT,
+  state         TEXT,                    -- QLD | NSW | … | NT
+  postcode      TEXT,
+  items         TEXT NOT NULL,           -- JSON: [{id, name, price, qty}]
+  subtotal      INTEGER NOT NULL,        -- whole AUD
+  shipping      INTEGER NOT NULL DEFAULT 0,
+  total         INTEGER NOT NULL,
+  status        TEXT NOT NULL DEFAULT 'paid',  -- paid | in_production | shipped | delivered | refunded | cancelled
+  payment_ref   TEXT,                    -- Stripe charge id when wired
+  source        TEXT,                    -- 'checkout' | 'manual_admin'
+  notes         TEXT,                    -- admin-only notes (used for manual orders)
+  photo_data_url TEXT,                   -- optional reference for manual orders
+  created_at    TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_orders_created ON orders(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_orders_status  ON orders(status);

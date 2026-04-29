@@ -1863,49 +1863,66 @@ document.addEventListener('keydown', e=>{
       if (currentStep === 2){
         const form = modal.querySelector('#coPayForm');
         if (!form.checkValidity()){ form.reportValidity(); return; }
-        // Simulate processing
         const btn = b;
         const orig = btn.textContent;
         btn.disabled = true;
-        btn.textContent = 'Processing payment…';
+        btn.textContent = 'Placing order…';
         const ship = serializeForm(modal.querySelector('#coShipForm'));
-        apiPost(API.checkout, {
-          items, total: total(),
-          ship,
-          payment: { last4: form.cardNumber.value.replace(/\s/g, '').slice(-4) },
-        }).then(() => {
-          btn.disabled = false;
-          btn.textContent = orig;
-          // Generate order number + persist to localStorage so the
-          // order tracking page can resurrect it later
-          const orderId = 'CB-' + Math.floor(100000 + Math.random() * 900000);
-          const order = {
-            id: orderId,
-            createdAt: Date.now(),
-            items: items.map(i => ({ id: i.id, name: i.name, price: i.price, pimg: i.pimg, qty: i.qty })),
-            subtotal: subtotal(),
-            shipping: shipping(),
-            total: total(),
-            ship,
-            payment: { last4: form.cardNumber.value.replace(/\s/g, '').slice(-4) },
-          };
-          let orders = [];
-          try { orders = JSON.parse(localStorage.getItem('cbwm_orders') || '[]'); } catch(_) {}
-          orders.unshift(order);
-          // Keep only last 20 to bound storage
-          if (orders.length > 20) orders = orders.slice(0, 20);
-          localStorage.setItem('cbwm_orders', JSON.stringify(orders));
 
-          successOrder.textContent = orderId;
-          successItems.textContent = items.reduce((s, i) => s + i.qty, 0);
-          successEmail.textContent = modal.querySelector('#coShipForm input[name="email"]').value;
-          const trackLink = modal.querySelector('#coTrackLink');
-          if (trackLink) trackLink.href = `order.html?id=${orderId}`;
-          // Clear cart
-          items = [];
-          saveCart();
-          go(3);
-        });
+        // Real order — POSTs to /api/orders so it lands in D1 and shows in
+        // admin Orders. Stripe is not yet wired, so the "payment" step
+        // currently just records the last-4 in notes for reference.
+        const last4 = form.cardNumber.value.replace(/\s/g, '').slice(-4);
+        fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            name: ship.name, email: ship.email, phone: ship.phone || '',
+            address: ship.address, suburb: ship.city, state: ship.state, postcode: ship.postcode,
+            items: items.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty })),
+            shipping: 0,
+            source: 'checkout',
+            notes: 'Card ending ' + last4,
+          }),
+        }).then(r => r.json().then(j => ({ ok: r.ok, body: j })))
+          .then(({ ok, body }) => {
+            btn.disabled = false;
+            btn.textContent = orig;
+            if (!ok || !body.id) {
+              alert('Sorry — couldn\'t place that order. ' + (body.error || 'Try again in a moment.'));
+              return;
+            }
+            const orderId = body.id;
+            // Cache locally for the order tracking page first paint
+            const order = {
+              id: orderId,
+              createdAt: Date.now(),
+              items: items.map(i => ({ id: i.id, name: i.name, price: i.price, pimg: i.pimg, qty: i.qty })),
+              subtotal: subtotal(),
+              shipping: shipping(),
+              total: body.total,
+              ship,
+            };
+            let orders = [];
+            try { orders = JSON.parse(localStorage.getItem('cbwm_orders') || '[]'); } catch(_) {}
+            orders.unshift(order);
+            if (orders.length > 20) orders = orders.slice(0, 20);
+            localStorage.setItem('cbwm_orders', JSON.stringify(orders));
+
+            successOrder.textContent = orderId;
+            successItems.textContent = items.reduce((s, i) => s + i.qty, 0);
+            successEmail.textContent = ship.email;
+            const trackLink = modal.querySelector('#coTrackLink');
+            if (trackLink) trackLink.href = `order.html?id=${orderId}`;
+            items = [];
+            saveCart();
+            go(3);
+          })
+          .catch(err => {
+            btn.disabled = false;
+            btn.textContent = orig;
+            alert('Couldn\'t reach the server — ' + (err.message || 'try again'));
+          });
         return;
       }
       go(currentStep + 1);

@@ -222,18 +222,133 @@ function stockStatus(n){
 }
 function orderStatus(s){
   const map = {
-    paid:       { cls:'info', label:'Paid' },
-    production: { cls:'warn', label:'In production' },
-    shipped:    { cls:'ok',   label:'Shipped' },
-    refunded:   { cls:'muted',label:'Refunded' },
+    paid:          { cls:'info', label:'Paid' },
+    in_production: { cls:'warn', label:'In production' },
+    production:    { cls:'warn', label:'In production' },  // legacy alias
+    shipped:       { cls:'ok',   label:'Shipped' },
+    delivered:     { cls:'ok',   label:'Delivered' },
+    refunded:      { cls:'muted',label:'Refunded' },
+    cancelled:     { cls:'muted',label:'Cancelled' },
   };
-  return map[s];
+  return map[s] || { cls:'muted', label: s || 'Unknown' };
 }
 
-/* ---------- DASHBOARD ---------- */
+/* Live orders cache — populated from /api/orders. The hardcoded ORDERS
+ * stub above is used only as a fallback for the very first paint before
+ * the API call returns (and on a cold cache offline). */
+let _ordersCache = [];
+
+function customerFirstName(o) {
+  return (o.name || '').split(/\s+/)[0] || 'Customer';
+}
+function formatOrderDate(iso) {
+  if (!iso) return '';
+  const t = new Date(iso.replace(' ', 'T') + 'Z').getTime();
+  if (!Number.isFinite(t)) return '';
+  const diff = (Date.now() - t) / 1000;
+  if (diff < 3600) return Math.max(1, Math.round(diff / 60)) + ' min ago';
+  if (diff < 86400 * 2) {
+    const d = new Date(t);
+    const today = new Date(); today.setHours(0,0,0,0);
+    const orderDay = new Date(t); orderDay.setHours(0,0,0,0);
+    const yest = new Date(today); yest.setDate(today.getDate() - 1);
+    const time = d.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' });
+    if (orderDay.getTime() === today.getTime()) return 'Today · ' + time;
+    if (orderDay.getTime() === yest.getTime()) return 'Yest · ' + time;
+  }
+  if (diff < 86400 * 7) return Math.round(diff / 86400) + ' days ago';
+  return new Date(iso).toLocaleDateString('en-AU');
+}
+
+function ordersToView(rows) {
+  return rows.map(o => {
+    const items = Array.isArray(o.items) ? o.items : [];
+    const itemsLabel = items.map(i => i.name + (i.qty > 1 ? ` ×${i.qty}` : '')).join(', ') || '(no items)';
+    return {
+      id:     o.id,
+      cust:   customerFirstName(o) + (o.name && o.name.split(/\s+/).length > 1 ? ' ' + o.name.split(/\s+/).slice(-1)[0][0] + '.' : ''),
+      fullName: o.name,
+      email:  o.email,
+      items:  itemsLabel,
+      total:  o.total,
+      status: o.status,
+      pay:    o.paymentRef || o.notes || '—',
+      date:   formatOrderDate(o.createdAt),
+      _raw:   o,
+    };
+  });
+}
+
+async function refreshOrdersFromAPI() {
+  try {
+    const res = await fetch('/api/orders', {
+      headers: { ...adminAuthHeaders() },
+      cache: 'no-store',
+    });
+    if (!res.ok) {
+      if (res.status === 401) {
+        localStorage.removeItem(ADMIN_AUTH_KEY);
+        showAdminLogin('Your session expired — please sign in again.');
+      }
+      return;
+    }
+    const data = await res.json();
+    _ordersCache = ordersToView(Array.isArray(data.orders) ? data.orders : []);
+    try { renderRecentOrders(); } catch (_) {}
+    try { renderOrders(); } catch (_) {}
+    try { renderDashboardStats(); } catch (_) {}
+  } catch (err) {
+    console.warn('[orders] fetch failed', err);
+  }
+}
+
+function ordersForView() {
+  return _ordersCache.length ? _ordersCache : ORDERS;
+}
+
+/* ---------- DASHBOARD ----------
+ * Stats and Recent Orders pull from the live cache when available,
+ * fall back to the static ORDERS stub on cold start. renderDashboardStats
+ * recomputes the four KPI cards from real data each refresh.
+ */
+function renderDashboardStats() {
+  const orders = ordersForView();
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  let mtdRev = 0, mtdOrders = 0;
+  for (const o of orders) {
+    const t = o._raw && o._raw.createdAt
+      ? new Date(o._raw.createdAt.replace(' ', 'T') + 'Z').getTime()
+      : 0;
+    if (t >= monthStart) {
+      mtdRev += Number(o.total) || 0;
+      mtdOrders += 1;
+    }
+  }
+  // Low stock count needs PRODUCTS — drafts read as out-of-stock; live as 5
+  // until real stock comes in.
+  const lowStock = (typeof PRODUCTS !== 'undefined')
+    ? PRODUCTS.filter(p => (p.stock || 0) > 0 && (p.stock || 0) <= 2).length
+    : 0;
+  const customRequests = (typeof _requestsCache !== 'undefined')
+    ? _requestsCache.filter(r => r.status === 'new').length
+    : 0;
+
+  const set = (sel, val) => {
+    const el = document.querySelector(sel);
+    if (el) el.textContent = val;
+  };
+  set('[data-stat="rev_mtd"]',   '$' + mtdRev.toLocaleString());
+  set('[data-stat="orders_mtd"]', mtdOrders);
+  set('[data-stat="low_stock"]', lowStock);
+  set('[data-stat="custom_requests"]', customRequests);
+}
+
 function renderRecentOrders(){
   const tb = document.getElementById('recentOrders');
-  tb.innerHTML = ORDERS.slice(0,5).map(o=>{
+  if (!tb) return;
+  const orders = ordersForView();
+  tb.innerHTML = orders.slice(0,5).map(o=>{
     const st = orderStatus(o.status);
     return `<tr>
       <td><strong>${o.id}</strong></td>
@@ -548,7 +663,7 @@ document.getElementById('prodCatFilter')?.addEventListener('change', _refreshSto
 /* ---------- ORDERS ---------- */
 function renderOrders(){
   const tb = document.getElementById('ordersBody'); if(!tb) return;
-  tb.innerHTML = ORDERS.map(o=>{
+  tb.innerHTML = ordersForView().map(o=>{
     const st = orderStatus(o.status);
     return `<tr>
       <td><input type="checkbox"/></td>
@@ -564,6 +679,8 @@ function renderOrders(){
   }).join('');
 }
 renderOrders();
+// Pull live orders from D1 — repopulates the table + dashboard once it lands.
+refreshOrdersFromAPI();
 
 /* ---------- CUSTOM ORDERS KANBAN ---------- *
  * Live requests come from D1 via GET /api/requests (admin auth). We
@@ -917,10 +1034,9 @@ function openNewQuoteForm() {
   setTimeout(() => form.querySelector('[name="name"]')?.focus(), 50);
 }
 
-/* Manual Order — for when Max takes a phone or in-person sale. Same
- * pipeline as New Quote for now (lands in /api/requests with source
- * 'manual_order' so Max sees it in Custom Orders). A real orders
- * table is pending — see audit notes. */
+/* Manual Order — for when Max takes a phone or in-person sale.
+ * Lands in the real /api/orders table now. Single-line item with the
+ * subject as the description and the typed dollar value as the total. */
 function openNewManualOrderForm() {
   let modal = document.getElementById('newManualOrderModal');
   if (!modal) {
@@ -989,17 +1105,20 @@ function openNewManualOrderForm() {
     const original = saveBtn.textContent;
     saveBtn.textContent = 'Saving…';
     try {
-      const res = await fetch('/api/requests', {
+      // The "Total" field on this form is reused — it's stored as `size`
+      // on the data dict but really represents the sale total in dollars.
+      const total = parseInt((data.size || '').toString().replace(/[^0-9]/g, ''), 10) || 0;
+      const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'content-type': 'application/json', ...adminAuthHeaders() },
         body: JSON.stringify({
           name: data.name, email: data.email, phone: data.phone || '',
-          subject: data.subject,
-          category: data.category || '',
-          size: data.size || '',
+          // Single line item: the subject is the description, total is the price.
+          items: [{ id: 'manual', name: data.subject, price: total, qty: 1 }],
+          shipping: 0,
+          source: 'manual_admin',
           notes: data.notes || '',
           photoDataUrl: getPhoto() || '',
-          source: 'manual_order',
         }),
       });
       if (!res.ok) {
@@ -1009,7 +1128,7 @@ function openNewManualOrderForm() {
       const result = await res.json();
       modal.hidden = true;
       toast(`Order saved · ${result.id}`);
-      if (typeof refreshRequestsFromAPI === 'function') refreshRequestsFromAPI();
+      if (typeof refreshOrdersFromAPI === 'function') refreshOrdersFromAPI();
     } catch (err) {
       errEl.textContent = 'Couldn\'t save: ' + (err.message || 'try again');
       errEl.hidden = false;

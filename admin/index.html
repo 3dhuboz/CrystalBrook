@@ -7,10 +7,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="../assets/admin.css?v=20260429-9" />
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260429-9" />
-<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260429-9" />
-<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260429-9" />
+<link rel="stylesheet" href="../assets/admin.css?v=20260429-10" />
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260429-10" />
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260429-10" />
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260429-10" />
 <link rel="manifest" href="../manifest.webmanifest" />
 <meta name="theme-color" content="#1c130a" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -158,23 +158,23 @@
     <div class="kpis">
       <div class="kpi">
         <span class="kpi-label">Revenue (MTD)</span>
-        <strong class="kpi-value">$18,420</strong>
-        <span class="kpi-delta up">▲ 12% vs last month</span>
+        <strong class="kpi-value" data-stat="rev_mtd">$0</strong>
+        <span class="kpi-delta">From paid orders this month</span>
       </div>
       <div class="kpi">
         <span class="kpi-label">Orders (MTD)</span>
-        <strong class="kpi-value">34</strong>
-        <span class="kpi-delta up">▲ 6 vs last month</span>
+        <strong class="kpi-value" data-stat="orders_mtd">0</strong>
+        <span class="kpi-delta">Placed this month</span>
       </div>
       <div class="kpi">
         <span class="kpi-label">Low stock items</span>
-        <strong class="kpi-value">4</strong>
+        <strong class="kpi-value" data-stat="low_stock">0</strong>
         <span class="kpi-delta warn">Needs attention</span>
       </div>
       <div class="kpi">
         <span class="kpi-label">Custom order requests</span>
-        <strong class="kpi-value">7</strong>
-        <span class="kpi-delta">3 awaiting quote</span>
+        <strong class="kpi-value" data-stat="custom_requests">0</strong>
+        <span class="kpi-delta">In the New column</span>
       </div>
     </div>
 
@@ -1566,6 +1566,6 @@
   </div>
 </div>
 
-<script src="../assets/admin.js?v=20260429-9"></script>
+<script src="../assets/admin.js?v=20260429-10"></script>
 </body>
 </html>

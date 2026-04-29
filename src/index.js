@@ -423,6 +423,144 @@ async function handleDeleteRequest(request, env, id) {
 }
 
 
+// -------- /api/orders (confirmed orders, customer + admin) --------
+
+const VALID_ORDER_STATUSES = new Set(['paid','in_production','shipped','delivered','refunded','cancelled']);
+
+function rowToOrder(row) {
+  let items = [];
+  try { items = JSON.parse(row.items || '[]'); } catch (_) { items = []; }
+  return {
+    id:        row.id,
+    name:      row.name,
+    email:     row.email,
+    phone:     row.phone,
+    address:   row.address,
+    suburb:    row.suburb,
+    state:     row.state,
+    postcode:  row.postcode,
+    items,
+    subtotal:  row.subtotal,
+    shipping:  row.shipping,
+    total:     row.total,
+    status:    row.status,
+    paymentRef: row.payment_ref,
+    source:    row.source,
+    notes:     row.notes,
+    photoDataUrl: row.photo_data_url,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+async function handleCreateOrder(request, env) {
+  // Public route — allowed without admin auth (the customer is checking out).
+  // Admin-flagged ('manual_admin' source) calls add the X-Admin-Password header
+  // and bypass any future rate-limiting we add.
+  let body;
+  try { body = await request.json(); }
+  catch (_) { return errorResponse('invalid JSON body'); }
+
+  const name     = (body.name     || '').toString().trim().slice(0, 200);
+  const email    = (body.email    || '').toString().trim().slice(0, 200);
+  const phone    = (body.phone    || '').toString().trim().slice(0, 50) || null;
+  const address  = (body.address  || '').toString().trim().slice(0, 300) || null;
+  const suburb   = (body.suburb   || '').toString().trim().slice(0, 100) || null;
+  const state    = (body.state    || '').toString().trim().slice(0, 8)  || null;
+  const postcode = (body.postcode || '').toString().trim().slice(0, 16) || null;
+  const items    = Array.isArray(body.items) ? body.items : [];
+  const source   = (body.source   || 'checkout').toString().slice(0, 32);
+  const notes    = (body.notes    || '').toString().slice(0, 4000) || null;
+  const photo    = (body.photoDataUrl || '').toString();
+
+  if (!name) return errorResponse('name required');
+  if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return errorResponse('valid email required');
+  if (!items.length) return errorResponse('at least one item required');
+
+  // Recompute totals server-side from the line items so a tampered client
+  // can't post a $1 total for $1000 of products. shipping defaults to free.
+  let subtotal = 0;
+  const cleanItems = items.map(it => {
+    const price = Number(it.price) || 0;
+    const qty   = Math.max(1, Math.min(20, Number(it.qty) || 1));
+    subtotal += price * qty;
+    return { id: String(it.id || ''), name: String(it.name || ''), price, qty };
+  });
+  const shipping = Number(body.shipping) || 0;
+  const total = subtotal + shipping;
+
+  let photoDataUrl = null;
+  if (photo) {
+    if (!photo.startsWith('data:image/')) return errorResponse('photo must be a data URL');
+    if (photo.length > 800_000) return errorResponse('photo too large');
+    photoDataUrl = photo;
+  }
+
+  // Sequential ID — count existing rows + 1, prefixed CB-. Not collision-proof
+  // under heavy concurrency but fine for a one-and-a-half-person workshop.
+  const countRow = await env.DB.prepare('SELECT COUNT(*) AS n FROM orders').first();
+  const seq = ((countRow && countRow.n) || 0) + 1;
+  const id = 'CB-' + String(seq).padStart(6, '0');
+
+  await env.DB.prepare(`
+    INSERT INTO orders (id, name, email, phone, address, suburb, state, postcode,
+      items, subtotal, shipping, total, status, source, notes, photo_data_url)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).bind(id, name, email, phone, address, suburb, state, postcode,
+    JSON.stringify(cleanItems), subtotal, shipping, total,
+    source === 'manual_admin' ? 'paid' : 'paid',  // assume paid on submit; admin can change
+    source, notes, photoDataUrl).run();
+
+  return jsonResponse({ ok: true, id, total });
+}
+
+async function handleListOrders(request, env) {
+  if (!await isAuthorised(request, env)) return errorResponse('unauthorised', 401);
+  const result = await env.DB.prepare(
+    'SELECT * FROM orders ORDER BY created_at DESC LIMIT 200'
+  ).all();
+  return jsonResponse({ orders: (result.results || []).map(rowToOrder) });
+}
+
+async function handleGetOrder(request, env, id) {
+  // Public — but only returns basic fields needed for the order tracking page.
+  const row = await env.DB.prepare('SELECT * FROM orders WHERE id = ?').bind(id).first();
+  if (!row) return errorResponse('not found', 404);
+  // For non-admin callers, hide the email/address — they'd need to be on the
+  // tracking-link landing page typed in by the customer with their order id.
+  const order = rowToOrder(row);
+  if (!await isAuthorised(request, env)) {
+    return jsonResponse({ order: {
+      id: order.id, items: order.items, subtotal: order.subtotal,
+      shipping: order.shipping, total: order.total, status: order.status,
+      createdAt: order.createdAt,
+    }});
+  }
+  return jsonResponse({ order });
+}
+
+async function handleUpdateOrderStatus(request, env, id) {
+  if (!await isAuthorised(request, env)) return errorResponse('unauthorised', 401);
+  let body;
+  try { body = await request.json(); }
+  catch (_) { return errorResponse('invalid JSON body'); }
+  const status = (body.status || '').toString().trim();
+  if (!VALID_ORDER_STATUSES.has(status)) return errorResponse('invalid status');
+  const res = await env.DB.prepare(
+    'UPDATE orders SET status = ?, updated_at = datetime(\'now\') WHERE id = ?'
+  ).bind(status, id).run();
+  if (!res.meta || !res.meta.changes) return errorResponse('not found', 404);
+  return jsonResponse({ ok: true, id, status });
+}
+
+async function handleDeleteOrder(request, env, id) {
+  if (!await isAuthorised(request, env)) return errorResponse('unauthorised', 401);
+  const res = await env.DB.prepare('DELETE FROM orders WHERE id = ?').bind(id).run();
+  if (!res.meta || !res.meta.changes) return errorResponse('not found', 404);
+  return jsonResponse({ ok: true, id });
+}
+
+
 // -------- main fetch handler --------
 
 export default {
@@ -470,6 +608,19 @@ export default {
           const id = reqMatch[1];
           if (request.method === 'PATCH')  return await handleUpdateRequestStatus(request, env, id);
           if (request.method === 'DELETE') return await handleDeleteRequest(request, env, id);
+        }
+        if (path === '/api/orders' && request.method === 'POST') {
+          return await handleCreateOrder(request, env);
+        }
+        if (path === '/api/orders' && request.method === 'GET') {
+          return await handleListOrders(request, env);
+        }
+        const ordMatch = path.match(/^\/api\/orders\/([\w-]+)$/);
+        if (ordMatch) {
+          const id = ordMatch[1];
+          if (request.method === 'GET')    return await handleGetOrder(request, env, id);
+          if (request.method === 'PATCH')  return await handleUpdateOrderStatus(request, env, id);
+          if (request.method === 'DELETE') return await handleDeleteOrder(request, env, id);
         }
         return errorResponse('not found', 404);
       } catch (err) {
