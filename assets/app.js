@@ -2263,16 +2263,21 @@ function renderProductPage() {
   }
   const wallSrc = wallMockupSrc(product.image);
 
-  let gallery = Array.isArray(product.gallery) && product.gallery.length
-    ? product.gallery.slice()
-    : (product.image
-        ? [{ src: product.image, alt: product.name, label: 'Cutout' }]
-        : []);
-
-  // Append the on-the-wall mockup as a final gallery item (unless it's
-  // already in the explicit gallery list).
+  // Always lead with the main product image, then append any extras from
+  // product.gallery, then the auto-discovered on-the-wall mockup. Earlier
+  // build replaced the main image with the gallery when gallery was set —
+  // that meant adding a single extra in admin pushed the main photo to
+  // the thumbnail strip and the customer saw the extra as the hero.
+  let gallery = product.image
+    ? [{ src: product.image, alt: product.name, label: '' }]
+    : [];
+  if (Array.isArray(product.gallery)) {
+    for (const g of product.gallery) {
+      if (g && g.src && g.src !== product.image) gallery.push(g);
+    }
+  }
   if (wallSrc && !gallery.some(g => g.src === wallSrc)) {
-    gallery.push({ src: wallSrc, alt: `${product.name} — on the wall`, label: 'On the wall' });
+    gallery.push({ src: wallSrc, alt: `${product.name} — on the wall`, label: '' });
   }
 
   function stageHTML(item){
@@ -2299,11 +2304,11 @@ function renderProductPage() {
             <button class="pdp-gallery-thumb${i === 0 ? ' is-active' : ''}"
                     role="tab" aria-selected="${i === 0}"
                     data-idx="${i}" type="button"
-                    title="${item.label || ('View ' + (i + 1))}">
+                    title="${item.label || ('View ' + (i + 1))}"
+                    aria-label="${item.label || ('View ' + (i + 1))}">
               ${item.type === 'video'
                 ? `<span class="pdp-gallery-thumb-video">▶</span>`
                 : `<img src="${item.src}" alt=""/>`}
-              ${item.label ? `<span class="pdp-gallery-thumb-label">${item.label}</span>` : ''}
             </button>
           `).join('')}
         </div>
