@@ -2263,20 +2263,27 @@ function renderProductPage() {
   }
   const wallSrc = wallMockupSrc(product.image);
 
-  // Always lead with the main product image, then append any extras from
-  // product.gallery, then the auto-discovered on-the-wall mockup. Earlier
-  // build replaced the main image with the gallery when gallery was set —
-  // that meant adding a single extra in admin pushed the main photo to
-  // the thumbnail strip and the customer saw the extra as the hero.
+  // Two streams of imagery now:
+  //   - "thumb" items (default): the main image + supporting photos shown
+  //     as the hero/thumb-strip carousel up top.
+  //   - "feature" items: rendered as full-width tiles BELOW the hero so
+  //     customers don't have to hunt the thumb strip — useful for wall
+  //     mockups Max wants prominent.
+  // Items in product.gallery default to "thumb" unless tagged
+  // display:'feature'. The main product.image is always thumb-stream and
+  // always first.
   let gallery = product.image
     ? [{ src: product.image, alt: product.name, label: '' }]
     : [];
+  let featureGallery = [];
   if (Array.isArray(product.gallery)) {
     for (const g of product.gallery) {
-      if (g && g.src && g.src !== product.image) gallery.push(g);
+      if (!g || !g.src || g.src === product.image) continue;
+      if (g.display === 'feature') featureGallery.push(g);
+      else gallery.push(g);
     }
   }
-  if (wallSrc && !gallery.some(g => g.src === wallSrc)) {
+  if (wallSrc && !gallery.some(g => g.src === wallSrc) && !featureGallery.some(g => g.src === wallSrc)) {
     gallery.push({ src: wallSrc, alt: `${product.name} — on the wall`, label: '' });
   }
 
@@ -2368,6 +2375,30 @@ function renderProductPage() {
       toggleWishlist(product.id);
       heartBtn.classList.toggle('is-wishlisted', isWishlisted(product.id));
     });
+  }
+
+  // Featured extras — gallery items Max marked as display:'feature' render
+  // full-width below the hero so customers don't have to dig in the thumbs.
+  const featuredEl = document.getElementById('pdpFeatured');
+  if (featuredEl) {
+    if (featureGallery.length) {
+      featuredEl.hidden = false;
+      featuredEl.innerHTML = featureGallery.map(item => {
+        if (item.type === 'video') {
+          return `<figure class="pdp-feature">
+            <video class="pdp-feature-media" src="${item.src}" controls preload="metadata" playsinline></video>
+            ${item.label ? `<figcaption>${item.label.replace(/</g, '&lt;')}</figcaption>` : ''}
+          </figure>`;
+        }
+        return `<figure class="pdp-feature">
+          <img class="pdp-feature-media" src="${item.src}" alt="${item.alt || product.name}"/>
+          ${item.label ? `<figcaption>${item.label.replace(/</g, '&lt;')}</figcaption>` : ''}
+        </figure>`;
+      }).join('');
+    } else {
+      featuredEl.hidden = true;
+      featuredEl.innerHTML = '';
+    }
   }
 
   // Related products from the same category

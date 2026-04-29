@@ -1384,6 +1384,14 @@ section > .container { padding: 0; }
 .pdp-shipping span { color: var(--ink-soft); }
 .pdp-shipping a { color: var(--ink); border-bottom: 1px solid var(--ink); }
 
+/* Featured extras — gallery items the admin marked as display:'feature' */
+.pdp-featured { max-width: var(--container); margin: 0 auto; padding: 32px 24px 12px; display: grid; gap: 32px; }
+.pdp-featured[hidden] { display: none; }
+.pdp-feature { margin: 0; text-align: center; }
+.pdp-feature-media { display: block; width: 100%; height: auto; max-height: 720px; object-fit: contain; border-radius: 4px; background: #faf6ee; }
+.pdp-feature figcaption { margin-top: 12px; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 1rem; color: var(--ink-mute); }
+@media (max-width: 720px) { .pdp-featured { padding: 18px 16px 4px; gap: 22px; } }
+
 .pdp-related { max-width: var(--container); margin: 0 auto; padding: 60px 24px; border-top: 1px solid var(--line); }
 .pdp-related-head { text-align: center; margin-bottom: 32px; }
 .pdp-related-head h3 { font-size: 1.3rem; font-weight: 400; margin-top: 4px; }

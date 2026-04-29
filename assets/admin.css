@@ -1876,10 +1876,23 @@ body.admin-locked { overflow: hidden; }
 .pdf-gallery-btn-row {
   display: flex; gap: 8px; flex-wrap: wrap;
 }
-.pdf-gallery-label {
+.pdf-gallery-fields {
+  display: flex; flex-direction: column; gap: 6px; min-width: 0;
+}
+.pdf-gallery-label,
+.pdf-gallery-display {
   margin: 0;
   font-size: .9rem;
   letter-spacing: 0; text-transform: none;
+}
+.pdf-gallery-display {
+  font-size: .82rem;
+  padding: 6px 8px;
+  color: var(--ink);
+}
+.pdf-gallery-item.is-feature {
+  border-color: rgba(212, 176, 106, .55);
+  background: rgba(212, 176, 106, .06);
 }
 .pdf-gallery-actions {
   display: flex; flex-direction: column; gap: 6px; align-items: flex-start;

@@ -3272,8 +3272,8 @@ function openProductDrawer(product, opts = {}) {
   form.querySelector('[name="draft"]').checked = !!product?.draft;
 
   // Hydrate the additional-photos list. The data shape is whatever the API
-  // returned: an array of {src, alt, label, type?} or null. Filter out the
-  // main image so it isn't shown twice — the gallery only holds extras.
+  // returned: an array of {src, alt, label, type?, display?} or null. Filter
+  // out the main image so it isn't shown twice — the gallery only holds extras.
   const apiGallery = Array.isArray(product?.gallery) ? product.gallery : [];
   const mainImage = product?.image || '';
   _drawerGallery = apiGallery
@@ -3282,6 +3282,7 @@ function openProductDrawer(product, opts = {}) {
       src: g.src,
       label: g.label || g.alt || '',
       type: g.type === 'video' ? 'video' : 'image',
+      display: g.display === 'feature' ? 'feature' : 'thumb',
     }));
   renderGalleryEditor();
 
@@ -3304,19 +3305,34 @@ function renderGalleryEditor() {
   }
   list.innerHTML = _drawerGallery.map((g, i) => {
     const isVideo = g.type === 'video';
+    const isFeature = g.display === 'feature';
     const thumb = isVideo
       ? `<span class="pdf-gallery-thumb pdf-gallery-thumb-video" title="Video"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>`
       : `<span class="pdf-gallery-thumb"><img src="${g.src}" alt=""/></span>`;
     return `
-      <li class="pdf-gallery-item${isVideo ? ' is-video' : ''}" draggable="true" data-idx="${i}">
+      <li class="pdf-gallery-item${isVideo ? ' is-video' : ''}${isFeature ? ' is-feature' : ''}" draggable="true" data-idx="${i}">
         <span class="pdf-gallery-handle" aria-hidden="true" title="Drag to reorder">⋮⋮</span>
         ${thumb}
-        <input class="inp pdf-gallery-label" type="text" placeholder="${isVideo ? 'Video label (e.g. Resin pour, On the wall)' : 'Label (e.g. Front, Hunter pose, On the wall)'}" value="${(g.label || '').replace(/"/g, '&quot;')}" data-label-idx="${i}"/>
+        <div class="pdf-gallery-fields">
+          <input class="inp pdf-gallery-label" type="text" placeholder="${isVideo ? 'Video label (e.g. Resin pour, On the wall)' : 'Label (e.g. Front, Hunter pose, On the wall)'}" value="${(g.label || '').replace(/"/g, '&quot;')}" data-label-idx="${i}"/>
+          <select class="inp pdf-gallery-display" data-display-idx="${i}" title="How this shows on the product page">
+            <option value="thumb"${!isFeature ? ' selected' : ''}>Thumbnail (in the strip)</option>
+            <option value="feature"${isFeature ? ' selected' : ''}>Featured (full-size on the page)</option>
+          </select>
+        </div>
         <button class="iact iact-delete" type="button" title="Remove this ${isVideo ? 'video' : 'photo'}" data-remove-idx="${i}">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
         </button>
       </li>`;
   }).join('');
+
+  // Display-mode select
+  list.querySelectorAll('[data-display-idx]').forEach(sel => {
+    sel.addEventListener('change', e => {
+      const idx = +e.target.dataset.displayIdx;
+      _drawerGallery[idx].display = e.target.value === 'feature' ? 'feature' : 'thumb';
+    });
+  });
 
   // Label edit on blur
   list.querySelectorAll('[data-label-idx]').forEach(inp => {
@@ -3372,15 +3388,16 @@ function closeProductDrawer() {
 function readDrawerForm() {
   const form = _drawer.form();
   const fd = new FormData(form);
-  // Build the gallery payload the API expects: array of {src, alt, label, type?}
+  // Build the gallery payload the API expects: array of {src, alt, label, type?, display?}
   // with the main image NOT included (it's the `image` field). Empty labels
-  // become empty strings; type is only included on videos. If there are
-  // no extras at all, send null so the gallery clears.
+  // become empty strings; type is only included on videos; display only
+  // included when it's "feature" (default is thumb).
   const extras = _drawerGallery.filter(g => g && g.src);
   const gallery = extras.length
     ? extras.map(g => {
         const out = { src: g.src, alt: g.label || '', label: g.label || '' };
         if (g.type === 'video') out.type = 'video';
+        if (g.display === 'feature') out.display = 'feature';
         return out;
       })
     : null;
@@ -3534,7 +3551,7 @@ async function shrinkImageFile(file, maxEdge = 1024, quality = 0.85) {
     galleryAddBtn.textContent = 'Resizing…';
     try {
       const dataUrl = await shrinkImageFile(file);
-      _drawerGallery.push({ src: dataUrl, label: '', type: 'image' });
+      _drawerGallery.push({ src: dataUrl, label: '', type: 'image', display: 'thumb' });
       renderGalleryEditor();
       toast('Added — give it a label and hit Save to keep.');
     } catch (err) {
@@ -3579,7 +3596,7 @@ async function shrinkImageFile(file, maxEdge = 1024, quality = 0.85) {
         throw new Error(j.error || 'upload failed');
       }
       const { url } = await res.json();
-      _drawerGallery.push({ src: url, label: '', type: 'video' });
+      _drawerGallery.push({ src: url, label: '', type: 'video', display: 'thumb' });
       renderGalleryEditor();
       toast('Video uploaded — give it a label and hit Save to keep.');
     } catch (err) {
