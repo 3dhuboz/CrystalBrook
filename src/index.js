@@ -1239,38 +1239,42 @@ async function handleStripeCheckout(request, env) {
   }
 }
 
-/* After Stripe redirects back to success_url, the storefront calls this
- * endpoint with the session_id. We retrieve the session, verify payment
- * status, and create (or look up) the matching D1 order. Idempotent:
- * a second call with the same session_id returns the existing order.
+/* Create (or look up) a D1 order row from a paid Stripe Checkout Session.
+ * Shared by the success-redirect confirm endpoint and the webhook handler,
+ * so a customer who closes their browser between paying and returning to
+ * /order.html still gets an order created — Stripe will deliver the
+ * checkout.session.completed event regardless of whether the redirect
+ * fires. Idempotent: keyed on stripe_session_id UNIQUE.
+ *
+ * `source` lets the caller distinguish webhook-created vs redirect-created
+ * orders in the source column ('checkout' = redirect path, 'webhook' = the
+ * customer never came back but we still got the event).
+ *
+ * Returns an object that either of the callers can shape into a Response:
+ *   - { ok: true, id, total, alreadyExisted }            on success
+ *   - { ok: false, status, error }                       on caller-actionable failure
  */
-async function handleConfirmStripeSession(request, env) {
-  if (!env.STRIPE_SECRET_KEY) return errorResponse('payments not configured', 503);
-
-  let body;
-  try { body = await request.json(); }
-  catch (_) { return errorResponse('invalid JSON body'); }
-  const sessionId = (body.session_id || '').toString().trim();
-  if (!/^cs_(test|live)_[A-Za-z0-9]+$/.test(sessionId)) {
-    return errorResponse('invalid session_id');
-  }
+async function createOrderFromStripeSession(env, sessionId, opts = {}) {
+  const source = opts.source || 'checkout';
 
   // Idempotency — if we've already made an order for this session, return it
   const existing = await env.DB.prepare(
     'SELECT id FROM orders WHERE stripe_session_id = ?'
   ).bind(sessionId).first();
-  if (existing && existing.id) return jsonResponse({ ok: true, id: existing.id, already_existed: true });
+  if (existing && existing.id) {
+    return { ok: true, id: existing.id, alreadyExisted: true };
+  }
 
   // Retrieve the session from Stripe to verify payment + pull line items
   let session;
   try {
     session = await stripeApi(env, `/checkout/sessions/${sessionId}`, 'GET');
   } catch (err) {
-    return errorResponse('Couldn\'t verify payment with Stripe — ' + (err.message || 'unknown error'), 502);
+    return { ok: false, status: 502, error: 'Couldn\'t verify payment with Stripe — ' + (err.message || 'unknown error') };
   }
 
   if (session.payment_status !== 'paid') {
-    return errorResponse(`payment not complete (status: ${session.payment_status || 'unknown'})`, 402);
+    return { ok: false, status: 402, error: `payment not complete (status: ${session.payment_status || 'unknown'})` };
   }
 
   const meta = session.metadata || {};
@@ -1287,7 +1291,9 @@ async function handleConfirmStripeSession(request, env) {
     const m = /^(.+?)x(\d+)$/.exec(tok);
     return m ? { id: m[1], qty: Math.max(1, Math.min(20, Number(m[2]) || 1)) } : null;
   }).filter(Boolean);
-  if (!cartParsed.length) return errorResponse('session has no line items', 422);
+  if (!cartParsed.length) {
+    return { ok: false, status: 422, error: 'session has no line items' };
+  }
 
   const placeholders = cartParsed.map(() => '?').join(',');
   const lookup = await env.DB.prepare(
@@ -1306,7 +1312,6 @@ async function handleConfirmStripeSession(request, env) {
   });
   const total = subtotal;
 
-  // Pull customer name from the session if metadata is missing it
   const name = meta.ship_name || customer.name || '';
   const email = customer.email || session.customer_email || '';
   const phone = meta.ship_phone || customer.phone || '';
@@ -1320,9 +1325,6 @@ async function handleConfirmStripeSession(request, env) {
   const seq = ((countRow && countRow.n) || 0) + 1;
   const id = 'CB-' + String(seq).padStart(6, '0');
 
-  // payment_intent ID is the durable reference for refunds; store it as
-  // payment_ref. session.payment_intent is just the id string in the
-  // default expand level.
   const paymentRef = session.payment_intent || null;
 
   try {
@@ -1332,18 +1334,169 @@ async function handleConfirmStripeSession(request, env) {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(id, name, email, phone, address, suburb, state, postcode,
       JSON.stringify(cleanItems), subtotal, 0, total,
-      'paid', 'checkout', paymentRef, sessionId).run();
+      'paid', source, paymentRef, sessionId).run();
   } catch (err) {
-    // If the UNIQUE constraint fires (race between two redirect taps),
-    // look up the already-created order and return that.
+    // If the UNIQUE constraint fires (race between the redirect confirm
+    // and the webhook arriving at the same time), look up the row the
+    // other path just created and return that. Both end up with the same
+    // order id, just one of them gets to insert it.
     const dup = await env.DB.prepare(
       'SELECT id FROM orders WHERE stripe_session_id = ?'
     ).bind(sessionId).first();
-    if (dup && dup.id) return jsonResponse({ ok: true, id: dup.id, already_existed: true });
+    if (dup && dup.id) return { ok: true, id: dup.id, alreadyExisted: true };
     throw err;
   }
 
-  return jsonResponse({ ok: true, id, total });
+  return { ok: true, id, total };
+}
+
+/* After Stripe redirects back to success_url, the storefront calls this
+ * endpoint with the session_id. Thin wrapper around the shared helper —
+ * the webhook path uses the same code with a different `source` tag.
+ */
+async function handleConfirmStripeSession(request, env) {
+  if (!env.STRIPE_SECRET_KEY) return errorResponse('payments not configured', 503);
+
+  let body;
+  try { body = await request.json(); }
+  catch (_) { return errorResponse('invalid JSON body'); }
+  const sessionId = (body.session_id || '').toString().trim();
+  if (!/^cs_(test|live)_[A-Za-z0-9]+$/.test(sessionId)) {
+    return errorResponse('invalid session_id');
+  }
+
+  const result = await createOrderFromStripeSession(env, sessionId, { source: 'checkout' });
+  if (!result.ok) return errorResponse(result.error, result.status || 500);
+  return jsonResponse({
+    ok: true,
+    id: result.id,
+    total: result.total,
+    already_existed: !!result.alreadyExisted,
+  });
+}
+
+/* Verify the Stripe-Signature header on a webhook payload. Implements
+ * Stripe's signing scheme without their SDK:
+ *
+ *   1. Pull `t` (timestamp) and `v1` (signature) entries from the header.
+ *   2. Build the signed payload: `<t>.<rawBody>`.
+ *   3. HMAC-SHA256 it with the webhook signing secret.
+ *   4. Constant-time compare against the v1 signature.
+ *   5. Reject if `t` is more than 5 minutes old (replay protection).
+ *
+ * Returns { ok: true } or { ok: false, reason }.
+ */
+async function verifyStripeSignature(rawBody, sigHeader, secret) {
+  if (!sigHeader) return { ok: false, reason: 'missing Stripe-Signature header' };
+  if (!secret)    return { ok: false, reason: 'STRIPE_WEBHOOK_SECRET not configured' };
+
+  // Header format: "t=1620000000,v1=abc...,v1=def...,v0=…"
+  const parts = sigHeader.split(',').map(s => s.trim());
+  let t = null;
+  const v1s = [];
+  for (const p of parts) {
+    const [k, ...rest] = p.split('=');
+    const v = rest.join('=');
+    if (k === 't') t = v;
+    else if (k === 'v1') v1s.push(v);
+  }
+  if (!t || !v1s.length) return { ok: false, reason: 'malformed Stripe-Signature header' };
+
+  // 5-minute tolerance — anything older is treated as a replay
+  const timestamp = Number(t);
+  if (!Number.isFinite(timestamp)) return { ok: false, reason: 'invalid timestamp' };
+  const now = Math.floor(Date.now() / 1000);
+  if (Math.abs(now - timestamp) > 300) return { ok: false, reason: 'timestamp outside tolerance' };
+
+  const signed = `${t}.${rawBody}`;
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const macBytes = new Uint8Array(await crypto.subtle.sign('HMAC', key, enc.encode(signed)));
+  const expected = Array.from(macBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+
+  // Constant-time compare against any of the v1 entries (Stripe may send
+  // multiple during signing-secret rotation windows).
+  const ok = v1s.some(sig => timingSafeEqualHex(sig, expected));
+  return ok ? { ok: true } : { ok: false, reason: 'signature mismatch' };
+}
+
+// Constant-time hex string comparison. Inputs are lowercase hex from
+// HMAC; same-length compare avoids leaking position-of-first-diff via
+// timing. Returns false if lengths differ.
+function timingSafeEqualHex(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+/* POST /api/stripe/webhook — Stripe delivers events here whenever a
+ * checkout session completes (and other events we subscribe to in the
+ * Stripe dashboard). Belt-and-braces for the success-redirect path: if
+ * the customer pays then closes their browser before returning to
+ * /order.html, this still creates the order in D1.
+ *
+ * Stripe retries non-2xx responses with exponential backoff for up to
+ * three days, so a transient D1 error → return 5xx → Stripe retries → we
+ * eventually succeed. The UNIQUE constraint on stripe_session_id makes
+ * the whole thing idempotent across retries.
+ */
+async function handleStripeWebhook(request, env) {
+  // Read the raw body BEFORE parsing — signature verification needs the
+  // exact bytes Stripe signed, not a normalised JSON re-serialisation.
+  const rawBody = await request.text();
+  const sigHeader = request.headers.get('Stripe-Signature') || '';
+
+  const verify = await verifyStripeSignature(rawBody, sigHeader, env.STRIPE_WEBHOOK_SECRET);
+  if (!verify.ok) {
+    console.warn('[stripe webhook] signature verify failed:', verify.reason);
+    // 401 (not 4xx generally) — Stripe won't retry on 401, which is what
+    // we want when the secret is wrong or the request is forged.
+    return errorResponse('signature verification failed', 401);
+  }
+
+  let event;
+  try { event = JSON.parse(rawBody); }
+  catch (_) { return errorResponse('invalid JSON body', 400); }
+
+  // Only the one event matters for now. Anything else → ack quietly.
+  if (event.type !== 'checkout.session.completed') {
+    return jsonResponse({ ok: true, ignored: event.type });
+  }
+
+  const session = event.data && event.data.object;
+  const sessionId = session && session.id;
+  if (!sessionId || !/^cs_(test|live)_[A-Za-z0-9]+$/.test(sessionId)) {
+    // Bad payload — don't ask Stripe to retry, log it and move on.
+    console.warn('[stripe webhook] missing/invalid session id in event', event.id);
+    return jsonResponse({ ok: true, skipped: 'no_session_id' });
+  }
+
+  try {
+    const result = await createOrderFromStripeSession(env, sessionId, { source: 'webhook' });
+    if (!result.ok) {
+      // Caller-actionable error (e.g. payment not yet paid). For
+      // `checkout.session.completed` specifically, Stripe only fires it
+      // for paid sessions, so this branch shouldn't happen — but if it
+      // does, log and 200 so Stripe doesn't loop. The order row will
+      // catch up via the success redirect.
+      console.warn('[stripe webhook] order create rejected:', result.error);
+      return jsonResponse({ ok: true, skipped: result.error });
+    }
+    return jsonResponse({ ok: true, id: result.id, already_existed: !!result.alreadyExisted });
+  } catch (err) {
+    // Unexpected error (D1 down, network blip) — return 5xx so Stripe
+    // retries with backoff. Idempotency takes care of dupes.
+    console.error('[stripe webhook] order create failed', err);
+    return errorResponse('temporary failure', 500);
+  }
 }
 
 
@@ -1586,6 +1739,9 @@ export default {
         }
         if (path === '/api/orders/confirm-stripe' && request.method === 'POST') {
           return await handleConfirmStripeSession(request, env);
+        }
+        if (path === '/api/stripe/webhook' && request.method === 'POST') {
+          return await handleStripeWebhook(request, env);
         }
         return errorResponse('not found', 404);
       } catch (err) {

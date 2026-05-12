@@ -41,6 +41,13 @@ enabled = true
 # STRIPE_SECRET_KEY`). Used server-side to create Checkout Sessions and
 # look them up post-payment.
 #
+# STRIPE_WEBHOOK_SECRET (also a `wrangler secret put`) signs incoming
+# webhook deliveries from Stripe to /api/stripe/webhook. Without it the
+# webhook handler rejects everything with 401 — which is the right
+# default (better to drop events than process forged ones). Grab the
+# value from Stripe dashboard → Developers → Webhooks → click the
+# endpoint → "Signing secret".
+#
 # The matching publishable key below is safe to commit and ship in the
 # bundle — it's designed to live in frontend code where customers can see
 # it. The pair authenticates the same Stripe account; only the secret
