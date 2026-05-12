@@ -46,3 +46,8 @@ assets/images/*.zip
 # Local previews / temp
 .claude/
 *.log
+
+# One-off scratch files used to pipe secrets into `wrangler secret put`
+# (never commit these, even by accident — they hold live keys)
+.secret-tmp
+*.secret

@@ -36,3 +36,14 @@ enabled = true
 # ADMIN_PASSWORD is held as a Worker secret (set via `wrangler secret put
 # ADMIN_PASSWORD`). The admin UI sends it via the X-Admin-Password header
 # on every write request; src/index.js validates it before mutating D1.
+
+# STRIPE_SECRET_KEY is also a Worker secret (set via `wrangler secret put
+# STRIPE_SECRET_KEY`). Used server-side to create Checkout Sessions and
+# look them up post-payment.
+#
+# The matching publishable key below is safe to commit and ship in the
+# bundle — it's designed to live in frontend code where customers can see
+# it. The pair authenticates the same Stripe account; only the secret
+# half can move money.
+[vars]
+STRIPE_PUBLISHABLE_KEY = "pk_live_51TUg1f2L8xy2zrXzLQLbQyxAskrJAsC8PhPaOlrmeDEpkHjGVBk0HmzVgx2LSbu1Pk1QFfjpaXpbCMSNTULURCKq00XQSXGguY"

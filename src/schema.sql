@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS products (
   description TEXT NOT NULL,           -- the long blurb
   gallery     TEXT,                    -- JSON array of {src, alt, label} or NULL
   draft       INTEGER NOT NULL DEFAULT 0,  -- 0 = visible on storefront, 1 = hidden
+  hide_wall_mockup INTEGER NOT NULL DEFAULT 0,  -- 1 = suppress the auto-injected on-the-wall thumbnail on the product page
+  feature_on_home INTEGER NOT NULL DEFAULT 0,  -- 1 = pin this product into its category's home-page montage card (3 max per category)
   sort_order  INTEGER NOT NULL DEFAULT 100, -- lower = earlier in catalog listings
   created_at  TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
@@ -107,6 +109,7 @@ CREATE TABLE IF NOT EXISTS orders (
   notes         TEXT,                    -- admin-only notes (used for manual orders)
   photo_data_url TEXT,                   -- optional reference for manual orders
   tracking_number TEXT,                  -- e.g. Aus Post tracking; included in shipped-status email
+  stripe_session_id TEXT UNIQUE,         -- Stripe Checkout Session id (cs_live_...); idempotency key for the redirect-to-success flow
   created_at    TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
 );

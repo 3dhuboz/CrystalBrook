@@ -242,15 +242,45 @@ const SHOP = PRODUCTS.filter(p => !p.draft);
  * preferring distinct images so the montage doesn't show duplicates.
  */
 function pickMontagePics(cat, n = 3){
+  // Two-pass pick so Max controls which products appear in the home-page
+  // category cards rather than the storefront auto-picking the first
+  // three. Pass 1: products with `feature_on_home: true` (Max's explicit
+  // picks, in catalogue sort order). Pass 2: fall back to any other
+  // suitable products until we have N. Both passes share a "seen" set so
+  // the same image isn't picked twice.
+  //
+  // Skip rules for both passes:
+  //   - data: URLs (old admin uploads pre-R2)
+  //   - /uploads/*.jpg / .jpeg / .webp — admin uploads that got flattened to
+  //     JPEG and have no transparency. They look like square stamps when
+  //     placed on the coloured stage, which is what was making Animals +
+  //     Birds montages look broken.
+  // The image still renders fine everywhere else (product page, shop
+  // grid) — we just don't put it in the cutout montage.
+  function suitable(p) {
+    if (!p || !p.image || p.cat !== cat) return false;
+    if (p.image.startsWith('data:')) return false;
+    if (/^\/uploads\/.*\.(jpe?g|webp)$/i.test(p.image)) return false;
+    return true;
+  }
   const seen = new Set();
   const out = [];
-  for (const p of SHOP) {
-    if (p.cat !== cat) continue;
-    if (!p.image) continue;
-    if (seen.has(p.image)) continue;        // belt-and-braces dedup
+  const push = (p) => {
+    if (!suitable(p) || seen.has(p.image)) return;
     seen.add(p.image);
     out.push(p);
-    if (out.length >= n) break;
+  };
+  // Pass 1: explicitly featured products
+  for (const p of SHOP) {
+    if (!p.feature_on_home) continue;
+    push(p);
+    if (out.length >= n) return out;
+  }
+  // Pass 2: auto-fill from the rest of the catalogue
+  for (const p of SHOP) {
+    if (p.feature_on_home) continue;
+    push(p);
+    if (out.length >= n) return out;
   }
   return out;
 }
@@ -1859,64 +1889,56 @@ document.addEventListener('keydown', e=>{
         const form = modal.querySelector('#coShipForm');
         if (!form.checkValidity()){ form.reportValidity(); return; }
       }
-      // Validate payment form before processing
+      // Step 2 ("Pay now") — kick the customer over to Stripe Checkout.
+      // We post the cart + shipping to /api/checkout, the Worker creates
+      // a Stripe Checkout Session (with server-validated prices) and
+      // hands back a hosted-payment URL. We redirect there; Stripe brings
+      // the customer back to /order.html?session_id=... once they've paid.
+      // The actual D1 order row is created on that redirect by
+      // /api/orders/confirm-stripe, not here, so customers who bail at
+      // the Stripe page never produce a phantom paid order.
       if (currentStep === 2){
-        const form = modal.querySelector('#coPayForm');
-        if (!form.checkValidity()){ form.reportValidity(); return; }
         const btn = b;
         const orig = btn.textContent;
         btn.disabled = true;
-        btn.textContent = 'Placing order…';
+        btn.textContent = 'Connecting to Stripe…';
         const ship = serializeForm(modal.querySelector('#coShipForm'));
 
-        // Real order — POSTs to /api/orders so it lands in D1 and shows in
-        // admin Orders. Stripe is not yet wired, so the "payment" step
-        // currently just records the last-4 in notes for reference.
-        const last4 = form.cardNumber.value.replace(/\s/g, '').slice(-4);
-        fetch('/api/orders', {
+        // Save a tiny pending-checkout record so the order.html landing
+        // page can show the right line items even before the Worker has
+        // finished creating the D1 order row.
+        try {
+          localStorage.setItem('cbwm_pending_checkout', JSON.stringify({
+            createdAt: Date.now(),
+            items: items.map(i => ({ id: i.id, name: i.name, price: i.price, pimg: i.pimg, qty: i.qty })),
+            subtotal: subtotal(),
+            shipping: shipping(),
+            ship,
+          }));
+        } catch (_) {}
+
+        fetch('/api/checkout', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
-            name: ship.name, email: ship.email, phone: ship.phone || '',
-            address: ship.address, suburb: ship.city, state: ship.state, postcode: ship.postcode,
-            items: items.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty })),
-            shipping: 0,
-            source: 'checkout',
-            notes: 'Card ending ' + last4,
+            items: items.map(i => ({ id: i.id, qty: i.qty })),
+            ship: {
+              name: ship.name, email: ship.email, phone: ship.phone || '',
+              address: ship.address, suburb: ship.city, state: ship.state, postcode: ship.postcode,
+            },
           }),
         }).then(r => r.json().then(j => ({ ok: r.ok, body: j })))
           .then(({ ok, body }) => {
-            btn.disabled = false;
-            btn.textContent = orig;
-            if (!ok || !body.id) {
-              alert('Sorry — couldn\'t place that order. ' + (body.error || 'Try again in a moment.'));
+            if (!ok || !body.url) {
+              btn.disabled = false;
+              btn.textContent = orig;
+              alert('Couldn\'t start checkout — ' + (body.error || 'please try again in a moment.'));
               return;
             }
-            const orderId = body.id;
-            // Cache locally for the order tracking page first paint
-            const order = {
-              id: orderId,
-              createdAt: Date.now(),
-              items: items.map(i => ({ id: i.id, name: i.name, price: i.price, pimg: i.pimg, qty: i.qty })),
-              subtotal: subtotal(),
-              shipping: shipping(),
-              total: body.total,
-              ship,
-            };
-            let orders = [];
-            try { orders = JSON.parse(localStorage.getItem('cbwm_orders') || '[]'); } catch(_) {}
-            orders.unshift(order);
-            if (orders.length > 20) orders = orders.slice(0, 20);
-            localStorage.setItem('cbwm_orders', JSON.stringify(orders));
-
-            successOrder.textContent = orderId;
-            successItems.textContent = items.reduce((s, i) => s + i.qty, 0);
-            successEmail.textContent = ship.email;
-            const trackLink = modal.querySelector('#coTrackLink');
-            if (trackLink) trackLink.href = `order.html?id=${orderId}`;
-            items = [];
-            saveCart();
-            go(3);
+            // The cart is cleared after Stripe confirms payment on the
+            // order.html landing page — not here, so a customer who
+            // closes the Stripe tab still has their cart on return.
+            window.location.href = body.url;
           })
           .catch(err => {
             btn.disabled = false;
@@ -1970,7 +1992,51 @@ document.addEventListener('keydown', e=>{
   if (!heroInner) return;
 
   const params = new URLSearchParams(location.search);
-  const id = (params.get('id') || '').trim();
+  let id = (params.get('id') || '').trim();
+  const sessionId = (params.get('session_id') || '').trim();
+
+  // Stripe just redirected the customer back from a successful payment.
+  // Hit /api/orders/confirm-stripe to verify the session and create the
+  // matching D1 order, then continue rendering the tracking page using
+  // the order id we get back. Idempotent — repeat redirects don't make
+  // duplicate orders.
+  if (!id && sessionId && /^cs_(test|live)_/.test(sessionId)) {
+    heroInner.innerHTML = '<p class="order-loading" style="text-align:center;padding:40px 20px;">Confirming your payment — one moment…</p>';
+    fetch('/api/orders/confirm-stripe', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ session_id: sessionId }),
+    }).then(r => r.json().then(j => ({ ok: r.ok, body: j })))
+      .then(({ ok, body }) => {
+        if (!ok || !body.id) {
+          heroInner.innerHTML = `<div class="order-404" style="text-align:center;padding:40px 20px;">
+            <p class="eyebrow">Hmm</p>
+            <h1>We couldn't confirm that payment.</h1>
+            <p>${(body && body.error) ? body.error : 'Stripe didn\'t report a completed charge — if your card was charged, drop Max a line and he\'ll sort it.'}</p>
+            <p><a class="btn btn-primary" href="shop.html">Back to the shop →</a></p>
+          </div>`;
+          return;
+        }
+        // Order was just created (or already existed). Clear the cart now
+        // that we know payment landed, and rewrite the URL so refreshes
+        // don't re-trigger the confirm call.
+        try { localStorage.removeItem('cbwm_cart'); } catch (_) {}
+        try { localStorage.removeItem('cbwm_pending_checkout'); } catch (_) {}
+        const cleanUrl = `${location.pathname}?id=${encodeURIComponent(body.id)}`;
+        history.replaceState({}, '', cleanUrl);
+        // Pop the page through one more time with the new id so the rest
+        // of the order-tracking logic below picks it up cleanly.
+        location.reload();
+      })
+      .catch(err => {
+        heroInner.innerHTML = `<div class="order-404" style="text-align:center;padding:40px 20px;">
+          <p class="eyebrow">Connection problem</p>
+          <h1>We couldn't reach our server.</h1>
+          <p>Your payment may have gone through — please don't pay again. Refresh the page in a minute, or email Max with the time you paid.</p>
+        </div>`;
+      });
+    return;
+  }
 
   const STAGES = [
     { key: 'received',  label: 'Order received',         blurb: 'We\'ve got it. Confirmation emailed.' },
@@ -2215,6 +2281,15 @@ function renderProductPage() {
   const product = id ? PRODUCTS.find(p => p.id === id) : null;
 
   if (!product){
+    // The embedded PRODUCTS is a build-time snapshot — products Max adds
+    // later in admin only land via /api/products. If the API refresh
+    // hasn't finished yet, hold off on the 404 markup (which would wipe
+    // .pdp-hero and prevent a successful re-render). The catalogue
+    // refresh sets window.__cbCatalogueLoaded and re-invokes us.
+    if (!window.__cbCatalogueLoaded) {
+      titleEl.textContent = 'Loading…';
+      return;
+    }
     const hero = document.querySelector('.pdp-hero');
     if (hero){
       hero.innerHTML = `
@@ -2283,7 +2358,12 @@ function renderProductPage() {
       else gallery.push(g);
     }
   }
-  if (wallSrc && !gallery.some(g => g.src === wallSrc) && !featureGallery.some(g => g.src === wallSrc)) {
+  // Auto-inject the on-the-wall mockup unless this product opts out via the
+  // admin "Hide auto wall-mockup" toggle. Some pieces don't have a clean
+  // wall mockup and Max wants to suppress the placeholder thumbnail.
+  if (wallSrc && !product.hide_wall_mockup
+      && !gallery.some(g => g.src === wallSrc)
+      && !featureGallery.some(g => g.src === wallSrc)) {
     gallery.push({ src: wallSrc, alt: `${product.name} — on the wall`, label: '' });
   }
 
@@ -2295,7 +2375,11 @@ function renderProductPage() {
        </div>`;
     }
     if (item.type === 'video') {
-      return `<video class="pdp-stage-video" src="${item.src}" controls preload="metadata" playsinline></video>`;
+      // Use the gallery item's own poster if Max set one, otherwise fall
+      // back to the product's main image so the player shows something
+      // recognisable instead of a black square with a play button.
+      const poster = item.poster || product.image || '';
+      return `<video class="pdp-stage-video" src="${item.src}"${poster ? ` poster="${poster}"` : ''} controls preload="metadata" playsinline></video>`;
     }
     return `<img src="${item.src}" alt="${item.alt || product.name}"/>`;
   }
@@ -2314,7 +2398,9 @@ function renderProductPage() {
                     title="${item.label || ('View ' + (i + 1))}"
                     aria-label="${item.label || ('View ' + (i + 1))}">
               ${item.type === 'video'
-                ? `<span class="pdp-gallery-thumb-video">▶</span>`
+                ? ((item.poster || product.image)
+                    ? `<img src="${item.poster || product.image}" alt=""/><span class="pdp-gallery-thumb-play">▶</span>`
+                    : `<span class="pdp-gallery-thumb-video">▶</span>`)
                 : `<img src="${item.src}" alt=""/>`}
             </button>
           `).join('')}
@@ -2386,7 +2472,7 @@ function renderProductPage() {
       featuredEl.innerHTML = featureGallery.map(item => {
         if (item.type === 'video') {
           return `<figure class="pdp-feature">
-            <video class="pdp-feature-media" src="${item.src}" controls preload="metadata" playsinline></video>
+            <video class="pdp-feature-media" src="${item.src}"${(item.poster || product.image) ? ` poster="${item.poster || product.image}"` : ''} controls preload="metadata" playsinline></video>
             ${item.label ? `<figcaption>${item.label.replace(/</g, '&lt;')}</figcaption>` : ''}
           </figure>`;
         }
@@ -3003,13 +3089,13 @@ async function submitQuoteRequest(payload) {
       for (const p of PRODUCTS) if (!p.draft) SHOP.push(p);
 
       // Re-run any renders that depend on the catalogue. Each is a no-op
-      // when its target element isn't on the current page.
+      // when its target element isn't on the current page. The product
+      // page renderer is invoked from the finally block below so it
+      // also runs on the API-failure path (which would otherwise leave
+      // the page stuck on a "Loading…" placeholder).
       try { renderCategoryShowcase(); } catch (_) {}
       if (typeof window.__cbApplyShopFilters === 'function') {
         try { window.__cbApplyShopFilters(); } catch (_) {}
-      }
-      if (typeof window.__cbRenderProductPage === 'function') {
-        try { window.__cbRenderProductPage(); } catch (_) {}
       }
       // Update the shop-hero "30 pieces" stat if it's on the current page
       document.querySelectorAll('[data-shop-stat="total"]').forEach(el => {
@@ -3031,6 +3117,13 @@ async function submitQuoteRequest(payload) {
     } catch (err) {
       // API unreachable / error → site keeps running on the embedded fallback
       console.warn('[catalogue] API refresh failed; using embedded fallback', err);
+    } finally {
+      // Tell the product-page renderer it's safe to show the 404 now —
+      // either we have fresh data or we've given up trying to fetch it.
+      window.__cbCatalogueLoaded = true;
+      if (typeof window.__cbRenderProductPage === 'function') {
+        try { window.__cbRenderProductPage(); } catch (_) {}
+      }
     }
   }
   refreshCatalogueFromAPI();
@@ -3056,10 +3149,41 @@ async function submitQuoteRequest(payload) {
       targets.forEach(el => {
         const key = el.dataset.contentKey;
         if (!(key in content)) return;
-        if ('contentHtml' in el.dataset) {
-          el.innerHTML = content[key];
+        const val = content[key];
+        if (el.tagName === 'IMG') {
+          // Image content keys store a URL (usually /uploads/<key> from R2).
+          // Empty string = keep the hard-coded fallback that's already in the
+          // src attribute. Anything non-empty replaces it.
+          if (typeof val === 'string' && val.trim()) {
+            el.src = val;
+          }
+        } else if ('contentHtml' in el.dataset) {
+          el.innerHTML = val;
         } else {
-          el.textContent = content[key];
+          el.textContent = val;
+        }
+      });
+      // The workshop figure on about.html is hidden by default. Reveal it
+      // only if Max has uploaded a photo for it. Same idea as the footer
+      // social links — keeps the page tidy when the key is empty.
+      const workshopFig = document.querySelector('[data-workshop-figure]');
+      if (workshopFig) {
+        const src = content.about_workshop_image;
+        if (typeof src === 'string' && src.trim()) {
+          workshopFig.hidden = false;
+        }
+      }
+      // Footer social links — hidden by default in the HTML, revealed
+      // here only if Max has filled in a URL in admin → Settings → Social
+      // links. Saves any broken "#" placeholder links from being visible.
+      document.querySelectorAll('a[data-social]').forEach(a => {
+        const platform = a.dataset.social;
+        const url = content['social_' + platform + '_url'];
+        if (typeof url === 'string' && /^https?:\/\//i.test(url)) {
+          a.href = url;
+          a.target = '_blank';
+          a.rel = 'noopener';
+          a.hidden = false;
         }
       });
     } catch (err) {

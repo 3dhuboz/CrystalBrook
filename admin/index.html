@@ -7,10 +7,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="../assets/admin.css?v=20260429-21" />
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260429-21" />
-<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260429-21" />
-<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260429-21" />
+<link rel="stylesheet" href="../assets/admin.css?v=20260512-1" />
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260512-1" />
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260512-1" />
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260512-1" />
 <link rel="manifest" href="../manifest.webmanifest" />
 <meta name="theme-color" content="#1c130a" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -589,6 +589,26 @@
     </div>
 
     <div class="card about-edit-card">
+      <div class="card-head"><h3>Hero stats — the four little numbers under the lede</h3></div>
+      <p class="card-note">"Pieces" is auto-filled from your live catalogue — only the label is editable. The other three (number + label) are free-text.</p>
+      <div class="form">
+        <label data-content-edit="shop_stat_total_label"><span>"Pieces" label (the count itself comes from your catalogue)</span><input class="inp" value="Pieces"/></label>
+        <div class="row-2">
+          <label data-content-edit="shop_stat_cats_value"><span>Categories number</span><input class="inp" value="6"/></label>
+          <label data-content-edit="shop_stat_cats_label"><span>Categories label</span><input class="inp" value="Categories"/></label>
+        </div>
+        <div class="row-2">
+          <label data-content-edit="shop_stat_leadtime_value"><span>Lead time number (e.g. "4–6 wk")</span><input class="inp" value="4–6 wk"/></label>
+          <label data-content-edit="shop_stat_leadtime_label"><span>Lead time label</span><input class="inp" value="Made to order"/></label>
+        </div>
+        <div class="row-2">
+          <label data-content-edit="shop_stat_madein_value"><span>Made-in value (e.g. "FNQ")</span><input class="inp" value="FNQ"/></label>
+          <label data-content-edit="shop_stat_madein_label"><span>Made-in label</span><input class="inp" value="Made in"/></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
       <div class="card-head"><h3>Toolbar labels</h3></div>
       <div class="form">
         <div class="row-2">
@@ -852,6 +872,27 @@
     </div>
 
     <div class="card about-edit-card">
+      <div class="card-head"><h3>Hero portrait photo</h3></div>
+      <div class="form">
+        <div class="pdf-row pdf-photo-row" data-content-image="about_hero_image">
+          <span class="pdf-photo-label">Photo of Max (top-right of the About page)</span>
+          <div class="pdf-photo">
+            <div class="pdf-photo-preview" data-image-preview>
+              <span class="pdf-photo-empty">Loading…</span>
+            </div>
+            <div class="pdf-photo-actions">
+              <button class="btn btn-ghost btn-small" type="button" data-image-upload>↑ Upload new photo</button>
+              <button class="btn btn-ghost btn-small" type="button" data-image-revert>↺ Restore original (Max with shark)</button>
+              <input type="file" accept="image/png,image/jpeg,image/webp" hidden data-image-file/>
+              <small class="pdf-photo-hint">JPG, PNG or WebP — auto-shrunk to keep the page fast. Replaces the shark photo at the top of <a href="../about.html" target="_blank" rel="noopener">about.html</a>.</small>
+            </div>
+          </div>
+        </div>
+        <label data-content-edit="about_portrait_cap"><span>Caption under the photo</span><input class="inp" placeholder="Max with one of his torched-shark pieces…"/></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
       <div class="card-head"><h3>Workshop strip</h3></div>
       <div class="form">
         <div class="row-2">
@@ -883,6 +924,27 @@
         </div>
         <label data-content-edit="about_place_p1"><span>Paragraph 1</span><textarea class="inp" rows="4">Gordonvale is a small cane town nestled at the foot of Walsh's Pyramid, on the Mulgrave River flats south of Cairns. The Bruce Highway runs straight through it. The Wet Tropics rainforest sits to the west; the Great Barrier Reef is forty minutes' drive east.</textarea></label>
         <label data-content-edit="about_place_p2"><span>Paragraph 2</span><textarea class="inp" rows="4">It's the kind of place where the subject matter is local and the timber's local too — Silky Oak, Spotted Gum, Blackwood and Ironbark, all sourced from QLD mills. The resin's mixed in the workshop. The prints are done in Cairns. Nothing on a Crystal Brook mount has travelled further than it had to.</textarea></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
+      <div class="card-head"><h3>Workshop photo (optional)</h3></div>
+      <div class="form">
+        <div class="pdf-row pdf-photo-row" data-content-image="about_workshop_image">
+          <span class="pdf-photo-label">Photo of the workshop (sits between the workshop story and the stats)</span>
+          <div class="pdf-photo">
+            <div class="pdf-photo-preview" data-image-preview>
+              <span class="pdf-photo-empty">No photo yet</span>
+            </div>
+            <div class="pdf-photo-actions">
+              <button class="btn btn-ghost btn-small" type="button" data-image-upload>↑ Upload photo</button>
+              <button class="btn btn-ghost btn-small" type="button" data-image-clear hidden>× Remove</button>
+              <input type="file" accept="image/png,image/jpeg,image/webp" hidden data-image-file/>
+              <small class="pdf-photo-hint">Skip this if you don't want a workshop photo — the section just won't show one. JPG, PNG or WebP, auto-shrunk to fit.</small>
+            </div>
+          </div>
+        </div>
+        <label data-content-edit="about_workshop_caption"><span>Caption under the workshop photo (optional)</span><input class="inp" placeholder="The Gordonvale workshop, one quiet morning."/></label>
       </div>
     </div>
 
@@ -1274,6 +1336,16 @@
     </div>
 
     <div class="card about-edit-card">
+      <div class="card-head"><h3>Social media links (footer)</h3></div>
+      <p class="card-note">Paste each profile URL when you're ready — links stay hidden in the footer until you fill them in. Leave a box blank to hide that icon. You can add or change any of these any time.</p>
+      <div class="form">
+        <label data-content-edit="social_facebook_url"><span>Facebook URL (e.g. https://www.facebook.com/crystalbrookgifts)</span><input class="inp" type="url" placeholder="https://www.facebook.com/yourpage"/></label>
+        <label data-content-edit="social_instagram_url"><span>Instagram URL (e.g. https://www.instagram.com/crystalbrookgifts)</span><input class="inp" type="url" placeholder="https://www.instagram.com/yourhandle"/></label>
+        <label data-content-edit="social_tiktok_url"><span>TikTok URL (e.g. https://www.tiktok.com/@crystalbrookgifts)</span><input class="inp" type="url" placeholder="https://www.tiktok.com/@yourhandle"/></label>
+      </div>
+    </div>
+
+    <div class="card about-edit-card">
       <div class="card-head"><h3>Cart drawer</h3></div>
       <div class="form">
         <label data-content-edit="cart_heading"><span>Heading</span><input class="inp" value="Your cart"/></label>
@@ -1604,6 +1676,14 @@
       <input type="checkbox" name="draft"/>
       <span><strong>Hide from storefront</strong> — flag as Draft (sold out, photo missing, not yet ready)</span>
     </label>
+    <label class="pdf-checkbox">
+      <input type="checkbox" name="hide_wall_mockup"/>
+      <span><strong>Hide auto "on the wall" thumbnail</strong> — tick this if the small wall-mockup picture in the product page's thumbnail strip is wrong or you'd rather it didn't show.</span>
+    </label>
+    <label class="pdf-checkbox">
+      <input type="checkbox" name="feature_on_home"/>
+      <span><strong>Feature on the home-page category card</strong> — tick this to pin this product into its category's montage on the home page. Up to three per category; pick ones with transparent backgrounds (cut-out PNGs) for the best look.</span>
+    </label>
   </form>
   <div class="prod-drawer-foot">
     <button class="btn btn-danger" id="prodDrawerDelete" type="button">Delete</button>
@@ -1626,6 +1706,6 @@
   </div>
 </div>
 
-<script src="../assets/admin.js?v=20260429-21"></script>
+<script src="../assets/admin.js?v=20260512-1"></script>
 </body>
 </html>
