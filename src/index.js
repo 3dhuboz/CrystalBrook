@@ -160,7 +160,7 @@ function validateProductPatch(patch) {
 
 async function handleGetProducts(request, env) {
   const url = new URL(request.url);
-  const includeDrafts = url.searchParams.get('drafts') === '1';
+  const includeDrafts = url.searchParams.get('drafts') === '1' && await isAuthorised(request, env);
   const cat = url.searchParams.get('cat');
 
   let sql = `SELECT * FROM products`;
@@ -397,7 +397,7 @@ async function handleCreateRequest(request, env) {
   // for a 1024px JPEG reference, and below the 1MB row limit.
   let photoDataUrl = null;
   if (photo) {
-    if (!photo.startsWith('data:image/')) return errorResponse('photo must be a data URL');
+    if (!/^data:image\/(jpeg|png|webp);base64,/.test(photo)) return errorResponse('photo must be a JPEG, PNG or WebP data URL');
     if (photo.length > 800_000) return errorResponse('photo too large (please re-attach a smaller one)');
     photoDataUrl = photo;
   }
@@ -493,7 +493,7 @@ async function handleSendQuote(request, env, id) {
   }
   let imageUrl = null;
   if (photo) {
-    if (!photo.startsWith('data:image/')) return errorResponse('image must be a data URL');
+    if (!/^data:image\/(jpeg|png|webp);base64,/.test(photo)) return errorResponse('photo must be a JPEG, PNG or WebP data URL');
     if (photo.length > 800_000) return errorResponse('image too large (please re-attach a smaller one)');
     imageUrl = photo;
   }
@@ -706,6 +706,9 @@ async function handleCreateOrder(request, env) {
   const postcode = (body.postcode || '').toString().trim().slice(0, 16) || null;
   const items    = Array.isArray(body.items) ? body.items : [];
   const source   = (body.source   || 'checkout').toString().slice(0, 32);
+  if (source === 'manual_admin' && !await isAuthorised(request, env)) {
+    return errorResponse('unauthorised', 401);
+  }
   const notes    = (body.notes    || '').toString().slice(0, 4000) || null;
   const photo    = (body.photoDataUrl || '').toString();
 
@@ -727,7 +730,7 @@ async function handleCreateOrder(request, env) {
 
   let photoDataUrl = null;
   if (photo) {
-    if (!photo.startsWith('data:image/')) return errorResponse('photo must be a data URL');
+    if (!/^data:image\/(jpeg|png|webp);base64,/.test(photo)) return errorResponse('photo must be a JPEG, PNG or WebP data URL');
     if (photo.length > 800_000) return errorResponse('photo too large');
     photoDataUrl = photo;
   }
@@ -851,10 +854,11 @@ function escapeHtml(s) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-function orderStatusEmailContent(orderRow, newStatus) {
+function orderStatusEmailContent(orderRow, newStatus, env) {
   const customerName = (orderRow.name || '').split(' ')[0] || 'there';
   const id = orderRow.id;
-  const trackUrl = `https://crystalbrook.steve-700.workers.dev/order.html?id=${encodeURIComponent(id)}`;
+  const baseUrl = (env && env.SITE_BASE_URL) ? env.SITE_BASE_URL : 'https://www.crystalbrookwallmounts.com.au';
+  const trackUrl = `${baseUrl}/order.html?id=${encodeURIComponent(id)}`;
   let items = [];
   try { items = JSON.parse(orderRow.items || '[]'); } catch (_) {}
   const itemList = items.map(i => `${i.name}${i.qty > 1 ? ` ×${i.qty}` : ''}`).join(', ') || 'your order';
@@ -942,7 +946,7 @@ async function sendOrderStatusEmail(env, orderRow, newStatus) {
   const to = orderRow.email;
   if (!to) return false;
 
-  const { subject, html, text } = orderStatusEmailContent(orderRow, newStatus);
+  const { subject, html, text } = orderStatusEmailContent(orderRow, newStatus, env);
   const result = await sendViaResend(env, { from, to, subject, html, text });
   return result.ok;
 }
@@ -1722,6 +1726,9 @@ export default {
         if (path === '/api/orders' && request.method === 'GET') {
           return await handleListOrders(request, env);
         }
+        if (path === '/api/orders/confirm-stripe' && request.method === 'POST') {
+          return await handleConfirmStripeSession(request, env);
+        }
         const ordMatch = path.match(/^\/api\/orders\/([\w-]+)$/);
         if (ordMatch) {
           const id = ordMatch[1];
@@ -1744,9 +1751,6 @@ export default {
         }
         if (path === '/api/checkout' && request.method === 'POST') {
           return await handleStripeCheckout(request, env);
-        }
-        if (path === '/api/orders/confirm-stripe' && request.method === 'POST') {
-          return await handleConfirmStripeSession(request, env);
         }
         if (path === '/api/stripe/webhook' && request.method === 'POST') {
           return await handleStripeWebhook(request, env);
