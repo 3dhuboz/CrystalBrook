@@ -1657,6 +1657,14 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
+    // Force HTTPS on the live domain — Cloudflare Workers always see https:// in
+    // url.protocol, so we check the CF-Visitor header for the original scheme.
+    const cfVisitor = request.headers.get('CF-Visitor');
+    const originalScheme = cfVisitor ? JSON.parse(cfVisitor).scheme : url.protocol.replace(':', '');
+    if (originalScheme === 'http' && !url.hostname.endsWith('.workers.dev')) {
+      return Response.redirect('https://' + url.host + url.pathname + url.search, 301);
+    }
+
     // API routes
     if (path.startsWith('/api/')) {
       try {
@@ -1763,7 +1771,11 @@ export default {
 
     // Anything else — fall through to the static asset bundle
     if (env.ASSETS && typeof env.ASSETS.fetch === 'function') {
-      return env.ASSETS.fetch(request);
+      const assetResponse = await env.ASSETS.fetch(request);
+      // Add HSTS so browsers remember HTTPS after the first visit
+      const res = new Response(assetResponse.body, assetResponse);
+      res.headers.set('strict-transport-security', 'max-age=31536000; includeSubDomains; preload');
+      return res;
     }
     return new Response('Not configured', { status: 500 });
   },
