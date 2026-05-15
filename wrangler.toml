@@ -55,11 +55,13 @@ enabled = true
 # Custom domains — both apex and www resolve to this Worker.
 # Requires crystalbrookwallmounts.com.au to be active as a zone in the
 # same Cloudflare account before `wrangler deploy` will accept them.
-[[custom_domains]]
-hostname = "crystalbrookwallmounts.com.au"
+[[routes]]
+pattern = "crystalbrookwallmounts.com.au"
+custom_domain = true
 
-[[custom_domains]]
-hostname = "www.crystalbrookwallmounts.com.au"
+[[routes]]
+pattern = "www.crystalbrookwallmounts.com.au"
+custom_domain = true
 
 [vars]
 STRIPE_PUBLISHABLE_KEY = "pk_live_51TUg1f2L8xy2zrXzLQLbQyxAskrJAsC8PhPaOlrmeDEpkHjGVBk0HmzVgx2LSbu1Pk1QFfjpaXpbCMSNTULURCKq00XQSXGguY"
