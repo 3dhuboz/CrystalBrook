@@ -11,7 +11,7 @@ const ADMIN_AUTH_KEY = 'cbwm_admin_password';
 const ADMIN_AUTH_NAME_KEY = 'cbwm_admin_name';
 
 function adminPassword() {
-  return localStorage.getItem(ADMIN_AUTH_KEY) || '';
+  return sessionStorage.getItem(ADMIN_AUTH_KEY) || '';
 }
 function adminAuthHeaders() {
   const pw = adminPassword();
@@ -33,7 +33,7 @@ async function saveProductChanges(id, patch) {
     body: JSON.stringify(patch),
   });
   if (res.status === 401) {
-    localStorage.removeItem(ADMIN_AUTH_KEY);
+    sessionStorage.removeItem(ADMIN_AUTH_KEY);
     showAdminLogin('Your session expired — please sign in again.');
     throw new Error('unauthorised');
   }
@@ -50,7 +50,7 @@ async function createProduct(payload) {
     body: JSON.stringify(payload),
   });
   if (res.status === 401) {
-    localStorage.removeItem(ADMIN_AUTH_KEY);
+    sessionStorage.removeItem(ADMIN_AUTH_KEY);
     showAdminLogin('Your session expired — please sign in again.');
     throw new Error('unauthorised');
   }
@@ -65,7 +65,7 @@ async function deleteProduct(id) {
     headers: { ...adminAuthHeaders() },
   });
   if (res.status === 401) {
-    localStorage.removeItem(ADMIN_AUTH_KEY);
+    sessionStorage.removeItem(ADMIN_AUTH_KEY);
     showAdminLogin('Your session expired — please sign in again.');
     throw new Error('unauthorised');
   }
@@ -77,11 +77,15 @@ async function deleteProduct(id) {
 }
 
 async function verifyAdminPassword(pw) {
-  const res = await fetch('/api/admin/check', {
-    method: 'POST',
-    headers: { 'X-Admin-Password': pw },
-  });
-  return res.ok;
+  try {
+    const res = await fetch('/api/admin/check', {
+      method: 'POST',
+      headers: { 'X-Admin-Password': pw },
+    });
+    return res.ok;
+  } catch (_) {
+    return false;
+  }
 }
 
 /* Admin-friendly category labels (storefront uses lowercase keys) */
@@ -264,7 +268,7 @@ async function refreshOrdersFromAPI() {
     });
     if (!res.ok) {
       if (res.status === 401) {
-        localStorage.removeItem(ADMIN_AUTH_KEY);
+        sessionStorage.removeItem(ADMIN_AUTH_KEY);
         showAdminLogin('Your session expired — please sign in again.');
       }
       return;
@@ -1313,7 +1317,7 @@ async function refreshRequestsFromAPI() {
     });
     if (!res.ok) {
       if (res.status === 401) {
-        localStorage.removeItem(ADMIN_AUTH_KEY);
+        sessionStorage.removeItem(ADMIN_AUTH_KEY);
         showAdminLogin('Your session expired — please sign in again.');
       }
       return;
@@ -2270,7 +2274,14 @@ function handleAdminAction(label, view, btn){
     openNewManualOrderForm();
     return;
   }
-  // + New product / + Add product → generic placeholder modal
+  // "+ New product" on Stocktake — the real drawer is wired up by its own
+  // dedicated handler (see "+ New product" button below), so we early-return
+  // here to stop the placeholder-modal fall-through from also firing on
+  // the same click. Without this, both modals open at once.
+  if (view === 'products' && (l.startsWith('+') || l.includes('new') || l.includes('add'))) {
+    return;
+  }
+  // + Add product / + Add … on other views → generic placeholder modal
   if (l.startsWith('+') || l.includes('new') || l.includes('add') || l.includes('manual')){
     openAdminModal(label, view);
     return;
@@ -3167,7 +3178,7 @@ function showAdminLogin(message = '') {
         submitBtn.textContent = 'Sign in';
         return;
       }
-      localStorage.setItem(ADMIN_AUTH_KEY, pw);
+      sessionStorage.setItem(ADMIN_AUTH_KEY, pw);
       hideAdminLogin();
       await refreshCatalogueAndRerender();
     } catch (err) {
@@ -3213,7 +3224,7 @@ async function refreshCatalogueAndRerender() {
   // on the first save attempt
   const ok = await verifyAdminPassword(pw).catch(() => false);
   if (!ok) {
-    localStorage.removeItem(ADMIN_AUTH_KEY);
+    sessionStorage.removeItem(ADMIN_AUTH_KEY);
     showAdminLogin('Your saved password no longer works — please sign in again.');
     return;
   }
@@ -3245,6 +3256,14 @@ let _drawerCurrentProduct = null;
 let _drawerMode = 'edit';
 let _drawerGallery = [];   // [{ src, label }] — additional photos beyond the main one
 
+function _slugifyForId(name) {
+  return 'p-' + (name || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40);
+}
+
 function openProductDrawer(product, opts = {}) {
   const mode = opts.mode || 'edit';
   _drawerMode = mode;
@@ -3258,9 +3277,24 @@ function openProductDrawer(product, opts = {}) {
   _drawer.title().textContent = mode === 'new' ? 'New product' : (product?.name || 'Edit product');
   _drawer.eyebrow().textContent = mode === 'new' ? 'Adding' : 'Editing';
 
-  form.querySelector('[name="id"]').readOnly = (mode !== 'new');
-  form.querySelector('[name="id"]').value = mode === 'new' ? 'p-' : (product?.id || '');
-  form.querySelector('[name="name"]').value = product?.name || '';
+  // ID field: read-only on edits (id is immutable); on new products it
+  // auto-derives from the Name as Max types so he doesn't have to hand-craft
+  // a slug. The auto-derive stops the moment Max manually edits the field.
+  const idInput   = form.querySelector('[name="id"]');
+  const nameInput = form.querySelector('[name="name"]');
+  idInput.readOnly = (mode !== 'new');
+  idInput.value = mode === 'new' ? '' : (product?.id || '');
+  nameInput.value = product?.name || '';
+  if (mode === 'new') {
+    let userTouchedId = false;
+    idInput.addEventListener('input', () => { userTouchedId = true; }, { once: false });
+    nameInput.oninput = () => {
+      if (userTouchedId) return;
+      idInput.value = _slugifyForId(nameInput.value);
+    };
+  } else {
+    nameInput.oninput = null;
+  }
   form.querySelector('[name="cat"]').value = product?.catKey || product?.cat || 'saltwater';
   form.querySelector('[name="badge"]').value = product?.badge || '';
   form.querySelector('[name="price"]').value = product?.price ?? '';
@@ -3270,6 +3304,10 @@ function openProductDrawer(product, opts = {}) {
   form.querySelector('[name="meta"]').value = product?.meta || '';
   form.querySelector('[name="description"]').value = product?.desc || product?.description || '';
   form.querySelector('[name="draft"]').checked = !!product?.draft;
+  const hideWallEl = form.querySelector('[name="hide_wall_mockup"]');
+  if (hideWallEl) hideWallEl.checked = !!product?.hide_wall_mockup;
+  const featureHomeEl = form.querySelector('[name="feature_on_home"]');
+  if (featureHomeEl) featureHomeEl.checked = !!product?.feature_on_home;
 
   // Hydrate the additional-photos list. The data shape is whatever the API
   // returned: an array of {src, alt, label, type?, display?} or null. Filter
@@ -3290,6 +3328,11 @@ function openProductDrawer(product, opts = {}) {
   drawer.setAttribute('aria-hidden', 'false');
   _drawer.scrim().hidden = false;
   document.body.style.overflow = 'hidden';
+  // Always scroll the drawer body to the top — otherwise the previous
+  // edit session's scroll position leaks across opens.
+  drawer.scrollTop = 0;
+  const body = drawer.querySelector('.prod-drawer-body');
+  if (body) body.scrollTop = 0;
   setTimeout(() => form.querySelector('[name="name"]')?.focus(), 50);
 }
 
@@ -3413,6 +3456,8 @@ function readDrawerForm() {
     meta: (fd.get('meta') || '').trim() || null,
     description: (fd.get('description') || '').trim(),
     draft: !!fd.get('draft'),
+    hide_wall_mockup: !!fd.get('hide_wall_mockup'),
+    feature_on_home: !!fd.get('feature_on_home'),
     gallery,
   };
   return out;
@@ -3421,14 +3466,21 @@ function readDrawerForm() {
 function validateDrawerData(data, mode) {
   const errors = [];
   if (mode === 'new') {
-    if (!/^p-[a-z0-9-]+$/.test(data.id)) errors.push('ID must start with "p-" and use lowercase letters, digits, or dashes');
+    if (!/^p-[a-z0-9-]+$/.test(data.id)) {
+      errors.push('Type a Name first — the product ID auto-fills from it.');
+    }
   }
   if (!data.name) errors.push('Name is required');
   if (!data.cat) errors.push('Category is required');
-  if (!Number.isFinite(data.price) || data.price < 0) errors.push('Price must be a non-negative number');
-  if (!data.size) errors.push('Size is required');
-  if (!data.image) errors.push('Image path is required');
-  if (!data.description) errors.push('Description is required');
+  if (!Number.isFinite(data.price) || data.price <= 0) errors.push('Price must be a number greater than 0');
+  if (!data.size) errors.push('Size is required (e.g. 60 × 30 cm)');
+  // The placeholder "assets/images/products/" passes a truthy check but
+  // would render as a broken image. Require either a real path (with a
+  // file extension) or a data URL from the upload widget.
+  if (!data.image || data.image === 'assets/images/products/' || data.image.endsWith('/')) {
+    errors.push('Photo is required — use the "↑ Upload from your computer" button up top, or paste a path.');
+  }
+  if (!data.description) errors.push('Description is required (one or two sentences for the product page)');
   return errors;
 }
 
@@ -3463,6 +3515,10 @@ function previewProductImage(src) {
 }
 
 async function shrinkImageFile(file, maxEdge = 1024, quality = 0.85) {
+  // Resize the source image. Returns { blob, mime } — Blob is what /api/upload
+  // wants, and Blob → R2 → /uploads/<key> URL is much smaller in the
+  // /api/products payload than the old base64 data-URL path (which made
+  // the catalogue response balloon to 50MB+).
   const dataUrl = await new Promise((resolve, reject) => {
     const r = new FileReader();
     r.onload = () => resolve(r.result);
@@ -3479,13 +3535,51 @@ async function shrinkImageFile(file, maxEdge = 1024, quality = 0.85) {
   const scale = Math.min(1, maxEdge / Math.max(w, h));
   const tw = Math.max(1, Math.round(w * scale));
   const th = Math.max(1, Math.round(h * scale));
+
+  // If the source is a PNG, try preserving transparency by emitting PNG —
+  // critical for the home-page montage and shop grid cards which paint the
+  // product onto a coloured stage and need a true cut-out, not a solid
+  // rectangle. PNG is bigger though, so if the result tips over ~800KB we
+  // fall back to flattened JPEG.
+  if (file.type === 'image/png') {
+    const cvPng = document.createElement('canvas');
+    cvPng.width = tw; cvPng.height = th;
+    cvPng.getContext('2d').drawImage(img, 0, 0, tw, th);
+    const pngBlob = await new Promise(r => cvPng.toBlob(r, 'image/png'));
+    if (pngBlob && pngBlob.size < 800 * 1024) return { blob: pngBlob, mime: 'image/png' };
+  }
+
+  // JPEG fallback — smaller, but no transparency. White-fill the canvas
+  // first so areas the source image left transparent come through as
+  // white instead of black.
   const cv = document.createElement('canvas');
   cv.width = tw; cv.height = th;
   const ctx = cv.getContext('2d');
   ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, tw, th);
   ctx.drawImage(img, 0, 0, tw, th);
-  return cv.toDataURL('image/jpeg', quality);
+  const jpgBlob = await new Promise(r => cv.toBlob(r, 'image/jpeg', quality));
+  return { blob: jpgBlob, mime: 'image/jpeg' };
+}
+
+/* Resize the image, then upload it to R2 via /api/upload and return the
+ * resulting `/uploads/<key>` URL. This is what every drawer photo-input
+ * (main image AND gallery items) now uses, replacing the old base64
+ * data-URL path that bloated the catalogue response. */
+async function shrinkAndUploadImage(file) {
+  const { blob, mime } = await shrinkImageFile(file);
+  if (!blob) throw new Error('image encode failed');
+  const res = await fetch('/api/upload', {
+    method: 'POST',
+    headers: { 'content-type': mime, ...adminAuthHeaders() },
+    body: blob,
+  });
+  if (!res.ok) {
+    const j = await res.json().catch(() => ({}));
+    throw new Error(j.error || `upload failed (${res.status})`);
+  }
+  const { url } = await res.json();
+  return url;
 }
 
 (() => {
@@ -3513,15 +3607,15 @@ async function shrinkImageFile(file, maxEdge = 1024, quality = 0.85) {
     }
     uploadBtn.disabled = true;
     const originalLabel = uploadBtn.textContent;
-    uploadBtn.textContent = 'Resizing…';
+    uploadBtn.textContent = 'Uploading…';
     try {
-      const dataUrl = await shrinkImageFile(file);
-      imageInput.value = dataUrl;
-      previewProductImage(dataUrl);
-      toast('Photo loaded — hit Save to keep it.');
+      const url = await shrinkAndUploadImage(file);
+      imageInput.value = url;
+      previewProductImage(url);
+      toast('Photo uploaded — hit Save to keep it.');
     } catch (err) {
       console.error('photo upload failed', err);
-      toast('Couldn\'t read that file. Try a JPG or PNG.');
+      toast('Upload failed: ' + (err.message || 'try again'));
     } finally {
       uploadBtn.disabled = false;
       uploadBtn.textContent = originalLabel;
@@ -3548,15 +3642,15 @@ async function shrinkImageFile(file, maxEdge = 1024, quality = 0.85) {
     }
     galleryAddBtn.disabled = true;
     const originalLabel = galleryAddBtn.textContent;
-    galleryAddBtn.textContent = 'Resizing…';
+    galleryAddBtn.textContent = 'Uploading…';
     try {
-      const dataUrl = await shrinkImageFile(file);
-      _drawerGallery.push({ src: dataUrl, label: '', type: 'image', display: 'thumb' });
+      const url = await shrinkAndUploadImage(file);
+      _drawerGallery.push({ src: url, label: '', type: 'image', display: 'thumb' });
       renderGalleryEditor();
       toast('Added — give it a label and hit Save to keep.');
     } catch (err) {
       console.error('gallery photo upload failed', err);
-      toast('Couldn\'t read that file. Try a JPG or PNG.');
+      toast('Upload failed: ' + (err.message || 'try again'));
     } finally {
       galleryAddBtn.disabled = false;
       galleryAddBtn.textContent = originalLabel;
@@ -3702,7 +3796,7 @@ function confirmDeleteProduct(product, opts = {}) {
   const btn = document.getElementById('signOutBtn');
   if (!btn) return;
   btn.addEventListener('click', () => {
-    localStorage.removeItem(ADMIN_AUTH_KEY);
+    sessionStorage.removeItem(ADMIN_AUTH_KEY);
     showAdminLogin('Signed out — sign in again to keep editing.');
   });
 })();
@@ -3720,7 +3814,7 @@ async function saveContent(key, value) {
     body: JSON.stringify({ value }),
   });
   if (res.status === 401) {
-    localStorage.removeItem(ADMIN_AUTH_KEY);
+    sessionStorage.removeItem(ADMIN_AUTH_KEY);
     showAdminLogin('Your session expired — please sign in again.');
     throw new Error('unauthorised');
   }
@@ -3733,7 +3827,8 @@ async function saveContent(key, value) {
 async function loadContentEditorFor(view) {
   if (!view) return;
   const labels = view.querySelectorAll('[data-content-edit]');
-  if (!labels.length) return;
+  const imageWidgets = view.querySelectorAll('[data-content-image]');
+  if (!labels.length && !imageWidgets.length) return;
   try {
     const res = await fetch('/api/content', { cache: 'no-store' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -3744,9 +3839,108 @@ async function loadContentEditorFor(view) {
       const field = label.querySelector('input, textarea');
       if (field && key in content) field.value = content[key];
     });
+    // Image widgets (data-content-image="…") get their preview populated
+    // from the same content map. Empty value = show the "no photo yet"
+    // placeholder; non-empty = render the thumb and reveal the remove btn.
+    imageWidgets.forEach(widget => {
+      const key = widget.dataset.contentImage;
+      renderAboutImagePreview(widget, content[key]);
+    });
   } catch (err) {
     console.warn('content editor: load failed', err);
   }
+}
+
+/* Paint the preview thumb inside an admin About-page image widget.
+ * `url` is either an /uploads/<key> string, an assets/… path, or empty. */
+function renderAboutImagePreview(widget, url) {
+  const preview = widget.querySelector('[data-image-preview]');
+  const clearBtn = widget.querySelector('[data-image-clear]');
+  if (!preview) return;
+  if (url && typeof url === 'string' && url.trim()) {
+    const img = new Image();
+    img.alt = '';
+    img.onload = () => {
+      preview.innerHTML = '';
+      preview.appendChild(img);
+    };
+    img.onerror = () => {
+      preview.innerHTML = '<span class="pdf-photo-empty">Couldn\'t load that photo</span>';
+    };
+    img.src = url;
+    if (clearBtn) clearBtn.hidden = false;
+  } else {
+    preview.innerHTML = '<span class="pdf-photo-empty">No photo yet</span>';
+    if (clearBtn) clearBtn.hidden = true;
+  }
+}
+
+/* Wire upload / remove / revert buttons inside every data-content-image
+ * widget. Idempotent — keyed to widget element so re-wiring is a no-op. */
+function wireAboutImageWidgets(view) {
+  if (!view) return;
+  const widgets = view.querySelectorAll('[data-content-image]');
+  widgets.forEach(widget => {
+    if (widget._wired) return;
+    widget._wired = true;
+    const key       = widget.dataset.contentImage;
+    const uploadBtn = widget.querySelector('[data-image-upload]');
+    const clearBtn  = widget.querySelector('[data-image-clear]');
+    const revertBtn = widget.querySelector('[data-image-revert]');
+    const fileInput = widget.querySelector('[data-image-file]');
+
+    uploadBtn?.addEventListener('click', () => fileInput?.click());
+
+    fileInput?.addEventListener('change', async e => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      if (!/^image\//.test(file.type)) {
+        toast('That doesn\'t look like a photo. Try a JPG, PNG or WebP.');
+        return;
+      }
+      uploadBtn.disabled = true;
+      const originalLabel = uploadBtn.textContent;
+      uploadBtn.textContent = 'Uploading…';
+      try {
+        const url = await shrinkAndUploadImage(file);
+        await saveContent(key, url);
+        renderAboutImagePreview(widget, url);
+        toast('Photo saved — visit the About page to see it.');
+      } catch (err) {
+        console.error('about image upload failed', err);
+        toast('Upload failed: ' + (err.message || 'try again'));
+      } finally {
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = originalLabel;
+        fileInput.value = '';
+      }
+    });
+
+    clearBtn?.addEventListener('click', async () => {
+      if (!confirm('Remove this photo? The section will hide it on the public page.')) return;
+      try {
+        await saveContent(key, '');
+        renderAboutImagePreview(widget, '');
+        toast('Photo removed.');
+      } catch (err) {
+        toast('Remove failed: ' + (err.message || 'try again'));
+      }
+    });
+
+    // Revert = clear the override and let the hard-coded fallback in the
+    // HTML <img src=…> attribute take over again. Only present on the hero
+    // photo (workshop photo doesn't have a fallback — it just hides).
+    revertBtn?.addEventListener('click', async () => {
+      if (!confirm('Restore the original photo (Max with the shark)?')) return;
+      try {
+        await saveContent(key, '');
+        renderAboutImagePreview(widget, '');
+        toast('Original photo restored.');
+      } catch (err) {
+        toast('Restore failed: ' + (err.message || 'try again'));
+      }
+    });
+  });
 }
 // Back-compat alias used elsewhere
 const loadAboutEditor = () =>
@@ -3838,6 +4032,11 @@ function wireContentEditor(viewName, opts = {}) {
     });
   }
 
+  // Wire any image-upload widgets in this view (idempotent — only the About
+  // page currently uses them, but the marker is generic so other views can
+  // adopt the same pattern later without extra wiring code).
+  wireAboutImageWidgets(view);
+
   // Populate values once on admin entry so switching to this view is instant
   loadContentEditorFor(view);
 
@@ -3916,7 +4115,7 @@ wireContentEditor('settings',    { statusElId: 'settingsSaveStatus',    saveAllB
       });
       if (res.status === 401) {
         // Current password apparently no longer matches what's live — kick to login
-        localStorage.removeItem(ADMIN_AUTH_KEY);
+        sessionStorage.removeItem(ADMIN_AUTH_KEY);
         showAdminLogin('Your saved password is no longer recognised — please sign in.');
         return;
       }
@@ -3925,7 +4124,7 @@ wireContentEditor('settings',    { statusElId: 'settingsSaveStatus',    saveAllB
         throw new Error(data.error || 'failed');
       }
       // Update cached password so the user stays signed in seamlessly
-      localStorage.setItem(ADMIN_AUTH_KEY, newPw);
+      sessionStorage.setItem(ADMIN_AUTH_KEY, newPw);
       curEl.value = '';
       newEl.value = '';
       confirmEl.value = '';

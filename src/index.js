@@ -27,6 +27,7 @@ const PRODUCT_FIELDS = [
 const UPDATABLE_FIELDS = [
   'name', 'cat', 'price', 'size', 'image', 'pimg', 'badge',
   'meta', 'description', 'gallery', 'draft', 'sort_order',
+  'hide_wall_mockup', 'feature_on_home',
 ];
 
 const VALID_CATS = new Set(['saltwater', 'freshwater', 'cars', 'animals', 'birds', 'montages']);
@@ -68,6 +69,8 @@ function rowToProduct(row) {
     desc: row.description,             // storefront uses `desc` not `description`
     gallery,
     draft: !!row.draft,
+    hide_wall_mockup: !!row.hide_wall_mockup,
+    feature_on_home: !!row.feature_on_home,
     sortOrder: row.sort_order,
   };
 }
@@ -137,6 +140,12 @@ function validateProductPatch(patch) {
   if ('draft' in patch && typeof patch.draft !== 'boolean' && patch.draft !== 0 && patch.draft !== 1) {
     errors.push('draft must be a boolean');
   }
+  if ('hide_wall_mockup' in patch && typeof patch.hide_wall_mockup !== 'boolean' && patch.hide_wall_mockup !== 0 && patch.hide_wall_mockup !== 1) {
+    errors.push('hide_wall_mockup must be a boolean');
+  }
+  if ('feature_on_home' in patch && typeof patch.feature_on_home !== 'boolean' && patch.feature_on_home !== 0 && patch.feature_on_home !== 1) {
+    errors.push('feature_on_home must be a boolean');
+  }
   if ('gallery' in patch && patch.gallery !== null && !Array.isArray(patch.gallery)) {
     errors.push('gallery must be an array or null');
   }
@@ -151,7 +160,7 @@ function validateProductPatch(patch) {
 
 async function handleGetProducts(request, env) {
   const url = new URL(request.url);
-  const includeDrafts = url.searchParams.get('drafts') === '1';
+  const includeDrafts = url.searchParams.get('drafts') === '1' && await isAuthorised(request, env);
   const cat = url.searchParams.get('cat');
 
   let sql = `SELECT * FROM products`;
@@ -193,8 +202,8 @@ async function handleUpdateProduct(request, env, id) {
     if (k === 'gallery') {
       sets.push(`gallery = ?`);
       params.push(v ? JSON.stringify(v) : null);
-    } else if (k === 'draft') {
-      sets.push(`draft = ?`);
+    } else if (k === 'draft' || k === 'hide_wall_mockup' || k === 'feature_on_home') {
+      sets.push(`${k} = ?`);
       params.push(v ? 1 : 0);
     } else {
       sets.push(`${k} = ?`);
@@ -234,8 +243,8 @@ async function handleCreateProduct(request, env) {
   if (dup) return errorResponse(`product id "${body.id}" already exists`, 409);
 
   await env.DB.prepare(`
-    INSERT INTO products (id, name, cat, price, size, image, pimg, badge, meta, description, gallery, draft, sort_order)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO products (id, name, cat, price, size, image, pimg, badge, meta, description, gallery, draft, hide_wall_mockup, feature_on_home, sort_order)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).bind(
     body.id,
     body.name,
@@ -249,6 +258,8 @@ async function handleCreateProduct(request, env) {
     body.description,
     body.gallery ? JSON.stringify(body.gallery) : null,
     body.draft ? 1 : 0,
+    body.hide_wall_mockup ? 1 : 0,
+    body.feature_on_home ? 1 : 0,
     body.sort_order ?? 100,
   ).run();
 
@@ -386,7 +397,7 @@ async function handleCreateRequest(request, env) {
   // for a 1024px JPEG reference, and below the 1MB row limit.
   let photoDataUrl = null;
   if (photo) {
-    if (!photo.startsWith('data:image/')) return errorResponse('photo must be a data URL');
+    if (!/^data:image\/(jpeg|png|webp);base64,/.test(photo)) return errorResponse('photo must be a JPEG, PNG or WebP data URL');
     if (photo.length > 800_000) return errorResponse('photo too large (please re-attach a smaller one)');
     photoDataUrl = photo;
   }
@@ -482,7 +493,7 @@ async function handleSendQuote(request, env, id) {
   }
   let imageUrl = null;
   if (photo) {
-    if (!photo.startsWith('data:image/')) return errorResponse('image must be a data URL');
+    if (!/^data:image\/(jpeg|png|webp);base64,/.test(photo)) return errorResponse('photo must be a JPEG, PNG or WebP data URL');
     if (photo.length > 800_000) return errorResponse('image too large (please re-attach a smaller one)');
     imageUrl = photo;
   }
@@ -672,6 +683,7 @@ function rowToOrder(row) {
     notes:     row.notes,
     photoDataUrl: row.photo_data_url,
     trackingNumber: row.tracking_number,
+    stripeSessionId: row.stripe_session_id,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -694,6 +706,9 @@ async function handleCreateOrder(request, env) {
   const postcode = (body.postcode || '').toString().trim().slice(0, 16) || null;
   const items    = Array.isArray(body.items) ? body.items : [];
   const source   = (body.source   || 'checkout').toString().slice(0, 32);
+  if (source === 'manual_admin' && !await isAuthorised(request, env)) {
+    return errorResponse('unauthorised', 401);
+  }
   const notes    = (body.notes    || '').toString().slice(0, 4000) || null;
   const photo    = (body.photoDataUrl || '').toString();
 
@@ -715,7 +730,7 @@ async function handleCreateOrder(request, env) {
 
   let photoDataUrl = null;
   if (photo) {
-    if (!photo.startsWith('data:image/')) return errorResponse('photo must be a data URL');
+    if (!/^data:image\/(jpeg|png|webp);base64,/.test(photo)) return errorResponse('photo must be a JPEG, PNG or WebP data URL');
     if (photo.length > 800_000) return errorResponse('photo too large');
     photoDataUrl = photo;
   }
@@ -839,10 +854,11 @@ function escapeHtml(s) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-function orderStatusEmailContent(orderRow, newStatus) {
+function orderStatusEmailContent(orderRow, newStatus, env) {
   const customerName = (orderRow.name || '').split(' ')[0] || 'there';
   const id = orderRow.id;
-  const trackUrl = `https://crystalbrook.steve-700.workers.dev/order.html?id=${encodeURIComponent(id)}`;
+  const baseUrl = (env && env.SITE_BASE_URL) ? env.SITE_BASE_URL : 'https://www.crystalbrookwallmounts.com.au';
+  const trackUrl = `${baseUrl}/order.html?id=${encodeURIComponent(id)}`;
   let items = [];
   try { items = JSON.parse(orderRow.items || '[]'); } catch (_) {}
   const itemList = items.map(i => `${i.name}${i.qty > 1 ? ` ×${i.qty}` : ''}`).join(', ') || 'your order';
@@ -930,7 +946,7 @@ async function sendOrderStatusEmail(env, orderRow, newStatus) {
   const to = orderRow.email;
   if (!to) return false;
 
-  const { subject, html, text } = orderStatusEmailContent(orderRow, newStatus);
+  const { subject, html, text } = orderStatusEmailContent(orderRow, newStatus, env);
   const result = await sendViaResend(env, { from, to, subject, html, text });
   return result.ok;
 }
@@ -1070,6 +1086,424 @@ async function handleDeleteOrder(request, env, id) {
 }
 
 
+// -------- /api/checkout + /api/orders/from-stripe (Stripe Checkout) --------
+
+/* Public config endpoint — exposes the Stripe publishable key (and any other
+ * env-driven values the storefront needs without a redeploy). The
+ * publishable key is safe to share — that's by design. */
+async function handleGetConfig(request, env) {
+  return jsonResponse({
+    stripe_publishable_key: env.STRIPE_PUBLISHABLE_KEY || null,
+  });
+}
+
+/* Form-encodes a nested object the way Stripe's REST API expects, e.g.
+ *   { line_items: [{ price_data: { currency: 'aud' } }] }
+ * becomes
+ *   line_items[0][price_data][currency]=aud
+ * Used to avoid pulling in the Stripe SDK (which doesn't tree-shake nicely
+ * for Workers and isn't needed for a couple of REST calls).
+ */
+function stripeEncode(obj, prefix = '') {
+  const out = new URLSearchParams();
+  const walk = (val, key) => {
+    if (val === null || val === undefined) return;
+    if (Array.isArray(val)) {
+      val.forEach((v, i) => walk(v, `${key}[${i}]`));
+    } else if (typeof val === 'object') {
+      for (const k of Object.keys(val)) walk(val[k], `${key}[${k}]`);
+    } else {
+      out.append(key, String(val));
+    }
+  };
+  for (const k of Object.keys(obj)) walk(obj[k], prefix ? `${prefix}[${k}]` : k);
+  return out;
+}
+
+async function stripeApi(env, path, method = 'POST', body = null) {
+  if (!env.STRIPE_SECRET_KEY) throw new Error('STRIPE_SECRET_KEY not configured on Worker');
+  const init = {
+    method,
+    headers: {
+      'Authorization': `Bearer ${env.STRIPE_SECRET_KEY}`,
+      ...(body ? { 'Content-Type': 'application/x-www-form-urlencoded' } : {}),
+    },
+  };
+  if (body instanceof URLSearchParams) init.body = body;
+  else if (body) init.body = stripeEncode(body);
+  const res = await fetch(`https://api.stripe.com/v1${path}`, init);
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(json?.error?.message || `stripe ${res.status}`);
+    err.statusCode = res.status;
+    err.stripeError = json?.error;
+    throw err;
+  }
+  return json;
+}
+
+/* Create a Stripe Checkout Session for the customer's cart. Server-side
+ * computes the line-item prices from D1 (never trusts client) so a tampered
+ * client can't post $1 for a $1000 product.
+ *
+ * Body: {
+ *   items: [{ id, qty }],
+ *   ship:  { name, email, phone, address, suburb, state, postcode },
+ * }
+ * Returns: { url } — the storefront redirects to it.
+ */
+async function handleStripeCheckout(request, env) {
+  if (!env.STRIPE_SECRET_KEY) {
+    return errorResponse('Payments are not configured yet — please contact us to complete your order.', 503);
+  }
+
+  let body;
+  try { body = await request.json(); }
+  catch (_) { return errorResponse('invalid JSON body'); }
+
+  const ship = body.ship || {};
+  const itemsIn = Array.isArray(body.items) ? body.items : [];
+  if (!itemsIn.length) return errorResponse('cart is empty');
+  if (!ship.email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(ship.email)) {
+    return errorResponse('a valid email address is required');
+  }
+  if (!ship.name) return errorResponse('a name is required');
+
+  // Look up authoritative product info from D1
+  const placeholders = itemsIn.map(() => '?').join(',');
+  const sql = `SELECT id, name, price, image FROM products WHERE id IN (${placeholders})`;
+  const result = await env.DB.prepare(sql).bind(...itemsIn.map(i => String(i.id))).all();
+  const byId = new Map();
+  for (const row of result.results || []) byId.set(row.id, row);
+
+  const lineItems = [];
+  const orderItems = [];
+  let subtotal = 0;
+  for (const it of itemsIn) {
+    const row = byId.get(String(it.id));
+    if (!row) return errorResponse(`product not found: ${it.id}`);
+    const qty = Math.max(1, Math.min(20, Number(it.qty) || 1));
+    const priceCents = Math.round(Number(row.price) * 100);
+    if (!Number.isFinite(priceCents) || priceCents <= 0) {
+      return errorResponse(`invalid price for ${row.id}`);
+    }
+    subtotal += priceCents * qty;
+    lineItems.push({
+      quantity: qty,
+      price_data: {
+        currency: 'aud',
+        unit_amount: priceCents,
+        product_data: { name: row.name },
+      },
+    });
+    orderItems.push({ id: row.id, name: row.name, price: row.price, qty });
+  }
+
+  // Where Stripe redirects after success / cancel. Use the SITE_BASE_URL secret
+  // if set (set with `wrangler secret put SITE_BASE_URL`); otherwise derive
+  // from the incoming request so dev/preview environments work too.
+  const origin = (env.SITE_BASE_URL || '').replace(/\/+$/, '') || new URL(request.url).origin;
+  const successUrl = `${origin}/order.html?session_id={CHECKOUT_SESSION_ID}`;
+  const cancelUrl  = `${origin}/shop.html?cancel=1`;
+
+  const sessionBody = {
+    mode: 'payment',
+    payment_method_types: ['card'],
+    line_items: lineItems,
+    success_url: successUrl,
+    cancel_url: cancelUrl,
+    customer_email: ship.email,
+    // Metadata is stored on the session — we read it back on the success
+    // redirect to build the D1 order. Stripe caps each value at 500 chars,
+    // so we store just product ids + qtys (the prices + names will be
+    // re-looked-up from D1 on confirm, which is the single source of truth
+    // anyway). The ship address is split into separate keys so each one
+    // comfortably fits.
+    metadata: {
+      cb_cart: orderItems.map(i => `${i.id}x${i.qty}`).join(',').slice(0, 500),
+      ship_name: (ship.name || '').slice(0, 200),
+      ship_phone: (ship.phone || '').slice(0, 50),
+      ship_address: (ship.address || '').slice(0, 300),
+      ship_suburb: (ship.suburb || '').slice(0, 100),
+      ship_state: (ship.state || '').slice(0, 8),
+      ship_postcode: (ship.postcode || '').slice(0, 16),
+    },
+    // We already collect shipping address in step 1 of our own checkout
+    // (and pass it through via metadata), so we DON'T turn on Stripe's
+    // shipping_address_collection — that would just make the customer
+    // re-type their address on the Stripe-hosted page.
+  };
+
+  try {
+    const session = await stripeApi(env, '/checkout/sessions', 'POST', sessionBody);
+    return jsonResponse({ url: session.url, id: session.id });
+  } catch (err) {
+    console.error('stripe checkout error', err.stripeError || err);
+    return errorResponse('Couldn\'t start checkout: ' + (err.message || 'try again'), 500);
+  }
+}
+
+/* Create (or look up) a D1 order row from a paid Stripe Checkout Session.
+ * Shared by the success-redirect confirm endpoint and the webhook handler,
+ * so a customer who closes their browser between paying and returning to
+ * /order.html still gets an order created — Stripe will deliver the
+ * checkout.session.completed event regardless of whether the redirect
+ * fires. Idempotent: keyed on stripe_session_id UNIQUE.
+ *
+ * `source` lets the caller distinguish webhook-created vs redirect-created
+ * orders in the source column ('checkout' = redirect path, 'webhook' = the
+ * customer never came back but we still got the event).
+ *
+ * Returns an object that either of the callers can shape into a Response:
+ *   - { ok: true, id, total, alreadyExisted }            on success
+ *   - { ok: false, status, error }                       on caller-actionable failure
+ */
+async function createOrderFromStripeSession(env, sessionId, opts = {}) {
+  const source = opts.source || 'checkout';
+
+  // Idempotency — if we've already made an order for this session, return it
+  const existing = await env.DB.prepare(
+    'SELECT id FROM orders WHERE stripe_session_id = ?'
+  ).bind(sessionId).first();
+  if (existing && existing.id) {
+    return { ok: true, id: existing.id, alreadyExisted: true };
+  }
+
+  // Retrieve the session from Stripe to verify payment + pull line items
+  let session;
+  try {
+    session = await stripeApi(env, `/checkout/sessions/${sessionId}`, 'GET');
+  } catch (err) {
+    return { ok: false, status: 502, error: 'Couldn\'t verify payment with Stripe — ' + (err.message || 'unknown error') };
+  }
+
+  if (session.payment_status !== 'paid') {
+    return { ok: false, status: 402, error: `payment not complete (status: ${session.payment_status || 'unknown'})` };
+  }
+
+  const meta = session.metadata || {};
+  const customer = session.customer_details || {};
+  const shipDetails = session.shipping_details || customer || {};
+  const shipAddr = shipDetails.address || {};
+
+  // Parse cb_cart back into ids + qtys, then re-look-up product info from
+  // D1 so the order row holds canonical names and prices (not whatever
+  // the cart looked like when the session was created — D1 is the source
+  // of truth and prices/names shouldn't drift mid-checkout anyway).
+  const cartTokens = (meta.cb_cart || '').split(',').filter(Boolean);
+  const cartParsed = cartTokens.map(tok => {
+    const m = /^(.+?)x(\d+)$/.exec(tok);
+    return m ? { id: m[1], qty: Math.max(1, Math.min(20, Number(m[2]) || 1)) } : null;
+  }).filter(Boolean);
+  if (!cartParsed.length) {
+    return { ok: false, status: 422, error: 'session has no line items' };
+  }
+
+  const placeholders = cartParsed.map(() => '?').join(',');
+  const lookup = await env.DB.prepare(
+    `SELECT id, name, price FROM products WHERE id IN (${placeholders})`
+  ).bind(...cartParsed.map(c => c.id)).all();
+  const productById = new Map();
+  for (const row of lookup.results || []) productById.set(row.id, row);
+
+  let subtotal = 0;
+  const cleanItems = cartParsed.map(c => {
+    const row = productById.get(c.id);
+    const price = row ? Number(row.price) : 0;
+    const name  = row ? String(row.name) : c.id;
+    subtotal += price * c.qty;
+    return { id: c.id, name, price, qty: c.qty };
+  });
+  const total = subtotal;
+
+  const name = meta.ship_name || customer.name || '';
+  const email = customer.email || session.customer_email || '';
+  const phone = meta.ship_phone || customer.phone || '';
+  const address = shipAddr.line1 || meta.ship_address || '';
+  const suburb  = shipAddr.city  || meta.ship_suburb || '';
+  const state   = shipAddr.state || meta.ship_state || '';
+  const postcode= shipAddr.postal_code || meta.ship_postcode || '';
+
+  // Sequential order id, same scheme as /api/orders
+  const countRow = await env.DB.prepare('SELECT COUNT(*) AS n FROM orders').first();
+  const seq = ((countRow && countRow.n) || 0) + 1;
+  const id = 'CB-' + String(seq).padStart(6, '0');
+
+  const paymentRef = session.payment_intent || null;
+
+  try {
+    await env.DB.prepare(`
+      INSERT INTO orders (id, name, email, phone, address, suburb, state, postcode,
+        items, subtotal, shipping, total, status, source, payment_ref, stripe_session_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(id, name, email, phone, address, suburb, state, postcode,
+      JSON.stringify(cleanItems), subtotal, 0, total,
+      'paid', source, paymentRef, sessionId).run();
+  } catch (err) {
+    // If the UNIQUE constraint fires (race between the redirect confirm
+    // and the webhook arriving at the same time), look up the row the
+    // other path just created and return that. Both end up with the same
+    // order id, just one of them gets to insert it.
+    const dup = await env.DB.prepare(
+      'SELECT id FROM orders WHERE stripe_session_id = ?'
+    ).bind(sessionId).first();
+    if (dup && dup.id) return { ok: true, id: dup.id, alreadyExisted: true };
+    throw err;
+  }
+
+  return { ok: true, id, total };
+}
+
+/* After Stripe redirects back to success_url, the storefront calls this
+ * endpoint with the session_id. Thin wrapper around the shared helper —
+ * the webhook path uses the same code with a different `source` tag.
+ */
+async function handleConfirmStripeSession(request, env) {
+  if (!env.STRIPE_SECRET_KEY) return errorResponse('payments not configured', 503);
+
+  let body;
+  try { body = await request.json(); }
+  catch (_) { return errorResponse('invalid JSON body'); }
+  const sessionId = (body.session_id || '').toString().trim();
+  if (!/^cs_(test|live)_[A-Za-z0-9]+$/.test(sessionId)) {
+    return errorResponse('invalid session_id');
+  }
+
+  const result = await createOrderFromStripeSession(env, sessionId, { source: 'checkout' });
+  if (!result.ok) return errorResponse(result.error, result.status || 500);
+  return jsonResponse({
+    ok: true,
+    id: result.id,
+    total: result.total,
+    already_existed: !!result.alreadyExisted,
+  });
+}
+
+/* Verify the Stripe-Signature header on a webhook payload. Implements
+ * Stripe's signing scheme without their SDK:
+ *
+ *   1. Pull `t` (timestamp) and `v1` (signature) entries from the header.
+ *   2. Build the signed payload: `<t>.<rawBody>`.
+ *   3. HMAC-SHA256 it with the webhook signing secret.
+ *   4. Constant-time compare against the v1 signature.
+ *   5. Reject if `t` is more than 5 minutes old (replay protection).
+ *
+ * Returns { ok: true } or { ok: false, reason }.
+ */
+async function verifyStripeSignature(rawBody, sigHeader, secret) {
+  if (!sigHeader) return { ok: false, reason: 'missing Stripe-Signature header' };
+  if (!secret)    return { ok: false, reason: 'STRIPE_WEBHOOK_SECRET not configured' };
+
+  // Header format: "t=1620000000,v1=abc...,v1=def...,v0=…"
+  const parts = sigHeader.split(',').map(s => s.trim());
+  let t = null;
+  const v1s = [];
+  for (const p of parts) {
+    const [k, ...rest] = p.split('=');
+    const v = rest.join('=');
+    if (k === 't') t = v;
+    else if (k === 'v1') v1s.push(v);
+  }
+  if (!t || !v1s.length) return { ok: false, reason: 'malformed Stripe-Signature header' };
+
+  // 5-minute tolerance — anything older is treated as a replay
+  const timestamp = Number(t);
+  if (!Number.isFinite(timestamp)) return { ok: false, reason: 'invalid timestamp' };
+  const now = Math.floor(Date.now() / 1000);
+  if (Math.abs(now - timestamp) > 300) return { ok: false, reason: 'timestamp outside tolerance' };
+
+  const signed = `${t}.${rawBody}`;
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const macBytes = new Uint8Array(await crypto.subtle.sign('HMAC', key, enc.encode(signed)));
+  const expected = Array.from(macBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+
+  // Constant-time compare against any of the v1 entries (Stripe may send
+  // multiple during signing-secret rotation windows).
+  const ok = v1s.some(sig => timingSafeEqualHex(sig, expected));
+  return ok ? { ok: true } : { ok: false, reason: 'signature mismatch' };
+}
+
+// Constant-time hex string comparison. Inputs are lowercase hex from
+// HMAC; same-length compare avoids leaking position-of-first-diff via
+// timing. Returns false if lengths differ.
+function timingSafeEqualHex(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+/* POST /api/stripe/webhook — Stripe delivers events here whenever a
+ * checkout session completes (and other events we subscribe to in the
+ * Stripe dashboard). Belt-and-braces for the success-redirect path: if
+ * the customer pays then closes their browser before returning to
+ * /order.html, this still creates the order in D1.
+ *
+ * Stripe retries non-2xx responses with exponential backoff for up to
+ * three days, so a transient D1 error → return 5xx → Stripe retries → we
+ * eventually succeed. The UNIQUE constraint on stripe_session_id makes
+ * the whole thing idempotent across retries.
+ */
+async function handleStripeWebhook(request, env) {
+  // Read the raw body BEFORE parsing — signature verification needs the
+  // exact bytes Stripe signed, not a normalised JSON re-serialisation.
+  const rawBody = await request.text();
+  const sigHeader = request.headers.get('Stripe-Signature') || '';
+
+  const verify = await verifyStripeSignature(rawBody, sigHeader, env.STRIPE_WEBHOOK_SECRET);
+  if (!verify.ok) {
+    console.warn('[stripe webhook] signature verify failed:', verify.reason);
+    // 401 (not 4xx generally) — Stripe won't retry on 401, which is what
+    // we want when the secret is wrong or the request is forged.
+    return errorResponse('signature verification failed', 401);
+  }
+
+  let event;
+  try { event = JSON.parse(rawBody); }
+  catch (_) { return errorResponse('invalid JSON body', 400); }
+
+  // Only the one event matters for now. Anything else → ack quietly.
+  if (event.type !== 'checkout.session.completed') {
+    return jsonResponse({ ok: true, ignored: event.type });
+  }
+
+  const session = event.data && event.data.object;
+  const sessionId = session && session.id;
+  if (!sessionId || !/^cs_(test|live)_[A-Za-z0-9]+$/.test(sessionId)) {
+    // Bad payload — don't ask Stripe to retry, log it and move on.
+    console.warn('[stripe webhook] missing/invalid session id in event', event.id);
+    return jsonResponse({ ok: true, skipped: 'no_session_id' });
+  }
+
+  try {
+    const result = await createOrderFromStripeSession(env, sessionId, { source: 'webhook' });
+    if (!result.ok) {
+      // Caller-actionable error (e.g. payment not yet paid). For
+      // `checkout.session.completed` specifically, Stripe only fires it
+      // for paid sessions, so this branch shouldn't happen — but if it
+      // does, log and 200 so Stripe doesn't loop. The order row will
+      // catch up via the success redirect.
+      console.warn('[stripe webhook] order create rejected:', result.error);
+      return jsonResponse({ ok: true, skipped: result.error });
+    }
+    return jsonResponse({ ok: true, id: result.id, already_existed: !!result.alreadyExisted });
+  } catch (err) {
+    // Unexpected error (D1 down, network blip) — return 5xx so Stripe
+    // retries with backoff. Idempotency takes care of dupes.
+    console.error('[stripe webhook] order create failed', err);
+    return errorResponse('temporary failure', 500);
+  }
+}
+
+
 // -------- /uploads (R2-backed video + binary uploads) --------
 
 const UPLOAD_MAX_BYTES = 50 * 1024 * 1024;  // 50MB cap — fine for short product videos
@@ -1116,6 +1550,91 @@ async function handleUpload(request, env) {
   return jsonResponse({ ok: true, key, url, contentType: ct, size: buf.byteLength });
 }
 
+/* One-off migration: walk every product, find any image / gallery[].src that
+ * starts with `data:` (base64-embedded photos from older admin uploads),
+ * decode them, push to R2, and rewrite the product row to reference the
+ * resulting `/uploads/<key>` URL. Drops the /api/products payload from
+ * ~50MB to <50KB so the storefront stops flashing stale data on every
+ * page load. Idempotent — running twice is a no-op because already-URL
+ * sources are skipped.
+ */
+async function handleMigrateImagesToR2(request, env) {
+  if (!await isAuthorised(request, env)) return errorResponse('unauthorised', 401);
+  if (!env.UPLOADS) return errorResponse('R2 binding missing', 503);
+
+  const stats = { products_scanned: 0, images_migrated: 0, gallery_migrated: 0, errors: [] };
+
+  async function dataUrlToR2(dataUrl) {
+    // Format: data:<mime>;base64,<payload>
+    const m = /^data:([^;,]+)(?:;base64)?,(.*)$/s.exec(dataUrl);
+    if (!m) throw new Error('not a data url');
+    const mime = m[1];
+    const payload = m[2];
+    const ext = ({
+      'image/png': 'png', 'image/jpeg': 'jpg', 'image/jpg': 'jpg', 'image/webp': 'webp',
+    })[mime.toLowerCase()] || 'bin';
+    // Decode base64 → Uint8Array
+    const bin = atob(payload);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const key = `${Date.now().toString(36)}-${randomToken(8)}.${ext}`;
+    await env.UPLOADS.put(key, bytes, { httpMetadata: { contentType: mime } });
+    return `/uploads/${key}`;
+  }
+
+  const rows = await env.DB.prepare('SELECT id, image, gallery FROM products').all();
+  for (const row of rows.results) {
+    stats.products_scanned++;
+    let newImage = row.image;
+    let newGallery = row.gallery;
+    let dirty = false;
+
+    // Migrate the main image
+    if (typeof row.image === 'string' && row.image.startsWith('data:')) {
+      try {
+        newImage = await dataUrlToR2(row.image);
+        stats.images_migrated++;
+        dirty = true;
+      } catch (e) {
+        stats.errors.push({ id: row.id, where: 'image', message: e.message });
+      }
+    }
+
+    // Migrate gallery items
+    if (row.gallery) {
+      let parsed;
+      try { parsed = JSON.parse(row.gallery); } catch (_) { parsed = null; }
+      if (Array.isArray(parsed)) {
+        let galleryDirty = false;
+        for (let i = 0; i < parsed.length; i++) {
+          const item = parsed[i];
+          if (item && typeof item.src === 'string' && item.src.startsWith('data:')) {
+            try {
+              parsed[i] = { ...item, src: await dataUrlToR2(item.src) };
+              stats.gallery_migrated++;
+              galleryDirty = true;
+            } catch (e) {
+              stats.errors.push({ id: row.id, where: `gallery[${i}]`, message: e.message });
+            }
+          }
+        }
+        if (galleryDirty) {
+          newGallery = JSON.stringify(parsed);
+          dirty = true;
+        }
+      }
+    }
+
+    if (dirty) {
+      await env.DB.prepare(
+        `UPDATE products SET image = ?, gallery = ?, updated_at = datetime('now') WHERE id = ?`
+      ).bind(newImage, newGallery, row.id).run();
+    }
+  }
+
+  return jsonResponse({ ok: true, ...stats });
+}
+
 async function handleServeUpload(request, env, key) {
   if (!env.UPLOADS) return errorResponse('R2 binding missing', 503);
   // Defensive — strip slashes and dots so we can't escape the bucket.
@@ -1141,6 +1660,14 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const path = url.pathname;
+
+    // Force HTTPS on the live domain — Cloudflare Workers always see https:// in
+    // url.protocol, so we check the CF-Visitor header for the original scheme.
+    const cfVisitor = request.headers.get('CF-Visitor');
+    const originalScheme = cfVisitor ? JSON.parse(cfVisitor).scheme : url.protocol.replace(':', '');
+    if (originalScheme === 'http' && !url.hostname.endsWith('.workers.dev')) {
+      return Response.redirect('https://' + url.host + url.pathname + url.search, 301);
+    }
 
     // API routes
     if (path.startsWith('/api/')) {
@@ -1199,6 +1726,9 @@ export default {
         if (path === '/api/orders' && request.method === 'GET') {
           return await handleListOrders(request, env);
         }
+        if (path === '/api/orders/confirm-stripe' && request.method === 'POST') {
+          return await handleConfirmStripeSession(request, env);
+        }
         const ordMatch = path.match(/^\/api\/orders\/([\w-]+)$/);
         if (ordMatch) {
           const id = ordMatch[1];
@@ -1212,6 +1742,18 @@ export default {
         }
         if (path === '/api/upload' && request.method === 'POST') {
           return await handleUpload(request, env);
+        }
+        if (path === '/api/admin/migrate-images-to-r2' && request.method === 'POST') {
+          return await handleMigrateImagesToR2(request, env);
+        }
+        if (path === '/api/config' && request.method === 'GET') {
+          return await handleGetConfig(request, env);
+        }
+        if (path === '/api/checkout' && request.method === 'POST') {
+          return await handleStripeCheckout(request, env);
+        }
+        if (path === '/api/stripe/webhook' && request.method === 'POST') {
+          return await handleStripeWebhook(request, env);
         }
         return errorResponse('not found', 404);
       } catch (err) {
@@ -1233,7 +1775,11 @@ export default {
 
     // Anything else — fall through to the static asset bundle
     if (env.ASSETS && typeof env.ASSETS.fetch === 'function') {
-      return env.ASSETS.fetch(request);
+      const assetResponse = await env.ASSETS.fetch(request);
+      // Add HSTS so browsers remember HTTPS after the first visit
+      const res = new Response(assetResponse.body, assetResponse);
+      res.headers.set('strict-transport-security', 'max-age=31536000; includeSubDomains; preload');
+      return res;
     }
     return new Response('Not configured', { status: 500 });
   },

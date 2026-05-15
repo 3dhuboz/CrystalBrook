@@ -4,16 +4,28 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="description" content="Meet Max White — the maker behind Crystal Brook Wall Mounts. Handcrafted resin-coated archival prints from a Gordonvale workshop in Far North Queensland." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://www.crystalbrookwallmounts.com.au/about.html" />
+<meta property="og:title" content="Meet Max — Crystal Brook Wall Mounts" />
+<meta property="og:description" content="Meet Max White — the maker behind Crystal Brook Wall Mounts. Handcrafted resin-coated archival prints from a Gordonvale workshop in Far North Queensland." />
+<meta property="og:image" content="https://www.crystalbrookwallmounts.com.au/assets/logos/logo-mark-96.png" />
+<meta property="og:site_name" content="Crystal Brook Wall Mounts" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Meet Max — Crystal Brook Wall Mounts" />
+<meta name="twitter:description" content="Meet Max White — the maker behind Crystal Brook Wall Mounts. Handcrafted resin-coated archival prints from a Gordonvale workshop in Far North Queensland." />
+<meta name="twitter:image" content="https://www.crystalbrookwallmounts.com.au/assets/logos/logo-mark-96.png" />
 <title>Meet Max — Crystal Brook Wall Mounts</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/styles.css?v=20260429-21" />
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260429-21" />
-<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260429-21" />
-<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260429-21" />
+<link rel="stylesheet" href="assets/styles.css?v=20260512-1" />
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=20260512-1" />
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=20260512-1" />
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png?v=20260512-1" />
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=20260512-1" />
 <link rel="manifest" href="manifest.webmanifest" />
-<meta name="theme-color" content="#ffffff" />
+<link rel="canonical" href="https://www.crystalbrookwallmounts.com.au/about.html" />
+<meta name="theme-color" content="#1c130a" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="Crystal Brook" />
@@ -156,6 +168,26 @@
     margin: 0 0 20px;
     max-width: 720px;
   }
+  .about-workshop-figure {
+    margin: 36px 0 0;
+    max-width: 920px;
+  }
+  .about-workshop-photo {
+    aspect-ratio: 16 / 9;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #f6f6f6;
+  }
+  .about-workshop-photo img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+  .about-workshop-cap {
+    margin: 12px 0 0;
+    font-size: .82rem;
+    color: var(--ink-mute);
+    font-style: italic;
+  }
+  .about-workshop-cap:empty { display: none; }
   .about-place-stats {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -294,7 +326,7 @@
 <header class="site-nav" id="siteNav">
   <div class="nav-inner">
     <a href="index.html" class="brand">
-      <span class="brand-mark"><img src="assets/logos/logo-mark-96.png?v=20260429-21" alt="Crystal Brook Wall Mounts emblem" width="64" height="64" style="display:block;border-radius:7px;" /></span>
+      <span class="brand-mark"><img src="assets/logos/logo-mark-96.png?v=20260512-1" alt="Crystal Brook Wall Mounts emblem" width="64" height="64" style="display:block;border-radius:7px;" /></span>
       <span class="brand-text">
         <span class="brand-name">Crystal Brook</span>
         <span class="brand-sub">Wall Mounts</span>
@@ -343,9 +375,9 @@
     </div>
     <div>
       <div class="about-portrait">
-        <img src="assets/images/max-portrait.jpg?v=20260429-21" alt="Max White on the FNQ coast holding one of his torched-wood shark mounts" />
+        <img data-content-key="about_hero_image" src="assets/images/max-portrait.jpg?v=20260512-1" alt="Max White on the FNQ coast holding one of his torched-wood shark mounts" />
       </div>
-      <p class="about-portrait-cap">Max with one of his torched-shark pieces, on the coast just south of Gordonvale.</p>
+      <p class="about-portrait-cap" data-content-key="about_portrait_cap">Max with one of his torched-shark pieces, on the coast just south of Gordonvale.</p>
     </div>
   </div>
 </section>
@@ -369,6 +401,12 @@
     <h2 data-content-key="about_place_h2" data-content-html>Made in <em>Far North Queensland.</em></h2>
     <p data-content-key="about_place_p1">Gordonvale is a small cane town nestled at the foot of Walsh's Pyramid, on the Mulgrave River flats south of Cairns. The Bruce Highway runs straight through it. The Wet Tropics rainforest sits to the west; the Great Barrier Reef is forty minutes' drive east.</p>
     <p data-content-key="about_place_p2">It's the kind of place where the subject matter is local and the timber's local too — Silky Oak, Spotted Gum, Blackwood and Ironbark, all sourced from QLD mills. The resin's mixed in the workshop. The prints are done in Cairns. Nothing on a Crystal Brook mount has travelled further than it had to.</p>
+    <figure class="about-workshop-figure" data-workshop-figure hidden>
+      <div class="about-workshop-photo">
+        <img data-content-key="about_workshop_image" src="" alt="" />
+      </div>
+      <figcaption class="about-workshop-cap" data-content-key="about_workshop_caption"></figcaption>
+    </figure>
     <dl class="about-place-stats">
       <div>
         <strong data-content-key="about_place_stat1_value">4865</strong>
@@ -547,7 +585,7 @@
       </div>
       <div>
         <h5 data-content-key="footer_col_follow_h">Follow</h5>
-        <a href="#">Facebook</a><a href="#">Instagram</a><a href="#">TikTok</a>
+        <a href="#" data-social="facebook" hidden>Facebook</a><a href="#" data-social="instagram" hidden>Instagram</a><a href="#" data-social="tiktok" hidden>TikTok</a>
       </div>
     </div>
   </div>
@@ -562,7 +600,7 @@
 <aside class="nav-drawer" id="navDrawer" aria-hidden="true" aria-label="Mobile navigation">
   <div class="nav-drawer-head">
     <span class="brand">
-      <span class="brand-mark"><img src="assets/logos/logo-mark-96.png?v=20260429-21" alt="Crystal Brook Wall Mounts emblem" width="64" height="64" style="display:block;border-radius:7px;" /></span>
+      <span class="brand-mark"><img src="assets/logos/logo-mark-96.png?v=20260512-1" alt="Crystal Brook Wall Mounts emblem" width="64" height="64" style="display:block;border-radius:7px;" /></span>
       <span class="brand-text">
         <span class="brand-name">Crystal Brook</span>
         <span class="brand-sub">Wall Mounts</span>
@@ -590,6 +628,6 @@
 <!-- ============ TOAST ============ -->
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/app.js?v=20260429-21"></script>
+<script src="assets/app.js?v=20260512-1"></script>
 </body>
 </html>

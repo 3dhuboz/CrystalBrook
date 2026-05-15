@@ -479,6 +479,10 @@ section > .container { padding: 0; }
   transition: all .15s var(--ease);
   text-decoration: none;
 }
+.btn:focus-visible {
+  outline: 2px solid var(--gold-deep, #b8862c);
+  outline-offset: 3px;
+}
 .btn-primary { background: var(--ink); color: #fff; }
 .btn-primary:hover { background: #000; opacity: 1; }
 .btn-ghost { background: transparent; color: var(--ink); }
@@ -658,6 +662,9 @@ section > .container { padding: 0; }
 .g-tile:hover .g-stage img { transform: scale(1.06); }
 .g-overlay { display: none; }
 .gallery-cta { text-align: center; margin-top: 32px; }
+@media (max-width: 900px) {
+  .gallery { grid-template-columns: repeat(4, 1fr); }
+}
 @media (max-width: 720px) {
   .stories-stats { grid-template-columns: repeat(2, 1fr); }
   .tm-row { grid-template-columns: 1fr; gap: 24px; }
@@ -792,7 +799,7 @@ section > .container { padding: 0; }
   border: 1px solid var(--line);
   border-radius: 999px;
 }
-.cart-qty-btn { width: 24px; height: 24px; display: grid; place-items: center; color: var(--ink); }
+.cart-qty-btn { min-width: 44px; min-height: 44px; display: grid; place-items: center; color: var(--ink); cursor: pointer; border: none; background: none; padding: 0; }
 .cart-qty-btn:hover { background: rgba(0,0,0,.04); }
 .cart-qty-val { min-width: 24px; text-align: center; font-size: .82rem; font-weight: 500; }
 .cart-remove, .wish-add, .cart-item-remove {
@@ -950,6 +957,10 @@ section > .container { padding: 0; }
 .co-card-input input { padding-right: 50px; font-family: 'Courier New', monospace; letter-spacing: 1.5px; }
 .co-card-brand { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 32px; height: 20px; pointer-events: none; }
 .co-secure { display: flex; align-items: center; gap: 6px; padding: 8px 10px; background: #fafafa; border-radius: var(--r-sm); font-size: .68rem; color: var(--ink-mute); margin-bottom: 14px; border: 1px solid var(--line); }
+.co-stripe-panel { padding: 22px 18px; background: #fafafa; border: 1px solid var(--line); border-radius: var(--r-md); text-align: center; margin: 12px 0 18px; }
+.co-stripe-mark { display: inline-flex; padding: 8px 12px; background: #fff; border: 1px solid var(--line); border-radius: var(--r-sm); margin-bottom: 12px; }
+.co-stripe-blurb { font-size: .9rem; color: var(--ink-mute); margin: 0; line-height: 1.5; }
+.co-stripe-blurb strong { color: var(--ink); }
 .co-actions { display: flex; gap: 10px; align-items: center; }
 .co-actions .btn-block { width: 100%; }
 .co-actions .btn-ghost { flex: 0 0 auto; }
@@ -1004,7 +1015,7 @@ section > .container { padding: 0; }
 .nav-drawer-admin:hover { background: var(--ink); color: #fff; opacity: 1; }
 .nav-drawer-tagline { margin: 12px 0 0; font-size: .72rem; color: var(--ink-mute); }
 
-@media (max-width: 760px) {
+@media (max-width: 900px) {
   .nav-inner { grid-template-columns: auto 1fr auto; padding: 0 16px; }
   .nav-links { display: none; }
   .admin-link { display: none; }
@@ -1344,6 +1355,18 @@ section > .container { padding: 0; }
   width: 32px; height: 32px; border-radius: 50%;
   display: grid; place-items: center;
   box-shadow: 0 1px 4px rgba(0,0,0,.12);
+}
+/* Small play-icon overlay drawn on top of the video's poster image in
+ * the gallery thumb strip — tells the customer "this one's a video"
+ * without hiding the still-image preview. */
+.pdp-gallery-thumb-play {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 28px; height: 28px; border-radius: 50%;
+  background: rgba(255,255,255,.92); color: var(--ink);
+  display: grid; place-items: center;
+  font-size: .9rem; line-height: 1;
+  box-shadow: 0 1px 4px rgba(0,0,0,.25);
+  pointer-events: none;
 }
 .pdp-gallery-thumb-label {
   position: absolute; left: 0; right: 0; bottom: 0;
