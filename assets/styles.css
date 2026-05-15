@@ -479,6 +479,10 @@ section > .container { padding: 0; }
   transition: all .15s var(--ease);
   text-decoration: none;
 }
+.btn:focus-visible {
+  outline: 2px solid var(--gold-deep, #b8862c);
+  outline-offset: 3px;
+}
 .btn-primary { background: var(--ink); color: #fff; }
 .btn-primary:hover { background: #000; opacity: 1; }
 .btn-ghost { background: transparent; color: var(--ink); }
@@ -792,7 +796,7 @@ section > .container { padding: 0; }
   border: 1px solid var(--line);
   border-radius: 999px;
 }
-.cart-qty-btn { width: 24px; height: 24px; display: grid; place-items: center; color: var(--ink); }
+.cart-qty-btn { min-width: 44px; min-height: 44px; display: grid; place-items: center; color: var(--ink); cursor: pointer; border: none; background: none; padding: 0; }
 .cart-qty-btn:hover { background: rgba(0,0,0,.04); }
 .cart-qty-val { min-width: 24px; text-align: center; font-size: .82rem; font-weight: 500; }
 .cart-remove, .wish-add, .cart-item-remove {
