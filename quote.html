@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="description" content="Your custom Crystal Brook Wall Mounts quote â€” review and approve." />
+<meta name="description" content="Your custom Crystal Brook Wall Mounts quote — review and approve." />
 <meta name="robots" content="noindex,nofollow" />
-<title>Your quote Â· Crystal Brook Wall Mounts</title>
+<title>Your quote · Crystal Brook Wall Mounts</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -133,14 +133,14 @@
   </div>
 
   <div class="quote-card" id="quoteCard">
-    <div class="quote-skeleton" id="quoteSkeleton">Loading your quoteâ€¦</div>
+    <div class="quote-skeleton" id="quoteSkeleton">Loading your quote…</div>
     <div id="quoteContent" hidden></div>
     <div id="quoteThanks" class="quote-thanks" hidden></div>
     <div id="quoteError" class="quote-err" hidden></div>
   </div>
 
   <div class="quote-foot">
-    Crystal Brook Wall Mounts Â· Gordonvale, FNQ<br/>
+    Crystal Brook Wall Mounts · Gordonvale, FNQ<br/>
     Questions? Reply to the email Max sent you, or ring <a href="tel:+61740561887">(07) 4056 1887</a>.
   </div>
 </div>
@@ -169,7 +169,7 @@
   fetch('/api/quote?id=' + encodeURIComponent(id) + '&token=' + encodeURIComponent(token))
     .then(r => r.ok ? r.json() : Promise.reject(new Error('not found')))
     .then(data => render(data.quote))
-    .catch(err => showError('We couldn\'t find that quote. The link might be expired â€” drop Max a message and he\'ll send a fresh one.'));
+    .catch(err => showError('We couldn\'t find that quote. The link might be expired — drop Max a message and he\'ll send a fresh one.'));
 
   function render(q) {
     skel.hidden = true;
@@ -185,18 +185,18 @@
     const firstName = (q.name || 'there').split(' ')[0];
     const mockup = q.quoteImageUrl
       ? '<div class="quote-mockup"><img src="' + q.quoteImageUrl + '" alt="Mockup of your custom piece"/></div>'
-      : '<div class="quote-mockup"><div class="quote-mockup-empty">Max will send a mockup separately if you\'d like one â€” just reply to his email.</div></div>';
-    const sizeLabel = ({small:'Small (â‰¤ 50 cm)', medium:'Medium (50â€“80 cm)', large:'Large (80â€“100 cm)', xl:'XL (100 cm +)'})[q.size] || (q.size || '');
+      : '<div class="quote-mockup"><div class="quote-mockup-empty">Max will send a mockup separately if you\'d like one — just reply to his email.</div></div>';
+    const sizeLabel = ({small:'Small (≤ 50 cm)', medium:'Medium (50–80 cm)', large:'Large (80–100 cm)', xl:'XL (100 cm +)'})[q.size] || (q.size || '');
 
     content.innerHTML = `
-      <p class="quote-eyebrow">Your custom quote Â· ${escapeHtml(q.id)}</p>
+      <p class="quote-eyebrow">Your custom quote · ${escapeHtml(q.id)}</p>
       <h1 class="quote-h1">A piece for you, <em>${escapeHtml(firstName)}</em>.</h1>
       <p class="quote-meta">Max has put this together for the piece you described. Have a look, then approve below or ask for changes.</p>
 
       ${mockup}
 
       <dl class="quote-meta-grid">
-        <div><dt>Subject</dt><dd>${escapeHtml(q.subject || 'â€”')}</dd></div>
+        <div><dt>Subject</dt><dd>${escapeHtml(q.subject || '—')}</dd></div>
         ${q.category ? '<div><dt>Category</dt><dd>' + escapeHtml(prettyCat(q.category)) + '</dd></div>' : ''}
         ${sizeLabel ? '<div><dt>Approx. size</dt><dd>' + escapeHtml(sizeLabel) + '</dd></div>' : ''}
       </dl>
@@ -209,13 +209,13 @@
       </div>
 
       <div class="quote-actions">
-        <button class="qbtn qbtn-approve" id="qApprove" type="button">Yes â€” go ahead and make it</button>
+        <button class="qbtn qbtn-approve" id="qApprove" type="button">Yes — go ahead and make it</button>
         <button class="qbtn qbtn-changes" id="qChanges" type="button">I'd like to discuss changes</button>
       </div>
 
       <div class="quote-changes-form" id="qChangesForm" hidden>
         <label for="qMsg">Tell Max what you'd like adjusted</label>
-        <textarea id="qMsg" placeholder="A different pose, a smaller size, an extra detail â€” whatever you have in mind."></textarea>
+        <textarea id="qMsg" placeholder="A different pose, a smaller size, an extra detail — whatever you have in mind."></textarea>
         <div class="quote-changes-actions">
           <button class="qbtn qbtn-approve" id="qSendChanges" type="button">Send to Max</button>
           <button class="qbtn qbtn-changes" id="qCancelChanges" type="button">Cancel</button>
@@ -258,7 +258,7 @@
       renderThanks(response, { responseMessage: message });
     } catch (err) {
       buttons.forEach(b => b.disabled = false);
-      errEl.textContent = 'Couldn\'t send your response â€” try again in a moment.';
+      errEl.textContent = 'Couldn\'t send your response — try again in a moment.';
       errEl.hidden = false;
     }
   }
@@ -269,15 +269,15 @@
         <div class="quote-thanks-mark">
           <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="none" stroke="#3a8a4f" stroke-width="3"/><path d="M19 33 L28 42 L46 22" fill="none" stroke="#3a8a4f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
-        <h2>Approved â€” Max is on it.</h2>
-        <p>You'll get an email when production starts, and another when your piece ships. Lead time is 4â€“6 weeks from now.</p>
+        <h2>Approved — Max is on it.</h2>
+        <p>You'll get an email when production starts, and another when your piece ships. Lead time is 4–6 weeks from now.</p>
         <p style="font-size:.82rem;color:#9c8e76;">If anything changes on your end, just reply to the email Max sent you.</p>`;
     } else {
       thanks.innerHTML = `
         <div class="quote-thanks-mark">
           <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="none" stroke="#a9864b" stroke-width="3"/><path d="M22 32 L42 32" fill="none" stroke="#a9864b" stroke-width="4" stroke-linecap="round"/></svg>
         </div>
-        <h2>Sent â€” Max will be in touch.</h2>
+        <h2>Sent — Max will be in touch.</h2>
         <p>Your note's gone to Max. He'll have a look and email you with an updated quote.</p>
         ${q.responseMessage ? '<div style="margin:24px auto;max-width:460px;text-align:left;background:#faf6ee;border-left:3px solid #a9864b;padding:14px 18px;border-radius:0 6px 6px 0;color:#1c130a;font-size:.95rem;line-height:1.55;white-space:pre-wrap;"><strong>What you sent:</strong>\n' + escapeHtml(q.responseMessage) + '</div>' : ''}`;
     }

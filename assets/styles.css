@@ -662,6 +662,9 @@ section > .container { padding: 0; }
 .g-tile:hover .g-stage img { transform: scale(1.06); }
 .g-overlay { display: none; }
 .gallery-cta { text-align: center; margin-top: 32px; }
+@media (max-width: 900px) {
+  .gallery { grid-template-columns: repeat(4, 1fr); }
+}
 @media (max-width: 720px) {
   .stories-stats { grid-template-columns: repeat(2, 1fr); }
   .tm-row { grid-template-columns: 1fr; gap: 24px; }
@@ -1012,7 +1015,7 @@ section > .container { padding: 0; }
 .nav-drawer-admin:hover { background: var(--ink); color: #fff; opacity: 1; }
 .nav-drawer-tagline { margin: 12px 0 0; font-size: .72rem; color: var(--ink-mute); }
 
-@media (max-width: 760px) {
+@media (max-width: 900px) {
   .nav-inner { grid-template-columns: auto 1fr auto; padding: 0 16px; }
   .nav-links { display: none; }
   .admin-link { display: none; }
