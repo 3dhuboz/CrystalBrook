@@ -52,5 +52,14 @@ enabled = true
 # bundle — it's designed to live in frontend code where customers can see
 # it. The pair authenticates the same Stripe account; only the secret
 # half can move money.
+# Custom domains — both apex and www resolve to this Worker.
+# Requires crystalbrookwallmounts.com.au to be active as a zone in the
+# same Cloudflare account before `wrangler deploy` will accept them.
+[[custom_domains]]
+hostname = "crystalbrookwallmounts.com.au"
+
+[[custom_domains]]
+hostname = "www.crystalbrookwallmounts.com.au"
+
 [vars]
 STRIPE_PUBLISHABLE_KEY = "pk_live_51TUg1f2L8xy2zrXzLQLbQyxAskrJAsC8PhPaOlrmeDEpkHjGVBk0HmzVgx2LSbu1Pk1QFfjpaXpbCMSNTULURCKq00XQSXGguY"
