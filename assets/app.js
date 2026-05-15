@@ -2029,11 +2029,16 @@ document.addEventListener('keydown', e=>{
         location.reload();
       })
       .catch(err => {
-        heroInner.innerHTML = `<div class="order-404" style="text-align:center;padding:40px 20px;">
-          <p class="eyebrow">Connection problem</p>
-          <h1>We couldn't reach our server.</h1>
-          <p>Your payment may have gone through — please don't pay again. Refresh the page in a minute, or email Max with the time you paid.</p>
-        </div>`;
+        console.error('confirm-stripe error', err);
+        const heroInner = document.querySelector('.hero-inner') || document.querySelector('main');
+        if (heroInner) {
+          heroInner.innerHTML = `<div style="text-align:center;padding:40px 20px;max-width:520px;margin:0 auto;">
+            <p class="eyebrow">Hmm</p>
+            <h1 style="font-size:1.5rem;margin-bottom:12px;">Something went wrong confirming your payment.</h1>
+            <p style="color:var(--ink-soft,#555)">Check your connection and refresh the page — or <a href="about.html">contact Max</a> if the problem persists.</p>
+            <p style="margin-top:24px;"><a class="btn btn-primary" href="shop.html">Back to the shop →</a></p>
+          </div>`;
+        }
       });
     return;
   }
