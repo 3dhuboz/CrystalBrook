@@ -11,7 +11,7 @@ const ADMIN_AUTH_KEY = 'cbwm_admin_password';
 const ADMIN_AUTH_NAME_KEY = 'cbwm_admin_name';
 
 function adminPassword() {
-  return localStorage.getItem(ADMIN_AUTH_KEY) || '';
+  return sessionStorage.getItem(ADMIN_AUTH_KEY) || '';
 }
 function adminAuthHeaders() {
   const pw = adminPassword();
@@ -33,7 +33,7 @@ async function saveProductChanges(id, patch) {
     body: JSON.stringify(patch),
   });
   if (res.status === 401) {
-    localStorage.removeItem(ADMIN_AUTH_KEY);
+    sessionStorage.removeItem(ADMIN_AUTH_KEY);
     showAdminLogin('Your session expired — please sign in again.');
     throw new Error('unauthorised');
   }
@@ -50,7 +50,7 @@ async function createProduct(payload) {
     body: JSON.stringify(payload),
   });
   if (res.status === 401) {
-    localStorage.removeItem(ADMIN_AUTH_KEY);
+    sessionStorage.removeItem(ADMIN_AUTH_KEY);
     showAdminLogin('Your session expired — please sign in again.');
     throw new Error('unauthorised');
   }
@@ -65,7 +65,7 @@ async function deleteProduct(id) {
     headers: { ...adminAuthHeaders() },
   });
   if (res.status === 401) {
-    localStorage.removeItem(ADMIN_AUTH_KEY);
+    sessionStorage.removeItem(ADMIN_AUTH_KEY);
     showAdminLogin('Your session expired — please sign in again.');
     throw new Error('unauthorised');
   }
@@ -77,11 +77,15 @@ async function deleteProduct(id) {
 }
 
 async function verifyAdminPassword(pw) {
-  const res = await fetch('/api/admin/check', {
-    method: 'POST',
-    headers: { 'X-Admin-Password': pw },
-  });
-  return res.ok;
+  try {
+    const res = await fetch('/api/admin/check', {
+      method: 'POST',
+      headers: { 'X-Admin-Password': pw },
+    });
+    return res.ok;
+  } catch (_) {
+    return false;
+  }
 }
 
 /* Admin-friendly category labels (storefront uses lowercase keys) */
@@ -264,7 +268,7 @@ async function refreshOrdersFromAPI() {
     });
     if (!res.ok) {
       if (res.status === 401) {
-        localStorage.removeItem(ADMIN_AUTH_KEY);
+        sessionStorage.removeItem(ADMIN_AUTH_KEY);
         showAdminLogin('Your session expired — please sign in again.');
       }
       return;
@@ -1313,7 +1317,7 @@ async function refreshRequestsFromAPI() {
     });
     if (!res.ok) {
       if (res.status === 401) {
-        localStorage.removeItem(ADMIN_AUTH_KEY);
+        sessionStorage.removeItem(ADMIN_AUTH_KEY);
         showAdminLogin('Your session expired — please sign in again.');
       }
       return;
@@ -3174,7 +3178,7 @@ function showAdminLogin(message = '') {
         submitBtn.textContent = 'Sign in';
         return;
       }
-      localStorage.setItem(ADMIN_AUTH_KEY, pw);
+      sessionStorage.setItem(ADMIN_AUTH_KEY, pw);
       hideAdminLogin();
       await refreshCatalogueAndRerender();
     } catch (err) {
@@ -3220,7 +3224,7 @@ async function refreshCatalogueAndRerender() {
   // on the first save attempt
   const ok = await verifyAdminPassword(pw).catch(() => false);
   if (!ok) {
-    localStorage.removeItem(ADMIN_AUTH_KEY);
+    sessionStorage.removeItem(ADMIN_AUTH_KEY);
     showAdminLogin('Your saved password no longer works — please sign in again.');
     return;
   }
@@ -3792,7 +3796,7 @@ function confirmDeleteProduct(product, opts = {}) {
   const btn = document.getElementById('signOutBtn');
   if (!btn) return;
   btn.addEventListener('click', () => {
-    localStorage.removeItem(ADMIN_AUTH_KEY);
+    sessionStorage.removeItem(ADMIN_AUTH_KEY);
     showAdminLogin('Signed out — sign in again to keep editing.');
   });
 })();
@@ -3810,7 +3814,7 @@ async function saveContent(key, value) {
     body: JSON.stringify({ value }),
   });
   if (res.status === 401) {
-    localStorage.removeItem(ADMIN_AUTH_KEY);
+    sessionStorage.removeItem(ADMIN_AUTH_KEY);
     showAdminLogin('Your session expired — please sign in again.');
     throw new Error('unauthorised');
   }
@@ -4111,7 +4115,7 @@ wireContentEditor('settings',    { statusElId: 'settingsSaveStatus',    saveAllB
       });
       if (res.status === 401) {
         // Current password apparently no longer matches what's live — kick to login
-        localStorage.removeItem(ADMIN_AUTH_KEY);
+        sessionStorage.removeItem(ADMIN_AUTH_KEY);
         showAdminLogin('Your saved password is no longer recognised — please sign in.');
         return;
       }
@@ -4120,7 +4124,7 @@ wireContentEditor('settings',    { statusElId: 'settingsSaveStatus',    saveAllB
         throw new Error(data.error || 'failed');
       }
       // Update cached password so the user stays signed in seamlessly
-      localStorage.setItem(ADMIN_AUTH_KEY, newPw);
+      sessionStorage.setItem(ADMIN_AUTH_KEY, newPw);
       curEl.value = '';
       newEl.value = '';
       confirmEl.value = '';
