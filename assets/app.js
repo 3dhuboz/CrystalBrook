@@ -2044,27 +2044,18 @@ document.addEventListener('keydown', e=>{
   }
 
   const STAGES = [
-    { key: 'received',  label: 'Order received',         blurb: 'We\'ve got it. Confirmation emailed.' },
-    { key: 'printing',  label: 'Archival print',          blurb: 'Pigment ink laid on cotton-rag.' },
-    { key: 'cut',       label: 'Hand-cut to silhouette',  blurb: 'Each piece traced and cut by hand.' },
-    { key: 'mount',     label: 'Mounted to timber',       blurb: 'Bonded to your chosen Australian hardwood.' },
-    { key: 'resin',     label: 'Resin pour',              blurb: 'Jewellery-grade epoxy poured in stages.' },
-    { key: 'cure',      label: 'Curing',                  blurb: '48 hours under glass-clear resin.' },
-    { key: 'shipped',   label: 'Shipped',                 blurb: 'Tracking number on the way to your inbox.' },
-    { key: 'delivered', label: 'Delivered',               blurb: 'On your wall.' },
+    { key: 'received',   label: 'Payment received', blurb: 'We\'ve got it. Confirmation emailed.' },
+    { key: 'production', label: 'In production',    blurb: 'Being made in the Gordonvale workshop.' },
+    { key: 'shipped',    label: 'Item shipped',     blurb: 'Tracking number on the way to your inbox.' },
+    { key: 'delivered',  label: 'Delivered',        blurb: 'On your wall.' },
   ];
 
-  // Order status maps to a stage index. Production has multiple sub-stages
-  // in the UI (printing → cut → mount → resin → cure) — when admin marks
-  // 'in_production', we plant the cursor in the middle (resin pour) so the
-  // earlier stages show as done. Once it's shipped or delivered, the
-  // cursor advances cleanly.
   function stageIndexFor(status) {
     switch (status) {
       case 'paid':          return 0;
-      case 'in_production': return 4;  // resin pour
-      case 'shipped':       return 6;
-      case 'delivered':     return 7;
+      case 'in_production': return 1;
+      case 'shipped':       return 2;
+      case 'delivered':     return 3;
       case 'refunded':
       case 'cancelled':     return -1;  // special-cased below
       default:              return 0;
