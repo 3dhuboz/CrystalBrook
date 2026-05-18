@@ -19,7 +19,7 @@ function adminAuthHeaders() {
 }
 
 async function fetchCatalogue() {
-  const res = await fetch('/api/products?drafts=1', { cache: 'no-store' });
+  const res = await fetch('/api/products?drafts=1', { cache: 'no-store', headers: { ...adminAuthHeaders() } });
   if (!res.ok) throw new Error('catalogue fetch failed: ' + res.status);
   const data = await res.json();
   return Array.isArray(data.products) ? data.products : [];
