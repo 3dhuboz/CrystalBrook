@@ -1087,6 +1087,209 @@ async function handleSendOrderInvoice(request, env, id) {
   return jsonResponse({ ok: true, id, sent: true });
 }
 
+/* Build a print-ready HTML page for an order invoice. Uses the same content
+ * as the emailed invoice but wraps it with @media print rules + an auto-print
+ * trigger so Max can hit "Print" → physical copy in two clicks. Served back
+ * as text/html; the admin UI fetches with auth headers and opens via blob URL.
+ */
+function orderInvoiceHtmlForPrint(orderRow) {
+  const { html: emailHtml } = orderInvoiceContent(orderRow);
+  // Pull the inner body of the email template — we want to re-host it in a
+  // print-optimised shell rather than nest two <html> documents.
+  const bodyMatch = emailHtml.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+  const inner = bodyMatch ? bodyMatch[1] : emailHtml;
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Invoice ${escapeHtml(orderRow.id)} — Crystal Brook Wall Mounts</title>
+<style>
+  @page { size: A4; margin: 14mm; }
+  html, body { background: #fff; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1c130a; }
+  .print-bar {
+    position: sticky; top: 0; z-index: 10;
+    background: #1c130a; color: #fff;
+    padding: 10px 16px; display: flex; gap: 12px; align-items: center; justify-content: space-between;
+    font-size: .85rem;
+  }
+  .print-bar button {
+    background: #a9864b; color: #fff; border: 0; border-radius: 4px;
+    padding: 8px 16px; font-size: .9rem; cursor: pointer; font-weight: 500;
+  }
+  .print-bar button:hover { background: #c79a55; }
+  .print-bar .close { background: transparent; color: #fff; text-decoration: underline; padding: 8px; }
+  .sheet { max-width: 580px; margin: 0 auto; padding: 24px; background: #fff; }
+  @media print {
+    .print-bar { display: none !important; }
+    .sheet { max-width: none; margin: 0; padding: 0; }
+    a[href]:after { content: ''; } /* no URLs printed next to mailto/tel links */
+  }
+</style>
+</head>
+<body>
+  <div class="print-bar">
+    <span>Invoice ${escapeHtml(orderRow.id)} — hit Print to send to printer or save as PDF</span>
+    <span>
+      <button type="button" onclick="window.print()">Print</button>
+      <button type="button" class="close" onclick="window.close()">Close</button>
+    </span>
+  </div>
+  <div class="sheet">${inner}</div>
+  <script>
+    // Auto-open print dialog after the page settles (fonts, layout).
+    // User can cancel and hit "Print" again from the bar above.
+    window.addEventListener('load', () => setTimeout(() => window.print(), 250));
+  </script>
+</body>
+</html>`;
+}
+
+/* Build a print-ready A4 shipping slip — large address block (so Max can
+ * stick it on the parcel or copy off it for the AusPost label) plus a brief
+ * item summary and order id. Different layout from the invoice on purpose:
+ * the customer-facing one is the invoice; this one is for Max's workshop.
+ */
+function orderShippingSlipHtmlForPrint(orderRow) {
+  let items = [];
+  try { items = JSON.parse(orderRow.items || '[]'); } catch (_) {}
+  const created = orderRow.created_at
+    ? new Date(orderRow.created_at.replace(' ', 'T') + 'Z')
+    : new Date();
+  const dateLabel = created.toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  const cityLine = [orderRow.suburb, orderRow.state, orderRow.postcode].filter(Boolean).join(' ').trim();
+  const itemRows = items.map(i =>
+    `<li><span class="qty">×${i.qty || 1}</span> ${escapeHtml(i.name)}</li>`
+  ).join('');
+
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Shipping slip ${escapeHtml(orderRow.id)} — Crystal Brook Wall Mounts</title>
+<style>
+  @page { size: A4; margin: 18mm; }
+  html, body { background: #fff; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1c130a; }
+  .print-bar {
+    position: sticky; top: 0; z-index: 10;
+    background: #1c130a; color: #fff;
+    padding: 10px 16px; display: flex; gap: 12px; align-items: center; justify-content: space-between;
+    font-size: .85rem;
+  }
+  .print-bar button {
+    background: #a9864b; color: #fff; border: 0; border-radius: 4px;
+    padding: 8px 16px; font-size: .9rem; cursor: pointer; font-weight: 500;
+  }
+  .print-bar button:hover { background: #c79a55; }
+  .print-bar .close { background: transparent; color: #fff; text-decoration: underline; padding: 8px; }
+  .sheet { max-width: 720px; margin: 0 auto; padding: 32px 28px; }
+  .meta-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 28px; padding-bottom: 16px; border-bottom: 2px solid #1c130a; }
+  .brand-eyebrow { font-size: .68rem; letter-spacing: .18em; text-transform: uppercase; color: #7a6e5c; margin: 0 0 4px; }
+  .brand-name { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: 1.6rem; margin: 0; }
+  .order-id { font-size: 1.2rem; font-weight: 500; margin: 0; }
+  .order-date { font-size: .85rem; color: #7a6e5c; margin: 4px 0 0; text-align: right; }
+  .from-block { font-size: .8rem; color: #7a6e5c; margin: 18px 0 32px; }
+  .ship-label { font-size: .68rem; letter-spacing: .2em; text-transform: uppercase; color: #7a6e5c; margin: 0 0 14px; }
+  .ship-addr {
+    font-size: 1.55rem;
+    line-height: 1.45;
+    font-weight: 500;
+    padding: 22px 24px;
+    border: 2px solid #1c130a;
+    border-radius: 4px;
+    margin: 0 0 36px;
+    letter-spacing: .005em;
+  }
+  .ship-addr .recipient { font-size: 1.7rem; font-weight: 600; display: block; margin-bottom: 10px; }
+  .ship-addr .contact { display: block; font-size: .9rem; color: #7a6e5c; margin-top: 12px; font-weight: 400; }
+  .items-h { font-size: .68rem; letter-spacing: .18em; text-transform: uppercase; color: #7a6e5c; margin: 0 0 10px; }
+  .items { list-style: none; padding: 0; margin: 0 0 28px; }
+  .items li { padding: 10px 0; border-bottom: 1px solid #e8e1d2; font-size: 1rem; }
+  .items .qty { display: inline-block; min-width: 2.5em; color: #a9864b; font-weight: 600; margin-right: 6px; }
+  .notes-h { font-size: .68rem; letter-spacing: .18em; text-transform: uppercase; color: #7a6e5c; margin: 0 0 8px; }
+  .notes { margin: 0 0 24px; padding: 12px 14px; background: #f7f3ec; border-left: 3px solid #a9864b; font-size: .95rem; white-space: pre-wrap; }
+  .footer { margin-top: 36px; padding-top: 14px; border-top: 1px solid #e8e1d2; font-size: .75rem; color: #7a6e5c; text-align: center; }
+  @media print {
+    .print-bar { display: none !important; }
+    .sheet { max-width: none; margin: 0; padding: 0; }
+  }
+</style>
+</head>
+<body>
+  <div class="print-bar">
+    <span>Shipping slip ${escapeHtml(orderRow.id)} — hit Print to send to printer</span>
+    <span>
+      <button type="button" onclick="window.print()">Print</button>
+      <button type="button" class="close" onclick="window.close()">Close</button>
+    </span>
+  </div>
+  <div class="sheet">
+    <div class="meta-row">
+      <div>
+        <p class="brand-eyebrow">Crystal Brook Wall Mounts</p>
+        <p class="brand-name">Shipping slip</p>
+      </div>
+      <div>
+        <p class="order-id">${escapeHtml(orderRow.id)}</p>
+        <p class="order-date">${dateLabel}</p>
+      </div>
+    </div>
+
+    <p class="from-block"><strong>From:</strong> Crystal Brook Wall Mounts, Gordonvale FNQ</p>
+
+    <p class="ship-label">Ship to</p>
+    <div class="ship-addr">
+      <span class="recipient">${escapeHtml(orderRow.name || '')}</span>
+      ${orderRow.address ? escapeHtml(orderRow.address) + '<br/>' : ''}
+      ${cityLine ? escapeHtml(cityLine) : ''}
+      ${(orderRow.email || orderRow.phone) ? `<span class="contact">${escapeHtml(orderRow.email || '')}${orderRow.email && orderRow.phone ? ' · ' : ''}${escapeHtml(orderRow.phone || '')}</span>` : ''}
+    </div>
+
+    <p class="items-h">Contents</p>
+    <ul class="items">${itemRows || '<li><em>No items listed</em></li>'}</ul>
+
+    ${orderRow.notes ? `<p class="notes-h">Notes</p><div class="notes">${escapeHtml(orderRow.notes)}</div>` : ''}
+
+    <p class="footer">Crystal Brook Wall Mounts · Gordonvale, FNQ · hello@crystalbrookwallmounts.com.au</p>
+  </div>
+  <script>
+    window.addEventListener('load', () => setTimeout(() => window.print(), 250));
+  </script>
+</body>
+</html>`;
+}
+
+/* Returns a print-ready invoice HTML page for the order. Admin-only — the
+ * UI fetches it with auth headers then opens via blob URL in a new tab. */
+async function handleOrderInvoiceHtml(request, env, id) {
+  if (!await isAuthorised(request, env)) return errorResponse('unauthorised', 401);
+  const row = await env.DB.prepare('SELECT * FROM orders WHERE id = ?').bind(id).first();
+  if (!row) return errorResponse('not found', 404);
+  return new Response(orderInvoiceHtmlForPrint(row), {
+    status: 200,
+    headers: {
+      'content-type': 'text/html; charset=utf-8',
+      'cache-control': 'no-store',
+    },
+  });
+}
+
+/* Same but for the shipping slip — admin-only print page. */
+async function handleOrderShippingSlipHtml(request, env, id) {
+  if (!await isAuthorised(request, env)) return errorResponse('unauthorised', 401);
+  const row = await env.DB.prepare('SELECT * FROM orders WHERE id = ?').bind(id).first();
+  if (!row) return errorResponse('not found', 404);
+  return new Response(orderShippingSlipHtmlForPrint(row), {
+    status: 200,
+    headers: {
+      'content-type': 'text/html; charset=utf-8',
+      'cache-control': 'no-store',
+    },
+  });
+}
+
 async function handleDeleteOrder(request, env, id) {
   if (!await isAuthorised(request, env)) return errorResponse('unauthorised', 401);
   const res = await env.DB.prepare('DELETE FROM orders WHERE id = ?').bind(id).run();
@@ -1217,7 +1420,12 @@ async function handleStripeCheckout(request, env) {
 
   const sessionBody = {
     mode: 'payment',
-    payment_method_types: ['card'],
+    // 'card' covers Visa/Mastercard/Amex/Apple Pay/Google Pay. 'paypal' lets
+    // customers pay with their PayPal account at Stripe's hosted checkout —
+    // funds still settle to the Stripe balance and pay out to Max's bank
+    // the same way as card payments. PayPal must also be enabled in
+    // Stripe Dashboard → Settings → Payment methods for the button to appear.
+    payment_method_types: ['card', 'paypal'],
     line_items: lineItems,
     success_url: successUrl,
     cancel_url: cancelUrl,
@@ -1748,6 +1956,14 @@ export default {
         const invoiceMatch = path.match(/^\/api\/orders\/([\w-]+)\/send-invoice$/);
         if (invoiceMatch && request.method === 'POST') {
           return await handleSendOrderInvoice(request, env, invoiceMatch[1]);
+        }
+        const printInvoiceMatch = path.match(/^\/api\/orders\/([\w-]+)\/invoice\.html$/);
+        if (printInvoiceMatch && request.method === 'GET') {
+          return await handleOrderInvoiceHtml(request, env, printInvoiceMatch[1]);
+        }
+        const shipSlipMatch = path.match(/^\/api\/orders\/([\w-]+)\/label\.html$/);
+        if (shipSlipMatch && request.method === 'GET') {
+          return await handleOrderShippingSlipHtml(request, env, shipSlipMatch[1]);
         }
         if (path === '/api/upload' && request.method === 'POST') {
           return await handleUpload(request, env);

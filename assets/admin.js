@@ -939,6 +939,8 @@ function openOrderDetail(id) {
 
       <div class="rd-actions">
         <button class="btn btn-gold" type="button" id="odSendInvoice">Email invoice to customer</button>
+        <button class="btn btn-ghost" type="button" id="odPrintInvoice">Print invoice</button>
+        <button class="btn btn-ghost" type="button" id="odPrintLabel">Print shipping slip</button>
         <a class="btn btn-ghost" href="mailto:${o.email}?subject=${encodeURIComponent('Your Crystal Brook order ' + o.id)}&body=${encodeURIComponent('Hi ' + ((o.name || 'there').split(' ')[0]) + ',\n\n')}">Reply by email →</a>
         <a class="btn btn-ghost" href="../order.html?id=${o.id}" target="_blank" rel="noopener">View customer-facing tracking →</a>
       </div>
@@ -1005,6 +1007,46 @@ function openOrderDetail(id) {
       sendInvBtn.textContent = original;
     }
   });
+
+  // Print invoice / Print shipping slip — fetch the print-ready HTML with
+  // auth headers, then open it via a blob URL so the new tab can render
+  // without re-authenticating. The Worker route returns text/html with an
+  // auto-print trigger so Max gets the print dialog straight away.
+  async function openPrintPage(kind, label, btn) {
+    if (!btn) return;
+    btn.disabled = true;
+    const original = btn.textContent;
+    btn.textContent = 'Loading…';
+    try {
+      const res = await fetch('/api/orders/' + encodeURIComponent(id) + '/' + kind + '.html', {
+        headers: { ...adminAuthHeaders() },
+      });
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || 'load failed');
+      }
+      const html = await res.text();
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const win = window.open(url, '_blank');
+      if (!win) {
+        toast('Popup blocked — allow popups for this site to print');
+        URL.revokeObjectURL(url);
+        return;
+      }
+      // Give the new tab time to load the HTML before we revoke the URL.
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (err) {
+      toast('Couldn\'t open ' + label + ': ' + (err.message || 'try again'));
+    } finally {
+      btn.disabled = false;
+      btn.textContent = original;
+    }
+  }
+  const printInvBtn = modal.querySelector('#odPrintInvoice');
+  printInvBtn?.addEventListener('click', () => openPrintPage('invoice', 'invoice', printInvBtn));
+  const printLabelBtn = modal.querySelector('#odPrintLabel');
+  printLabelBtn?.addEventListener('click', () => openPrintPage('label', 'shipping slip', printLabelBtn));
 
   // Status toggle clicks → PATCH /api/orders/:id
   const grid    = modal.querySelector('#odStatusGrid');
@@ -2739,8 +2781,9 @@ const HELP_GUIDES = {
         'When you mark it Shipped, paste in the AusPost tracking number — the customer email goes out automatically.',
       ]},
       { h: 'Sending an invoice', steps: [
-        'Open the order and hit "Send invoice" — this emails the customer a copy of their receipt.',
-        'Print label and print invoice are coming in a future update.',
+        'Open the order and hit "Email invoice to customer" — this emails them a copy of their receipt.',
+        '"Print invoice" opens the same receipt in a new tab and triggers your printer — handy if you want to include a paper copy in the parcel.',
+        '"Print shipping slip" opens a one-page A4 with the customer\'s address and what they ordered — stick it on the parcel or use it to fill out the AusPost label.',
       ]},
     ],
   },
