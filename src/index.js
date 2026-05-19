@@ -923,7 +923,16 @@ async function sendViaResend(env, payload) {
   // beneath each CTA so customers can copy-paste if the click-tracking
   // redirect fails to resolve (which it does on plenty of corporate
   // networks and ad-blocker-heavy DNS resolvers).
-  const body = { ...payload, tracking: { click: false, open: false } };
+  //
+  // reply_to: hello@crystalbrookwallmounts.com.au is a send-only address
+  // (no inbox), so we route customer replies to Max's actual Optus inbox
+  // via env.MAIL_REPLY_TO. If unset, no reply-to header is added and the
+  // bounce/reply goes to the from address (which won't receive it).
+  const body = {
+    ...payload,
+    ...(env.MAIL_REPLY_TO ? { reply_to: env.MAIL_REPLY_TO } : {}),
+    tracking: { click: false, open: false },
+  };
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
