@@ -2738,9 +2738,9 @@ const HELP_GUIDES = {
         'Use the status dropdown to move it to the next step.',
         'When you mark it Shipped, paste in the AusPost tracking number — the customer email goes out automatically.',
       ]},
-      { h: 'Printing labels & invoices', steps: [
-        'Open the order, then use the "Print label" or "Print invoice" buttons up the top right.',
-        'Both are A4-friendly so any home printer works.',
+      { h: 'Sending an invoice', steps: [
+        'Open the order and hit "Send invoice" — this emails the customer a copy of their receipt.',
+        'Print label and print invoice are coming in a future update.',
       ]},
     ],
   },
@@ -3214,6 +3214,10 @@ async function refreshCatalogueAndRerender() {
   } catch (err) {
     console.warn('catalogue refresh failed', err);
   }
+
+  // Also refresh orders — they have their own auth-gated fetch and
+  // need to be loaded after login, not just on cold script start.
+  try { await refreshOrdersFromAPI(); } catch (_) {}
 }
 
 (async () => {
