@@ -249,37 +249,43 @@ function pickMontagePics(cat, n = 3){
   // suitable products until we have N. Both passes share a "seen" set so
   // the same image isn't picked twice.
   //
-  // Skip rules for both passes:
-  //   - data: URLs (old admin uploads pre-R2)
+  // Skip rules:
+  //   - data: URLs (old admin uploads pre-R2) — always skipped
   //   - /uploads/*.jpg / .jpeg / .webp — admin uploads that got flattened to
-  //     JPEG and have no transparency. They look like square stamps when
-  //     placed on the coloured stage, which is what was making Animals +
-  //     Birds montages look broken.
+  //     JPEG and have no transparency. They look like square stamps on the
+  //     coloured montage stage, which is what was making Animals + Birds
+  //     montages look broken in the auto-pick path. So we filter them out
+  //     of Pass 2 (auto-fill) — but Pass 1 (Max's explicit picks) bypasses
+  //     the filter. If Max has deliberately ticked "feature on home" for
+  //     a JPEG product, his choice wins; otherwise the box would silently
+  //     do nothing and he'd never know why.
+  //
   // The image still renders fine everywhere else (product page, shop
-  // grid) — we just don't put it in the cutout montage.
-  function suitable(p) {
+  // grid) — we just default it out of the auto-pick montage.
+  function suitable(p, { strict = true } = {}) {
     if (!p || !p.image || p.cat !== cat) return false;
     if (p.image.startsWith('data:')) return false;
-    if (/^\/uploads\/.*\.(jpe?g|webp)$/i.test(p.image)) return false;
+    if (strict && /^\/uploads\/.*\.(jpe?g|webp)$/i.test(p.image)) return false;
     return true;
   }
   const seen = new Set();
   const out = [];
-  const push = (p) => {
-    if (!suitable(p) || seen.has(p.image)) return;
-    seen.add(p.image);
-    out.push(p);
-  };
-  // Pass 1: explicitly featured products
+  // Pass 1: explicitly featured products — bypass the cutout-only filter
+  // so Max's deliberate picks always show, even if the image is a JPEG.
   for (const p of SHOP) {
     if (!p.feature_on_home) continue;
-    push(p);
+    if (!suitable(p, { strict: false }) || seen.has(p.image)) continue;
+    seen.add(p.image);
+    out.push(p);
     if (out.length >= n) return out;
   }
-  // Pass 2: auto-fill from the rest of the catalogue
+  // Pass 2: auto-fill from the rest of the catalogue, keeping the strict
+  // filter so we don't accidentally splat a square JPEG into the slot.
   for (const p of SHOP) {
     if (p.feature_on_home) continue;
-    push(p);
+    if (!suitable(p) || seen.has(p.image)) continue;
+    seen.add(p.image);
+    out.push(p);
     if (out.length >= n) return out;
   }
   return out;
