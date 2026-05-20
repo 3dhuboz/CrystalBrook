@@ -3755,6 +3755,21 @@ async function shrinkAndUploadImage(file) {
     const errors = validateDrawerData(data, _drawerMode);
     if (errors.length) { alert(errors.join('\n')); return; }
 
+    // Pre-flight: each home-page category card has exactly 3 slots. If Max
+    // ticks "Feature on home" on a 4th product in the same category, save
+    // would silently fail (server enforces the cap with a 409). Catch it
+    // here so the toast is friendly and the round-trip is skipped.
+    if (data.feature_on_home) {
+      const editingId = _drawerMode === 'new' ? null : (_drawerCurrentProduct?.id ?? null);
+      const otherFeaturedInCat = PRODUCTS.filter(p =>
+        p.catKey === data.cat && p.feature_on_home && p.id !== editingId
+      ).length;
+      if (otherFeaturedInCat >= 3) {
+        toast(`That category already has 3 products pinned to the home page (max is 3). Untick one first, then come back.`);
+        return;
+      }
+    }
+
     const saveBtn = _drawer.saveBtn();
     saveBtn.disabled = true;
     saveBtn.textContent = 'Saving…';

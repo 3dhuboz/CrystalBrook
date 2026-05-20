@@ -192,8 +192,17 @@ async function handleUpdateProduct(request, env, id) {
   const errors = validateProductPatch(body);
   if (errors.length) return errorResponse(errors.join('; '));
 
-  const existing = await env.DB.prepare('SELECT id FROM products WHERE id = ?').bind(id).first();
+  const existing = await env.DB.prepare('SELECT id, cat, feature_on_home FROM products WHERE id = ?').bind(id).first();
   if (!existing) return errorResponse('not found', 404);
+
+  // Enforce the home-page cap *before* we issue the UPDATE so a 4th tick
+  // never makes it into the table. Only check when flipping from 0 → 1;
+  // re-saving an already-featured product is a no-op for cap purposes.
+  if (body.feature_on_home && !existing.feature_on_home) {
+    const cat = body.cat || existing.cat;
+    const capError = await checkFeatureHomeCap(env, cat, id);
+    if (capError) return errorResponse(capError, 409);
+  }
 
   const sets = [];
   const params = [];
@@ -222,6 +231,25 @@ async function handleUpdateProduct(request, env, id) {
   return jsonResponse({ product: rowToProduct(row) });
 }
 
+/* Each home-page category card has exactly 3 image slots. Allow no more
+ * than 3 products per category to be flagged feature_on_home — otherwise
+ * the 4th would silently be ignored by the storefront's montage picker.
+ * Pass the id being saved (for an update) so we don't double-count it.
+ * Returns null if OK, or an error-message string if at cap.
+ */
+async function checkFeatureHomeCap(env, cat, excludeId) {
+  const FEATURE_CAP = 3;
+  let sql = 'SELECT COUNT(*) AS n FROM products WHERE feature_on_home = 1 AND cat = ?';
+  const params = [cat];
+  if (excludeId) { sql += ' AND id != ?'; params.push(excludeId); }
+  const row = await env.DB.prepare(sql).bind(...params).first();
+  const n = row?.n ?? 0;
+  if (n >= FEATURE_CAP) {
+    return `That category already has ${n} products pinned to the home page (max ${FEATURE_CAP}). Untick one first.`;
+  }
+  return null;
+}
+
 async function handleCreateProduct(request, env) {
   if (!await isAuthorised(request, env)) return errorResponse('unauthorised', 401);
 
@@ -241,6 +269,11 @@ async function handleCreateProduct(request, env) {
 
   const dup = await env.DB.prepare('SELECT id FROM products WHERE id = ?').bind(body.id).first();
   if (dup) return errorResponse(`product id "${body.id}" already exists`, 409);
+
+  if (body.feature_on_home) {
+    const capError = await checkFeatureHomeCap(env, body.cat, null);
+    if (capError) return errorResponse(capError, 409);
+  }
 
   await env.DB.prepare(`
     INSERT INTO products (id, name, cat, price, size, image, pimg, badge, meta, description, gallery, draft, hide_wall_mockup, feature_on_home, sort_order)
