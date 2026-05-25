@@ -2,3 +2,5 @@ User-agent: *
 Disallow: /api/
 Disallow: /admin/
 Allow: /
+
+Sitemap: https://www.crystalbrookwallmounts.com.au/sitemap.xml

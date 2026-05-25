@@ -50,6 +50,57 @@ function errorResponse(message, status = 400) {
   return jsonResponse({ error: message }, { status });
 }
 
+function xmlEscape(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+async function handleSitemap(request, env) {
+  const origin = 'https://www.crystalbrookwallmounts.com.au';
+  const today = new Date().toISOString().slice(0, 10);
+  const urls = [
+    { loc: `${origin}/`, priority: '1.0', changefreq: 'weekly' },
+    { loc: `${origin}/shop.html`, priority: '0.9', changefreq: 'weekly' },
+    { loc: `${origin}/about.html`, priority: '0.7', changefreq: 'monthly' },
+    { loc: `${origin}/policies.html`, priority: '0.4', changefreq: 'monthly' },
+  ];
+
+  if (env.DB) {
+    const result = await env.DB.prepare(
+      'SELECT id FROM products WHERE draft = 0 ORDER BY cat, sort_order, name'
+    ).all();
+    for (const row of result.results || []) {
+      urls.push({
+        loc: `${origin}/product.html?id=${encodeURIComponent(row.id)}`,
+        priority: '0.8',
+        changefreq: 'weekly',
+      });
+    }
+  }
+
+  const body = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.map(({ loc, priority, changefreq }) => `  <url>
+    <loc>${xmlEscape(loc)}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>${changefreq}</changefreq>
+    <priority>${priority}</priority>
+  </url>`).join('\n')}
+</urlset>
+`;
+
+  return new Response(body, {
+    headers: {
+      'content-type': 'application/xml; charset=utf-8',
+      'cache-control': 'public, max-age=3600',
+    },
+  });
+}
+
 function rowToProduct(row) {
   // D1 returns SQL nulls as JS nulls; gallery is stored as JSON text.
   let gallery = null;
@@ -1917,6 +1968,15 @@ export default {
     const originalScheme = cfVisitor ? JSON.parse(cfVisitor).scheme : url.protocol.replace(':', '');
     if (originalScheme === 'http' && !url.hostname.endsWith('.workers.dev')) {
       return Response.redirect('https://' + url.host + url.pathname + url.search, 301);
+    }
+
+    if (path === '/sitemap.xml' && request.method === 'GET') {
+      try {
+        return await handleSitemap(request, env);
+      } catch (err) {
+        console.error('Sitemap error', err);
+        return errorResponse('internal error', 500);
+      }
     }
 
     // API routes
