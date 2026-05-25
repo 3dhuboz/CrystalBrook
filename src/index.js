@@ -59,6 +59,27 @@ function xmlEscape(value) {
     .replace(/'/g, '&apos;');
 }
 
+async function withProductCanonical(response, id) {
+  if (!id) return response;
+  const canonicalUrl = `https://www.crystalbrookwallmounts.com.au/wall-mounts/${encodeURIComponent(id)}`;
+  const rewritten = new HTMLRewriter()
+    .on('link[rel="canonical"]', {
+      element(element) {
+        element.setAttribute('href', canonicalUrl);
+      },
+    })
+    .on('meta[property="og:url"]', {
+      element(element) {
+        element.setAttribute('content', canonicalUrl);
+      },
+    })
+    .transform(response);
+
+  const res = new Response(rewritten.body, rewritten);
+  res.headers.delete('content-length');
+  return res;
+}
+
 async function handleSitemap(request, env) {
   const origin = 'https://www.crystalbrookwallmounts.com.au';
   const today = new Date().toISOString().slice(0, 10);
@@ -75,7 +96,7 @@ async function handleSitemap(request, env) {
     ).all();
     for (const row of result.results || []) {
       urls.push({
-        loc: `${origin}/product.html?id=${encodeURIComponent(row.id)}`,
+        loc: `${origin}/wall-mounts/${encodeURIComponent(row.id)}`,
         priority: '0.8',
         changefreq: 'weekly',
       });
@@ -1979,6 +2000,17 @@ export default {
       }
     }
 
+    const productPageMatch = path.match(/^\/wall-mounts\/([\w-]+)$/);
+    if (productPageMatch && request.method === 'GET' && env.ASSETS && typeof env.ASSETS.fetch === 'function') {
+      const assetUrl = new URL(request.url);
+      assetUrl.pathname = '/product.html';
+      assetUrl.search = `?id=${encodeURIComponent(productPageMatch[1])}`;
+      const assetResponse = await env.ASSETS.fetch(new Request(assetUrl.toString(), request));
+      const res = new Response(assetResponse.body, assetResponse);
+      res.headers.set('strict-transport-security', 'max-age=31536000; includeSubDomains; preload');
+      return await withProductCanonical(res, productPageMatch[1]);
+    }
+
     // API routes
     if (path.startsWith('/api/')) {
       try {
@@ -2097,7 +2129,8 @@ export default {
       // Add HSTS so browsers remember HTTPS after the first visit
       const res = new Response(assetResponse.body, assetResponse);
       res.headers.set('strict-transport-security', 'max-age=31536000; includeSubDomains; preload');
-      return res;
+      const productId = path === '/product.html' ? url.searchParams.get('id') : '';
+      return await withProductCanonical(res, productId);
     }
     return new Response('Not configured', { status: 500 });
   },

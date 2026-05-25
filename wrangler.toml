@@ -17,6 +17,7 @@ compatibility_date = "2026-05-15"
 directory = "."
 not_found_handling = "404-page"
 binding = "ASSETS"
+run_worker_first = true
 
 [[d1_databases]]
 binding = "DB"

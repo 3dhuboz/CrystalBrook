@@ -6,6 +6,10 @@ const STD_DESC = "Resin-coated cut-out archival print, mounted on timber and res
 
 const IMG = 'assets/images/products/';
 
+function productHref(id) {
+  return `/wall-mounts/${encodeURIComponent(id)}`;
+}
+
 /* PRODUCTS catalogue.
  * Note: products without their own dedicated photo currently use the
  * visually-closest existing image as a stand-in (commented "stand-in"
@@ -382,7 +386,7 @@ function bindCardInteractions(){
     // Card-level click → full product page (Quick View button stays as lightbox)
     card.addEventListener('click', (e)=>{
       if (e.target.closest('[data-add]') || e.target.closest('[data-view]') || e.target.closest('[data-wishlist-toggle]')) return;
-      location.href = `product.html?id=${card.dataset.id}`;
+      location.href = productHref(card.dataset.id);
     });
     bindTilt(card);
   });
@@ -828,7 +832,7 @@ document.getElementById('lightboxClose')?.addEventListener('click', closeLightbo
       return;
     }
     results.innerHTML = matches.map(p => `
-      <a class="search-result" href="product.html?id=${p.id}">
+      <a class="search-result" href="${productHref(p.id)}">
         <div class="search-result-thumb stage-${p.cat}">
           ${p.image
             ? `<img src="${p.image}" alt="" loading="lazy"/>`
@@ -930,9 +934,9 @@ function renderCart(){
       : `<span class="cart-thumb-mark">${shortName(i.name)}</span>`;
     return `
       <div class="cart-item">
-        <a class="cart-thumb stage-${cat}" href="product.html?id=${i.id}">${thumb}</a>
+        <a class="cart-thumb stage-${cat}" href="${productHref(i.id)}">${thumb}</a>
         <div class="cart-meta">
-          <a class="cart-item-name" href="product.html?id=${i.id}">${i.name}</a>
+          <a class="cart-item-name" href="${productHref(i.id)}">${i.name}</a>
           <div class="cart-item-sub">${size}</div>
           <div class="cart-qty-row">
             <div class="cart-qty">
@@ -1041,9 +1045,9 @@ function renderWishlist(){
       : `<span class="wish-thumb-mark">${shortName(p.name)}</span>`;
     return `
       <div class="cart-item wish-item">
-        <a class="wish-thumb stage-${p.cat}" href="product.html?id=${p.id}">${thumb}</a>
+        <a class="wish-thumb stage-${p.cat}" href="${productHref(p.id)}">${thumb}</a>
         <div class="wish-meta">
-          <a class="cart-item-name" href="product.html?id=${p.id}">${p.name}</a>
+          <a class="cart-item-name" href="${productHref(p.id)}">${p.name}</a>
           <div class="cart-item-meta">${p.size} · ${CAT_LABELS[p.cat]}</div>
           <div class="wish-actions">
             <button class="wish-add" data-wish-add="${p.id}" type="button">Add to cart</button>
@@ -2224,9 +2228,9 @@ document.addEventListener('keydown', e=>{
           : `<span class="order-item-mark">${shortName(i.name)}</span>`;
         return `
           <div class="order-item">
-            <a class="order-item-thumb stage-${p?.cat || 'animals'}" href="product.html?id=${i.id}">${thumb}</a>
+            <a class="order-item-thumb stage-${p?.cat || 'animals'}" href="${productHref(i.id)}">${thumb}</a>
             <div class="order-item-meta">
-              <a href="product.html?id=${i.id}">${i.name}</a>
+              <a href="${productHref(i.id)}">${i.name}</a>
               <span>${p?.size || ''}${p?.size && p?.cat ? ' · ' : ''}${CAT_LABELS[p?.cat] || ''}</span>
               <span class="order-item-qty">Qty ${i.qty}</span>
             </div>
@@ -2279,7 +2283,8 @@ function renderProductPage() {
   if (!titleEl) return;
 
   const params = new URLSearchParams(location.search);
-  const id = params.get('id');
+  const productPathMatch = location.pathname.match(/^\/wall-mounts\/([^/]+)$/);
+  const id = params.get('id') || (productPathMatch ? decodeURIComponent(productPathMatch[1]) : null);
   const product = id ? PRODUCTS.find(p => p.id === id) : null;
 
   if (!product){
@@ -2312,10 +2317,33 @@ function renderProductPage() {
   }
 
   // Document title + meta description
+  const canonicalUrl = `https://www.crystalbrookwallmounts.com.au${productHref(product.id)}`;
+  const canonicalEl = document.querySelector('link[rel="canonical"]');
+  if (canonicalEl) canonicalEl.setAttribute('href', canonicalUrl);
+  const ogUrl = document.querySelector('meta[property="og:url"]');
+  if (ogUrl) ogUrl.setAttribute('content', canonicalUrl);
+  const productPageTitle = `${product.name} · Crystal Brook Wall Mounts`;
+  const ogTitle = document.querySelector('meta[property="og:title"]');
+  if (ogTitle) ogTitle.setAttribute('content', productPageTitle);
+  const twitterTitle = document.querySelector('meta[name="twitter:title"]');
+  if (twitterTitle) twitterTitle.setAttribute('content', productPageTitle);
+  const productImageUrl = product.image
+    ? new URL(product.image, 'https://www.crystalbrookwallmounts.com.au/').href
+    : '';
+  const ogImage = document.querySelector('meta[property="og:image"]');
+  if (ogImage && productImageUrl) ogImage.setAttribute('content', productImageUrl);
+  const twitterImage = document.querySelector('meta[name="twitter:image"]');
+  if (twitterImage && productImageUrl) twitterImage.setAttribute('content', productImageUrl);
   document.title = `${product.name} · Crystal Brook Wall Mounts`;
   const metaDesc = document.querySelector('meta[name="description"]');
   if (metaDesc) metaDesc.setAttribute('content',
     `${product.name} — ${product.size}. ${product.desc}`);
+
+  const productMetaDescription = metaDesc?.getAttribute('content') || `${product.name} ${product.size}. ${product.desc}`;
+  const ogDesc = document.querySelector('meta[property="og:description"]');
+  if (ogDesc) ogDesc.setAttribute('content', productMetaDescription);
+  const twitterDesc = document.querySelector('meta[name="twitter:description"]');
+  if (twitterDesc) twitterDesc.setAttribute('content', productMetaDescription);
 
   // Crumb
   const crumbCat = document.getElementById('pdpCrumbCat');
@@ -2502,7 +2530,7 @@ function renderProductPage() {
       relatedGrid.querySelectorAll('.product-card').forEach(card => {
         card.addEventListener('click', e => {
           if (e.target.closest('[data-add]') || e.target.closest('[data-view]')) return;
-          location.href = `product.html?id=${card.dataset.id}`;
+          location.href = productHref(card.dataset.id);
         });
         const addBtn = card.querySelector('[data-add]');
         addBtn?.addEventListener('click', e => {
