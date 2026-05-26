@@ -1991,6 +1991,15 @@ export default {
       return Response.redirect('https://' + url.host + url.pathname + url.search, 301);
     }
 
+    if (path === '/' && request.method === 'GET' && env.ASSETS && typeof env.ASSETS.fetch === 'function') {
+      const assetUrl = new URL(request.url);
+      assetUrl.pathname = '/index.html';
+      const assetResponse = await env.ASSETS.fetch(new Request(assetUrl.toString(), request));
+      const res = new Response(assetResponse.body, assetResponse);
+      res.headers.set('strict-transport-security', 'max-age=31536000; includeSubDomains; preload');
+      return res;
+    }
+
     if (path === '/sitemap.xml' && request.method === 'GET') {
       try {
         return await handleSitemap(request, env);
