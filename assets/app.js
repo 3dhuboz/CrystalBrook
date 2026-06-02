@@ -2327,9 +2327,7 @@ function renderProductPage() {
   if (ogTitle) ogTitle.setAttribute('content', productPageTitle);
   const twitterTitle = document.querySelector('meta[name="twitter:title"]');
   if (twitterTitle) twitterTitle.setAttribute('content', productPageTitle);
-  const productImageUrl = product.image
-    ? new URL(product.image, 'https://www.crystalbrookwallmounts.com.au/').href
-    : '';
+  const productImageUrl = `https://www.crystalbrookwallmounts.com.au/assets/social/products/${encodeURIComponent(product.id)}.png`;
   const ogImage = document.querySelector('meta[property="og:image"]');
   if (ogImage && productImageUrl) ogImage.setAttribute('content', productImageUrl);
   const twitterImage = document.querySelector('meta[name="twitter:image"]');

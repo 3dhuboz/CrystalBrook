@@ -59,10 +59,39 @@ function xmlEscape(value) {
     .replace(/'/g, '&apos;');
 }
 
-async function withProductCanonical(response, id) {
+function truncateMeta(value, max = 220) {
+  const text = String(value || '').replace(/\s+/g, ' ').trim();
+  return text.length > max ? text.slice(0, max - 1).trimEnd() + '…' : text;
+}
+
+async function withProductMeta(response, env, id) {
   if (!id) return response;
   const canonicalUrl = `https://www.crystalbrookwallmounts.com.au/wall-mounts/${encodeURIComponent(id)}`;
+  let title = 'Crystal Brook Wall Mounts — Handcrafted pieces';
+  let description = 'A handcrafted resin-coated wall mount from Crystal Brook — Australian hardwood, archival print, signed and numbered.';
+  let imageUrl = `https://www.crystalbrookwallmounts.com.au/assets/social/share-home.png`;
+
+  if (env.DB) {
+    try {
+      const product = await env.DB.prepare(
+        'SELECT id, name, size, meta, description FROM products WHERE id = ? AND draft = 0'
+      ).bind(id).first();
+      if (product) {
+        title = `${product.name} · Crystal Brook Wall Mounts`;
+        description = truncateMeta(`${product.name} — ${product.size}. ${product.description || product.meta || ''}`);
+        imageUrl = `https://www.crystalbrookwallmounts.com.au/assets/social/products/${encodeURIComponent(product.id)}.png`;
+      }
+    } catch (err) {
+      console.error('Product share meta error', err);
+    }
+  }
+
   const rewritten = new HTMLRewriter()
+    .on('title', {
+      element(element) {
+        element.setInnerContent(title);
+      },
+    })
     .on('link[rel="canonical"]', {
       element(element) {
         element.setAttribute('href', canonicalUrl);
@@ -71,6 +100,41 @@ async function withProductCanonical(response, id) {
     .on('meta[property="og:url"]', {
       element(element) {
         element.setAttribute('content', canonicalUrl);
+      },
+    })
+    .on('meta[property="og:title"]', {
+      element(element) {
+        element.setAttribute('content', title);
+      },
+    })
+    .on('meta[property="og:description"]', {
+      element(element) {
+        element.setAttribute('content', description);
+      },
+    })
+    .on('meta[property="og:image"]', {
+      element(element) {
+        element.setAttribute('content', imageUrl);
+      },
+    })
+    .on('meta[name="twitter:title"]', {
+      element(element) {
+        element.setAttribute('content', title);
+      },
+    })
+    .on('meta[name="twitter:description"]', {
+      element(element) {
+        element.setAttribute('content', description);
+      },
+    })
+    .on('meta[name="twitter:image"]', {
+      element(element) {
+        element.setAttribute('content', imageUrl);
+      },
+    })
+    .on('meta[name="description"]', {
+      element(element) {
+        element.setAttribute('content', description);
       },
     })
     .transform(response);
@@ -2017,7 +2081,7 @@ export default {
       const assetResponse = await env.ASSETS.fetch(new Request(assetUrl.toString(), request));
       const res = new Response(assetResponse.body, assetResponse);
       res.headers.set('strict-transport-security', 'max-age=31536000; includeSubDomains; preload');
-      return await withProductCanonical(res, productPageMatch[1]);
+      return await withProductMeta(res, env, productPageMatch[1]);
     }
 
     // API routes
@@ -2139,7 +2203,7 @@ export default {
       const res = new Response(assetResponse.body, assetResponse);
       res.headers.set('strict-transport-security', 'max-age=31536000; includeSubDomains; preload');
       const productId = path === '/product.html' ? url.searchParams.get('id') : '';
-      return await withProductCanonical(res, productId);
+      return await withProductMeta(res, env, productId);
     }
     return new Response('Not configured', { status: 500 });
   },
