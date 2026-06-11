@@ -6,6 +6,7 @@
 .gitignore
 .gitattributes
 .claude/
+.codex-remote-attachments/
 .vscode/
 .idea/
 

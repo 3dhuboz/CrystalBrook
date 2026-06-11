@@ -378,6 +378,87 @@ table{ border-collapse: collapse; width:100%; }
 .link{ color: var(--gold); font-size:.82rem; cursor:pointer; }
 .link:hover{ color: var(--gold-2); }
 
+/* =========================================================
+   METRICS
+   ========================================================= */
+.metrics-status-grid{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.metric-status-card{
+  display:grid;
+  grid-template-columns: 12px 1fr;
+  gap: 12px;
+  align-items:start;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 16px;
+}
+.metric-status-card strong{
+  display:block;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.metric-status-card span:last-child{
+  display:block;
+  color: var(--ink-mute);
+  font-size: .84rem;
+  line-height: 1.45;
+}
+.metric-status-dot{
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  margin-top: 5px;
+  background: var(--ink-dim);
+  box-shadow: 0 0 0 4px rgba(160,160,160,.12);
+}
+.metric-status-dot.ok{
+  background: var(--ok);
+  box-shadow: 0 0 0 4px rgba(47,122,77,.12);
+}
+.metric-status-dot.warn{
+  background: var(--warn);
+  box-shadow: 0 0 0 4px rgba(168,90,26,.12);
+}
+.metric-mini{
+  color: var(--ink-mute);
+  font-size: .78rem;
+}
+.metric-actions{
+  list-style:none;
+  padding:0;
+  margin:0;
+  display:flex;
+  flex-direction:column;
+  gap: 8px;
+}
+.metric-actions li{
+  display:grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items:center;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line);
+}
+.metric-actions li:last-child{ border-bottom:0; }
+.metric-actions a{
+  color: var(--ink);
+  font-weight: 500;
+}
+.metric-actions a:hover{ color: var(--gold-2); }
+.metric-actions span{
+  color: var(--ink-mute);
+  font-size:.76rem;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+}
+
 /* chart (pure CSS) */
 .chart{
   height: 220px;
@@ -926,6 +1007,7 @@ table{ border-collapse: collapse; width:100%; }
 @media (max-width: 1200px){
   .dash-grid{ grid-template-columns: 1fr; }
   .kpis{ grid-template-columns: repeat(2, 1fr); }
+  .metrics-status-grid{ grid-template-columns: 1fr; }
   .editor-grid{ grid-template-columns: 1fr; }
   .kanban{ grid-template-columns: repeat(2, 1fr); }
 }
@@ -936,6 +1018,8 @@ table{ border-collapse: collapse; width:100%; }
   .side-nav{ flex-direction: row; overflow-x: auto; gap: 4px; width: 100%; }
   .s-link{ white-space: nowrap; }
   .kpis{ grid-template-columns: 1fr 1fr; }
+  .metrics-status-grid{ grid-template-columns: 1fr; }
+  .metric-actions li{ grid-template-columns: 1fr; gap: 6px; }
   .kanban{ grid-template-columns: 1fr; }
   .search{ min-width: 0; width: 100%; }
   .topbar{ flex-direction: column; gap: 10px; align-items: stretch; }

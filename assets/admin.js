@@ -175,7 +175,7 @@ const CUSTOM_ORDERS = { 'New': [], 'Quoted': [], 'In Production': [], 'Completed
 const nav = document.getElementById('sideNav');
 const crumb = document.getElementById('crumb');
 const VIEW_LABELS = {
-  dashboard:'Dashboard', products:'Stocktake', orders:'Orders',
+  dashboard:'Dashboard', metrics:'Metrics', products:'Stocktake', orders:'Orders',
   custom:'Custom Orders', revenue:'Revenue',
   homepage:'Homepage Editor', about:'About Page', settings:'Settings'
 };
@@ -218,6 +218,7 @@ function orderStatus(s){
  * stub above is used only as a fallback for the very first paint before
  * the API call returns (and on a cold cache offline). */
 let _ordersCache = [];
+let _requestsCache = [];
 
 function customerFirstName(o) {
   return (o.name || '').split(/\s+/)[0] || 'Customer';
@@ -279,6 +280,7 @@ async function refreshOrdersFromAPI() {
     try { renderOrders(); } catch (_) {}
     try { renderDashboardStats(); } catch (_) {}
     try { renderRevenueAll(); } catch (_) {}
+    try { renderMetricsAll(); } catch (_) {}
   } catch (err) {
     console.warn('[orders] fetch failed', err);
   }
@@ -347,6 +349,147 @@ function renderRecentOrders(){
   }).join('');
 }
 renderRecentOrders();
+
+/* ---------- METRICS PAGE ----------
+ * Pulls live store signals from the admin API caches. Google Analytics
+ * visitor numbers stay in GA4 for now; the tab links Max straight to the
+ * correct tools and keeps the local conversion numbers visible here.
+ */
+const GA_MEASUREMENT_ID = 'G-3QYH8PSQR5';
+const _METRICS_STATE = { range: '30d' };
+
+function _rangeLabel(range) {
+  return ({ '7d': 'Last 7 days', '30d': 'Last 30 days', '90d': 'Last 90 days', all: 'All time' })[range] || 'Selected period';
+}
+
+function _periodCutoff(range) {
+  const days = ({ '7d': 7, '30d': 30, '90d': 90 })[range];
+  return days ? Date.now() - days * 86400_000 : 0;
+}
+
+function _parseLocalDate(value) {
+  if (!value) return 0;
+  const normalised = String(value).includes('T') ? String(value) : String(value).replace(' ', 'T') + 'Z';
+  const t = new Date(normalised).getTime();
+  return Number.isFinite(t) ? t : 0;
+}
+
+function _metricOrdersInRange() {
+  const cutoff = _periodCutoff(_METRICS_STATE.range);
+  return (_ordersCache || []).map(o => o._raw).filter(Boolean).filter(o => !cutoff || _parseLocalDate(o.createdAt) >= cutoff);
+}
+
+function _metricRequestsInRange() {
+  const cutoff = _periodCutoff(_METRICS_STATE.range);
+  return (_requestsCache || []).filter(r => !cutoff || _parseLocalDate(r.createdAt) >= cutoff);
+}
+
+function _metricSet(key, value) {
+  const el = document.querySelector(`[data-metric="${key}"]`);
+  if (el) el.textContent = value;
+}
+
+function _metricSetSub(key, value) {
+  const el = document.querySelector(`[data-metric-sub="${key}"]`);
+  if (el) el.textContent = value;
+}
+
+function renderMetricsKPIs() {
+  const orders = _metricOrdersInRange();
+  const requests = _metricRequestsInRange();
+  const liveProducts = (PRODUCTS || []).filter(p => !p.draft).length;
+  const revenue = orders
+    .filter(o => o.status !== 'refunded' && o.status !== 'cancelled')
+    .reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+
+  _metricSet('revenue', '$' + revenue.toLocaleString());
+  _metricSet('orders', orders.length.toLocaleString());
+  _metricSet('requests', requests.length.toLocaleString());
+  _metricSet('products', liveProducts.toLocaleString());
+  _metricSet('sitemap_count', (liveProducts + 4).toLocaleString() + ' URLs');
+  _metricSetSub('revenue', _rangeLabel(_METRICS_STATE.range));
+  _metricSetSub('orders', orders.length === 1 ? '1 confirmed checkout' : orders.length + ' confirmed checkouts');
+  _metricSetSub('requests', requests.length === 1 ? '1 request-a-piece form' : requests.length + ' request-a-piece forms');
+  _metricSetSub('products', 'Measurement ID ' + GA_MEASUREMENT_ID);
+
+  const totalSignals = orders.length + requests.length;
+  _metricSet('conversion_label', totalSignals ? `${totalSignals} lead/sale signal${totalSignals === 1 ? '' : 's'}` : 'No activity yet');
+}
+
+function renderMetricsBars() {
+  const el = document.getElementById('metricsBars');
+  if (!el) return;
+  const orders = _metricOrdersInRange();
+  const requests = _metricRequestsInRange();
+  const buckets = [
+    { label: 'Enquiries', value: requests.length, fill: '#33a5c7' },
+    { label: 'Orders', value: orders.length, fill: '#d4b06a' },
+    { label: 'Revenue / $100', value: Math.round(orders.reduce((sum, o) => sum + (Number(o.total) || 0), 0) / 100), fill: '#5fa86a' },
+  ];
+  const W = 760, H = 260, pad = 34;
+  const max = Math.max(1, ...buckets.map(b => b.value));
+  const step = (W - pad * 2) / buckets.length;
+  const bw = step * 0.45;
+  const bars = buckets.map((b, i) => {
+    const h = Math.max(2, (b.value / max) * (H - pad * 2));
+    const x = pad + i * step + (step - bw) / 2;
+    const y = H - pad - h;
+    return `<rect x="${x}" y="${y}" width="${bw}" height="${h}" rx="4" fill="${b.fill}"/>
+      <text x="${x + bw / 2}" y="${y - 8}" fill="#e8d5a0" font-size="12" text-anchor="middle" font-family="Inter">${b.value}</text>
+      <text x="${x + bw / 2}" y="${H - 8}" fill="#9d8f77" font-size="11" text-anchor="middle" font-family="Inter">${b.label}</text>`;
+  }).join('');
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    <line x1="${pad}" x2="${W - pad}" y1="${H - pad}" y2="${H - pad}" stroke="#2a231c"/>
+    ${bars}
+  </svg>`;
+}
+
+function renderMetricsSignals() {
+  const tb = document.getElementById('metricsSignals');
+  if (!tb) return;
+  const orders = _metricOrdersInRange().map(o => ({
+    type: 'Order',
+    customer: o.name || 'Customer',
+    value: '$' + (Number(o.total) || 0).toLocaleString(),
+    status: orderStatus(o.status || 'paid').label,
+    date: o.createdAt,
+  }));
+  const requests = _metricRequestsInRange().map(r => ({
+    type: 'Enquiry',
+    customer: r.name || 'Customer',
+    value: r.category || r.subject || 'Custom piece',
+    status: (r.status || 'new').replace(/_/g, ' '),
+    date: r.createdAt,
+  }));
+  const rows = orders.concat(requests)
+    .sort((a, b) => _parseLocalDate(b.date) - _parseLocalDate(a.date))
+    .slice(0, 12);
+  if (!rows.length) {
+    tb.innerHTML = '<tr><td colspan="5" class="t-empty">No orders or enquiries in this period yet.</td></tr>';
+    return;
+  }
+  tb.innerHTML = rows.map(row => `
+    <tr>
+      <td><span class="status ${row.type === 'Order' ? 'ok' : 'info'}">${row.type}</span></td>
+      <td>${row.customer}</td>
+      <td>${row.value}</td>
+      <td>${row.status}</td>
+      <td>${formatOrderDate(row.date || '')}</td>
+    </tr>
+  `).join('');
+}
+
+function renderMetricsAll() {
+  renderMetricsKPIs();
+  renderMetricsBars();
+  renderMetricsSignals();
+}
+renderMetricsAll();
+
+document.getElementById('metricsRange')?.addEventListener('change', e => {
+  _METRICS_STATE.range = e.target.value;
+  renderMetricsAll();
+});
 
 /* ---------- Revenue line chart (SVG) ---------- */
 function renderRevenueChart(id, data, opts={}){
@@ -1260,8 +1403,6 @@ function relativeTime(iso) {
   return new Date(iso).toLocaleDateString();
 }
 
-let _requestsCache = [];
-
 const REQUEST_STATUS_LABELS = {
   new:         { cls: 'info',  label: 'New' },
   quoted:      { cls: 'warn',  label: 'Quote sent' },
@@ -1367,6 +1508,8 @@ async function refreshRequestsFromAPI() {
     const data = await res.json();
     _requestsCache = Array.isArray(data.requests) ? data.requests : [];
     renderKanban();
+    try { renderDashboardStats(); } catch (_) {}
+    try { renderMetricsAll(); } catch (_) {}
   } catch (err) {
     console.warn('[requests] fetch failed', err);
   }
@@ -3253,6 +3396,7 @@ async function refreshCatalogueAndRerender() {
     try { renderProducts(); } catch (_) {}
     try { renderRecentOrders(); } catch (_) {}
     try { renderRevProducts(); } catch (_) {}
+    try { renderMetricsAll(); } catch (_) {}
     try { renderFeatured(); } catch (_) {}
   } catch (err) {
     console.warn('catalogue refresh failed', err);

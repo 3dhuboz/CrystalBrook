@@ -16,6 +16,7 @@ yarn-error.log*
 
 # Cloudflare
 .wrangler/
+.codex-remote-attachments/
 .dev.vars
 .env
 .env.*
