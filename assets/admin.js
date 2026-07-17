@@ -355,7 +355,7 @@ renderRecentOrders();
  * visitor numbers stay in GA4 for now; the tab links Max straight to the
  * correct tools and keeps the local conversion numbers visible here.
  */
-const GA_MEASUREMENT_ID = 'G-3QYH8PSQR5';
+const GA_MEASUREMENT_ID = 'G-QNF1LQEJNL';
 const _METRICS_STATE = { range: '30d' };
 
 function _rangeLabel(range) {
