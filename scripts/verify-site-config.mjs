@@ -56,9 +56,31 @@ for (const placeholder of [
   'Placeholder reviews',
   'Real review will go here',
   'first pieces ship',
-  'id="stories"',
+  'tm-placeholder',
+  'data-content-key="home_stories_note"',
 ]) {
   check(!homepage.includes(placeholder), `Homepage still exposes placeholder review content: ${placeholder}`);
+}
+
+check(
+  homepage.includes('<section class="stories" id="stories">'),
+  'Homepage is missing the Stories from the wall section',
+);
+
+for (const contentKey of [
+  'home_stories_eyebrow',
+  'home_stories_h2',
+  'home_stories_q1',
+  'home_stories_q1_attribution',
+  'home_stories_q2',
+  'home_stories_q2_attribution',
+  'home_stories_q3',
+  'home_stories_q3_attribution',
+]) {
+  check(
+    homepage.includes(`data-content-key="${contentKey}"`),
+    `Homepage is missing customer story content key: ${contentKey}`,
+  );
 }
 
 if (failures.length) {
@@ -67,4 +89,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log('Site verification passed: root routing, review copy, and Analytics configuration are correct.');
+console.log('Site verification passed: root routing, customer stories, and Analytics configuration are correct.');
