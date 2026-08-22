@@ -184,6 +184,13 @@ function switchView(key){
   document.querySelectorAll('.s-link').forEach(a=>a.classList.toggle('is-active', a.dataset.view===key));
   crumb.textContent = VIEW_LABELS[key] || 'Dashboard';
   window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // A customer can submit a request while Max already has the admin open.
+  // Refresh the shared request cache whenever either view that displays it
+  // is opened, instead of requiring a page reload or manual request entry.
+  if ((key === 'dashboard' || key === 'custom') && adminPassword()) {
+    refreshRequestsFromAPI();
+  }
 }
 nav.addEventListener('click', e=>{
   const a = e.target.closest('.s-link[data-view]'); if(!a) return;
@@ -1514,7 +1521,6 @@ async function refreshRequestsFromAPI() {
     console.warn('[requests] fetch failed', err);
   }
 }
-refreshRequestsFromAPI();
 
 function openRequestDetail(id) {
   const r = _requestsCache.find(x => x.id === id);
@@ -3388,23 +3394,26 @@ function hideAdminLogin() {
 async function refreshCatalogueAndRerender() {
   try {
     const apiProducts = await fetchCatalogue();
-    if (!apiProducts.length) return;
-    PRODUCTS.length = 0;
-    PRODUCTS.push(...apiProducts.map(apiToAdminProduct));
+    if (apiProducts.length) {
+      PRODUCTS.length = 0;
+      PRODUCTS.push(...apiProducts.map(apiToAdminProduct));
 
-    // Re-run the views that depend on PRODUCTS
-    try { renderProducts(); } catch (_) {}
-    try { renderRecentOrders(); } catch (_) {}
-    try { renderRevProducts(); } catch (_) {}
-    try { renderMetricsAll(); } catch (_) {}
-    try { renderFeatured(); } catch (_) {}
+      // Re-run the views that depend on PRODUCTS
+      try { renderProducts(); } catch (_) {}
+      try { renderRecentOrders(); } catch (_) {}
+      try { renderRevProducts(); } catch (_) {}
+      try { renderMetricsAll(); } catch (_) {}
+      try { renderFeatured(); } catch (_) {}
+    }
   } catch (err) {
     console.warn('catalogue refresh failed', err);
   }
 
-  // Also refresh orders — they have their own auth-gated fetch and
-  // need to be loaded after login, not just on cold script start.
+  // Orders and custom requests have their own auth-gated endpoints. Both
+  // must load after login; calling either before authentication only gets a
+  // 401 and leaves its dashboard cache empty.
   try { await refreshOrdersFromAPI(); } catch (_) {}
+  try { await refreshRequestsFromAPI(); } catch (_) {}
 }
 
 (async () => {

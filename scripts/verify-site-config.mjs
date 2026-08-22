@@ -52,6 +52,21 @@ for (const file of analyticsFiles.filter((file) => file.endsWith('.html') && fil
 }
 
 const homepage = readFileSync('index.html', 'utf8');
+const adminApp = readFileSync('assets/admin.js', 'utf8');
+
+check(
+  /async function refreshCatalogueAndRerender\(\)[\s\S]*?await refreshOrdersFromAPI\(\)[\s\S]*?await refreshRequestsFromAPI\(\)/.test(adminApp),
+  'Admin login boot must refresh both orders and custom requests',
+);
+check(
+  /\(key === 'dashboard' \|\| key === 'custom'\)[\s\S]{0,180}refreshRequestsFromAPI\(\)/.test(adminApp),
+  'Dashboard and Custom Orders navigation must refresh customer requests',
+);
+check(
+  !/^refreshRequestsFromAPI\(\);$/m.test(adminApp),
+  'Custom requests must not be fetched before the admin password is available',
+);
+
 for (const placeholder of [
   'Placeholder reviews',
   'Real review will go here',
@@ -89,4 +104,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log('Site verification passed: root routing, customer stories, and Analytics configuration are correct.');
+console.log('Site verification passed: routing, admin request refresh, customer stories, and Analytics configuration are correct.');
