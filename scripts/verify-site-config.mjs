@@ -66,6 +66,18 @@ check(
   !/^refreshRequestsFromAPI\(\);$/m.test(adminApp),
   'Custom requests must not be fetched before the admin password is available',
 );
+check(
+  worker.includes('const token = row.quote_token || randomToken(16);'),
+  'Re-sending a quote must keep its existing customer token valid',
+);
+check(
+  worker.includes("const baseUrl = 'https://www.crystalbrookwallmounts.com.au';"),
+  'Quote emails must use the live customer domain',
+);
+check(
+  worker.includes('quote_images_json') && adminApp.includes('imageUrls: quoteImages'),
+  'Custom quotes must persist and submit multiple images',
+);
 
 for (const placeholder of [
   'Placeholder reviews',

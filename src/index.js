@@ -519,6 +519,12 @@ const REQUEST_FIELDS = ['id','name','email','phone','subject','category','size',
 const VALID_REQUEST_STATUSES = new Set(['new','quoted','in_progress','done','declined']);
 
 function rowToRequest(row) {
+  let quoteImages = [];
+  try {
+    quoteImages = JSON.parse(row.quote_images_json || '[]');
+    if (!Array.isArray(quoteImages)) quoteImages = [];
+  } catch (_) { quoteImages = []; }
+  if (!quoteImages.length && row.quote_image_url) quoteImages = [row.quote_image_url];
   return {
     id: row.id,
     name: row.name,
@@ -535,6 +541,7 @@ function rowToRequest(row) {
     quotePrice: row.quote_price,
     quoteMessage: row.quote_message,
     quoteImageUrl: row.quote_image_url,
+    quoteImages,
     quoteToken: row.quote_token,           // admin only — NEVER returned to public callers
     quoteSentAt: row.quote_sent_at,
     quoteResponse: row.quote_response,
@@ -653,39 +660,48 @@ async function handleSendQuote(request, env, id) {
 
   const price   = Number(body.price);
   const message = (body.message || '').toString().trim();
-  const photo   = (body.imageDataUrl || '').toString();
+  const legacyPhoto = (body.imageDataUrl || '').toString().trim();
   if (!Number.isFinite(price) || price < 0 || price > 100000) {
     return errorResponse('price must be a non-negative number under 100000');
   }
   if (!message || message.length > 4000) {
     return errorResponse('message required (≤ 4000 chars)');
   }
-  let imageUrl = null;
-  if (photo) {
-    if (!/^data:image\/(jpeg|png|webp);base64,/.test(photo)) return errorResponse('photo must be a JPEG, PNG or WebP data URL');
-    if (photo.length > 800_000) return errorResponse('image too large (please re-attach a smaller one)');
-    imageUrl = photo;
+  const suppliedImages = Array.isArray(body.imageUrls)
+    ? body.imageUrls
+    : (legacyPhoto ? [legacyPhoto] : []);
+  if (suppliedImages.length > 8) return errorResponse('a quote can include up to 8 images');
+  const imageUrls = [];
+  for (const raw of suppliedImages) {
+    const image = (raw || '').toString().trim();
+    if (!image) continue;
+    const isDataImage = /^data:image\/(jpeg|png|webp);base64,/.test(image);
+    const isStoredUpload = /^\/uploads\/[a-zA-Z0-9._/-]+$/.test(image);
+    if (!isDataImage && !isStoredUpload) return errorResponse('quote images must be uploaded through the admin');
+    if (isDataImage && image.length > 800_000) return errorResponse('image too large (please re-attach a smaller one)');
+    if (!imageUrls.includes(image)) imageUrls.push(image);
   }
+  const imageUrl = imageUrls[0] || null;
 
   const row = await env.DB.prepare('SELECT * FROM requests WHERE id = ?').bind(id).first();
   if (!row) return errorResponse('not found', 404);
 
-  // Rotate the token every send so an old quote link can't approve a
-  // re-quoted price. Also resets the response so the customer can
-  // approve the new version.
-  const token = randomToken(16);
+  // Keep the same private token when re-sending. Customers often open the
+  // first email after Max has made an edit; rotating here made that earlier
+  // email report an expired link even though the quote still existed.
+  const token = row.quote_token || randomToken(16);
   await env.DB.prepare(`
     UPDATE requests
-       SET quote_price = ?, quote_message = ?, quote_image_url = ?,
+       SET quote_price = ?, quote_message = ?, quote_image_url = ?, quote_images_json = ?,
            quote_token = ?, quote_sent_at = datetime('now'),
            quote_response = NULL, quote_response_at = NULL, quote_response_message = NULL,
            status = CASE WHEN status = 'new' THEN 'quoted' ELSE status END
      WHERE id = ?
-  `).bind(price, message, imageUrl, token, id).run();
+  `).bind(price, message, imageUrl, JSON.stringify(imageUrls), token, id).run();
 
   let emailSent = false;
   try {
-    emailSent = await sendQuoteEmailToCustomer(env, { ...row, quote_price: price, quote_message: message, quote_image_url: imageUrl, quote_token: token });
+    emailSent = await sendQuoteEmailToCustomer(env, { ...row, quote_price: price, quote_message: message, quote_image_url: imageUrl, quote_images_json: JSON.stringify(imageUrls), quote_token: token });
   } catch (err) {
     console.error('Quote email failed:', err);
   }
@@ -704,7 +720,14 @@ async function handleGetQuote(request, env) {
     'SELECT * FROM requests WHERE id = ? AND quote_token = ?'
   ).bind(id, token).first();
   if (!row) return errorResponse('not found or token mismatch', 404);
-  if (!row.quote_price || !row.quote_sent_at) return errorResponse('quote not yet sent', 404);
+  if (row.quote_price == null || !row.quote_sent_at) return errorResponse('quote not yet sent', 404);
+
+  let quoteImages = [];
+  try {
+    quoteImages = JSON.parse(row.quote_images_json || '[]');
+    if (!Array.isArray(quoteImages)) quoteImages = [];
+  } catch (_) { quoteImages = []; }
+  if (!quoteImages.length && row.quote_image_url) quoteImages = [row.quote_image_url];
 
   return jsonResponse({ quote: {
     id: row.id,
@@ -716,6 +739,7 @@ async function handleGetQuote(request, env) {
     quotePrice: row.quote_price,
     quoteMessage: row.quote_message,
     quoteImageUrl: row.quote_image_url,          // Max's mockup
+    quoteImages,
     quoteSentAt: row.quote_sent_at,
     response: row.quote_response,                // null | approved | changes_requested
     responseAt: row.quote_response_at,
@@ -791,7 +815,7 @@ function quoteCustomerEmailContent(row, baseUrl) {
 async function sendQuoteEmailToCustomer(env, row) {
   const from = env.MAIL_FROM;
   if (!env.RESEND_API_KEY || !from || !row.email) return false;
-  const baseUrl = env.SITE_BASE_URL || 'https://crystalbrook.steve-700.workers.dev';
+  const baseUrl = 'https://www.crystalbrookwallmounts.com.au';
   const { subject, html, text } = quoteCustomerEmailContent(row, baseUrl);
   const result = await sendViaResend(env, { from, to: row.email, subject, html, text });
   return result.ok;
@@ -808,7 +832,7 @@ async function sendQuoteResponseEmailToAdmin(env, row, response, message) {
   const subject = ok
     ? `${row.name} approved their quote (${row.id})`
     : `${row.name} asked for changes on their quote (${row.id})`;
-  const baseUrl = env.SITE_BASE_URL || 'https://crystalbrook.steve-700.workers.dev';
+  const baseUrl = 'https://www.crystalbrookwallmounts.com.au';
   const adminUrl = `${baseUrl}/admin/#custom`;
   const html = `<!doctype html><html><body style="margin:0;background:#f7f3ec;font-family:-apple-system,BlinkMacSystemFont,sans-serif;color:#1c130a;line-height:1.6;">
     <div style="max-width:540px;margin:0 auto;padding:28px 24px;background:#fff;">

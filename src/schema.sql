@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS requests (
   quote_price            INTEGER,          -- whole AUD
   quote_message          TEXT,             -- Max's note explaining the quote
   quote_image_url        TEXT,             -- mockup data URL (≤ 800KB)
+  quote_images_json      TEXT,             -- JSON array of mockup URLs (up to 8)
   quote_token            TEXT,             -- random hex; gates the customer-facing /quote.html link
   quote_sent_at          TEXT,             -- when the email went out
   quote_response         TEXT,             -- 'approved' | 'changes_requested' | NULL

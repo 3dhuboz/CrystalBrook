@@ -40,6 +40,11 @@
   .quote-mockup { margin: 0 0 28px; border-radius: 6px; overflow: hidden; background: #faf6ee; border: 1px solid rgba(0,0,0,0.06); }
   .quote-mockup img { display: block; width: 100%; max-height: 480px; object-fit: contain; }
   .quote-mockup-empty { padding: 60px 24px; text-align: center; color: #7a6e5c; font-style: italic; }
+  .quote-mockups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 0 0 28px; }
+  .quote-mockups .quote-mockup { margin: 0; }
+  .quote-mockups .quote-mockup:first-child:last-child { grid-column: 1 / -1; }
+  .quote-response-note { margin: 24px 0 0; padding: 18px 20px; border-left: 3px solid #3a8a4f; background: #f3f8f4; color: #284e32; }
+  .quote-response-note.is-changes { border-left-color: #a9864b; background: #faf6ee; color: #5e4b2d; }
 
   .quote-meta-grid {
     display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 18px 28px;
@@ -173,18 +178,12 @@
 
   function render(q) {
     skel.hidden = true;
-    if (q.response === 'approved') {
-      renderThanks('approved', q);
-      return;
-    }
-    if (q.response === 'changes_requested') {
-      renderThanks('changes_requested', q);
-      return;
-    }
-
     const firstName = (q.name || 'there').split(' ')[0];
-    const mockup = q.quoteImageUrl
-      ? '<div class="quote-mockup"><img src="' + q.quoteImageUrl + '" alt="Mockup of your custom piece"/></div>'
+    const images = Array.isArray(q.quoteImages) && q.quoteImages.length
+      ? q.quoteImages
+      : (q.quoteImageUrl ? [q.quoteImageUrl] : []);
+    const mockup = images.length
+      ? '<div class="quote-mockups">' + images.map((src, index) => '<div class="quote-mockup"><img src="' + escapeHtml(src) + '" alt="Quote image ' + (index + 1) + ' of your custom piece"/></div>').join('') + '</div>'
       : '<div class="quote-mockup"><div class="quote-mockup-empty">Max will send a mockup separately if you\'d like one — just reply to his email.</div></div>';
     const sizeLabel = ({small:'Small (≤ 50 cm)', medium:'Medium (50–80 cm)', large:'Large (80–100 cm)', xl:'XL (100 cm +)'})[q.size] || (q.size || '');
 
@@ -208,7 +207,11 @@
         <span class="quote-price-value">$${(q.quotePrice || 0).toLocaleString()}</span>
       </div>
 
-      <div class="quote-actions">
+      ${q.response === 'approved' ? `
+        <div class="quote-response-note"><strong>Quote approved.</strong><br/>Max has received your approval and will keep you updated as the piece progresses.</div>
+      ` : q.response === 'changes_requested' ? `
+        <div class="quote-response-note is-changes"><strong>Changes requested.</strong><br/>Max has received your note and will be in touch with an updated quote.${q.responseMessage ? '<br/><br/><strong>Your note:</strong><br/>' + escapeHtml(q.responseMessage) : ''}</div>
+      ` : `<div class="quote-actions">
         <button class="qbtn qbtn-approve" id="qApprove" type="button">Yes — go ahead and make it</button>
         <button class="qbtn qbtn-changes" id="qChanges" type="button">I'd like to discuss changes</button>
       </div>
@@ -220,9 +223,13 @@
           <button class="qbtn qbtn-approve" id="qSendChanges" type="button">Send to Max</button>
           <button class="qbtn qbtn-changes" id="qCancelChanges" type="button">Cancel</button>
         </div>
-      </div>
+      </div>`}
     `;
     content.hidden = false;
+
+    // A responded quote remains fully visible for reference, but its action
+    // buttons are replaced by the recorded response above.
+    if (q.response === 'approved' || q.response === 'changes_requested') return;
 
     document.getElementById('qApprove').addEventListener('click', () => respond('approved', ''));
     document.getElementById('qChanges').addEventListener('click', () => {

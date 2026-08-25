@@ -1564,6 +1564,10 @@ function openRequestDetail(id) {
       </div>`;
   }
 
+  let quoteImages = Array.isArray(r.quoteImages)
+    ? r.quoteImages.filter(Boolean).slice(0, 8)
+    : (r.quoteImageUrl ? [r.quoteImageUrl] : []);
+
   modal.innerHTML = `
     <div class="rd-card">
       <button class="rd-close" type="button" aria-label="Close">×</button>
@@ -1593,21 +1597,14 @@ function openRequestDetail(id) {
             <label><span>Customer email</span><input class="inp" type="email" disabled value="${r.email || ''}"/></label>
           </div>
           <label><span>Message to the customer *</span><textarea class="inp" name="message" rows="4" required placeholder="Explain what's included, the timber/size you're recommending, lead time, anything that makes the quote feel personal.">${(r.quoteMessage || '').replace(/</g, '&lt;')}</textarea></label>
-          <div class="row-2" style="grid-template-columns: 1fr;">
-            <label style="display:block;">
-              <span>Mockup image (optional)</span>
-              <div class="contact-photo" style="margin-top:6px;">
-                <div class="contact-photo-preview" data-photo-preview>
-                  ${r.quoteImageUrl ? `<img src="${r.quoteImageUrl}" alt="Existing mockup"/>` : '<span class="contact-photo-empty">No mockup attached</span>'}
-                </div>
-                <div class="contact-photo-actions">
-                  <button class="btn btn-ghost btn-small" type="button" data-photo-upload>↑ Attach mockup</button>
-                  <button class="btn btn-ghost btn-small" type="button" data-photo-clear ${r.quoteImageUrl ? '' : 'hidden'}>× Remove</button>
-                  <input type="file" accept="image/png,image/jpeg,image/webp" hidden/>
-                  <small class="contact-photo-hint">Auto-shrunk to fit. Use the Image Builder to generate one if you don't have a mockup yet.</small>
-                </div>
-              </div>
-            </label>
+          <div style="display:block;">
+            <span class="form-label">Quote images (optional, up to 8)</span>
+            <div data-quote-image-list style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin:8px 0 12px;"></div>
+            <div class="contact-photo-actions">
+              <button class="btn btn-ghost btn-small" type="button" data-quote-images-upload>↑ Attach image(s)</button>
+              <input type="file" data-quote-images-file accept="image/png,image/jpeg,image/webp" multiple hidden/>
+              <small class="contact-photo-hint">Add mockups or detail views. They are uploaded in the order selected and can be removed before sending.</small>
+            </div>
           </div>
           <p class="newquote-err" id="rdQuoteErr" hidden style="color:#d9534f;margin:0;font-size:.9rem;"></p>
           <div class="row-2" style="margin-top:6px;">
@@ -1640,13 +1637,56 @@ function openRequestDetail(id) {
   modal.hidden = false;
   modal.querySelector('.rd-close').addEventListener('click', () => modal.hidden = true);
 
-  // Wire the photo uploader inside this modal
   const form = modal.querySelector('#rdQuoteForm');
-  const getPhoto = wireAdminPhotoUploader(form);
-  // If there's already an image, seed the closure so we don't lose it on re-send
-  // The wireAdminPhotoUploader returns null until the user picks a new one,
-  // so we capture the existing URL separately.
-  const existingMockup = r.quoteImageUrl || null;
+  const imageList = modal.querySelector('[data-quote-image-list]');
+  const imageInput = modal.querySelector('[data-quote-images-file]');
+  const imageUpload = modal.querySelector('[data-quote-images-upload]');
+
+  function renderQuoteImages() {
+    if (!quoteImages.length) {
+      imageList.innerHTML = '<div class="contact-photo-empty" style="grid-column:1/-1;padding:22px;">No quote images attached</div>';
+      return;
+    }
+    imageList.innerHTML = quoteImages.map((src, index) => `
+      <div style="position:relative;border:1px solid rgba(0,0,0,.12);background:#faf6ee;border-radius:4px;overflow:hidden;aspect-ratio:4/3;">
+        <img src="${src}" alt="Quote image ${index + 1}" style="width:100%;height:100%;object-fit:contain;display:block;"/>
+        <button type="button" data-remove-quote-image="${index}" aria-label="Remove image ${index + 1}" title="Remove image" style="position:absolute;top:5px;right:5px;width:30px;height:30px;border:0;border-radius:3px;background:rgba(28,19,10,.88);color:#fff;font-size:20px;line-height:1;cursor:pointer;">×</button>
+      </div>`).join('');
+    imageList.querySelectorAll('[data-remove-quote-image]').forEach(button => {
+      button.addEventListener('click', () => {
+        quoteImages.splice(Number(button.dataset.removeQuoteImage), 1);
+        renderQuoteImages();
+      });
+    });
+  }
+
+  renderQuoteImages();
+  imageUpload.addEventListener('click', () => imageInput.click());
+  imageInput.addEventListener('change', async () => {
+    const files = Array.from(imageInput.files || []);
+    if (!files.length) return;
+    if (quoteImages.length + files.length > 8) {
+      toast(`A quote can have up to 8 images. You can add ${8 - quoteImages.length} more.`);
+      imageInput.value = '';
+      return;
+    }
+    imageUpload.disabled = true;
+    const original = imageUpload.textContent;
+    try {
+      for (let i = 0; i < files.length; i++) {
+        imageUpload.textContent = `Uploading ${i + 1} of ${files.length}…`;
+        quoteImages.push(await shrinkAndUploadImage(files[i]));
+        renderQuoteImages();
+      }
+      toast(`${files.length} quote image${files.length === 1 ? '' : 's'} attached — send the quote to save.`);
+    } catch (err) {
+      toast('Image upload failed: ' + (err.message || 'try again'));
+    } finally {
+      imageUpload.disabled = false;
+      imageUpload.textContent = original;
+      imageInput.value = '';
+    }
+  });
 
   modal.querySelector('#rdQuoteSend').addEventListener('click', async () => {
     const errEl = modal.querySelector('#rdQuoteErr');
@@ -1666,7 +1706,7 @@ function openRequestDetail(id) {
         body: JSON.stringify({
           price,
           message: data.message.trim(),
-          imageDataUrl: getPhoto() || existingMockup || '',
+          imageUrls: quoteImages,
         }),
       });
       if (!res.ok) {
