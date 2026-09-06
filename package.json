@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "test": "node scripts/verify-site-config.mjs"
+    "test": "node scripts/verify-site-config.mjs && node scripts/verify-request-uploads.mjs"
   },
   "devDependencies": {
     "wrangler": "^4.91.0"

@@ -466,29 +466,29 @@
 <section class="about-final" id="contact">
   <div class="about-final-inner">
     <p class="eyebrow" data-content-key="contact_eyebrow">Get in touch</p>
-    <h2 data-content-key="contact_h2" data-content-html>Workshop visits, by <em>appointment.</em></h2>
+    <h2 data-content-key="contact_h2">Workshop visits, by <em>appointment.</em></h2>
     <p data-content-key="contact_lede">Drop Max a line by phone, email, or fill in the form below — he'll come back with a quote, timber options, and a size that suits your wall. Workshop visits in Gordonvale are by appointment.</p>
 
     <dl class="about-contact-strip">
       <div>
         <dt>Phone</dt>
-        <dd><a href="tel:+61740561887" data-content-key="contact_phone">(07) 4056 1887</a></dd>
+        <dd><a href="tel:+61740561887" data-content-key="contact_phone" data-contact-link="tel">(07) 4056 1887</a></dd>
       </div>
       <div>
         <dt>Email</dt>
-        <dd><a href="mailto:mandpwhite@optusnet.com.au" data-content-key="contact_email">mandpwhite@optusnet.com.au</a></dd>
+        <dd><a href="mailto:mandpwhite@optusnet.com.au" data-content-key="contact_email" data-contact-link="mailto">mandpwhite@optusnet.com.au</a></dd>
       </div>
       <div>
         <dt>Workshop</dt>
-        <dd><span data-content-key="contact_workshop">Gordonvale, FNQ</span><br/><em>Visits by appointment</em></dd>
+        <dd><span data-content-key="contact_workshop">Gordonvale, FNQ</span><br/><em data-content-key="contact_workshop_note">Visits by appointment</em></dd>
       </div>
     </dl>
 
     <!-- Quote / commission form — saves to D1 via /api/requests -->
     <form class="contact-form" id="contactForm" novalidate>
-      <p class="contact-form-eyebrow">Or send a request right here</p>
-      <h3 class="contact-form-title">Tell Max what you're after.</h3>
-      <p class="contact-form-lede"><strong>Max prints from your <em>idea</em>, not from your photographs.</strong> Describe the subject in your own words — the species, the model, the dog's name. If you've seen a picture you like, you can attach it as a reference for inspiration only.</p>
+      <p class="contact-form-eyebrow" data-content-key="contact_form_eyebrow">Or send a request right here</p>
+      <h3 class="contact-form-title" data-content-key="contact_form_title">Tell Max what you're after.</h3>
+      <p class="contact-form-lede" data-content-key="contact_form_lede"><strong>Max prints from your <em>idea</em>, not from your photographs.</strong> Describe the subject in your own words — the species, the model, the dog's name.</p>
 
       <div class="contact-form-grid">
         <label class="contact-field contact-field-full">
@@ -535,21 +535,6 @@
           <input type="tel" name="phone" id="contactPhone" autocomplete="tel" />
         </label>
 
-        <div class="contact-field contact-field-full">
-          <span class="contact-field-label">Reference picture (optional)</span>
-          <div class="contact-photo">
-            <div class="contact-photo-preview" id="contactPhotoPreview">
-              <span class="contact-photo-empty">No reference attached</span>
-            </div>
-            <div class="contact-photo-actions">
-              <button class="btn btn-ghost btn-small" type="button" id="contactPhotoUpload">↑ Attach a reference photo</button>
-              <button class="btn btn-ghost btn-small" type="button" id="contactPhotoClear" hidden>× Remove</button>
-              <input type="file" id="contactPhotoFile" accept="image/png,image/jpeg,image/webp" hidden />
-              <small class="contact-photo-hint">Just for inspiration &mdash; Max won't print directly from your photo. Big files get auto-shrunk.</small>
-            </div>
-          </div>
-        </div>
-
         <label class="contact-field contact-field-full">
           <span>Anything else? (optional)</span>
           <textarea name="notes" id="contactNotes" rows="3" placeholder="Particular angle, colour, deadline, gift occasion, timber preference&hellip;"></textarea>
@@ -558,8 +543,8 @@
 
       <p class="contact-form-err" id="contactErr" hidden></p>
       <div class="contact-form-actions">
-        <button class="btn btn-primary" type="submit" id="contactSubmit">Send request</button>
-        <small>No payment taken yet. Max will reply within a business day with a quote.</small>
+        <button class="btn btn-primary" type="submit" id="contactSubmit" data-content-key="contact_submit_label">Send request</button>
+        <small data-content-key="contact_form_fineprint">No payment taken yet. Max will reply within a business day with a quote.</small>
       </div>
     </form>
 
@@ -567,8 +552,8 @@
       <div class="contact-thanks-mark" aria-hidden="true">
         <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="none" stroke="#3a8a4f" stroke-width="3"/><path d="M19 33 L28 42 L46 22" fill="none" stroke="#3a8a4f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
-      <h3>Thanks &mdash; got it.</h3>
-      <p>Max will be in touch within a business day with a quote and timber options. Reference number <strong id="contactThanksId">&hellip;</strong> &mdash; pop that in any reply if you're emailing back.</p>
+      <h3 data-content-key="contact_thanks_title">Thanks &mdash; got it.</h3>
+      <p><span data-content-key="contact_thanks_message">Max will be in touch within a business day with a quote and timber options.</span> Reference number <strong id="contactThanksId">&hellip;</strong> &mdash; pop that in any reply if you're emailing back.</p>
       <button class="btn btn-ghost" type="button" id="contactThanksAnother">Send another request</button>
     </div>
   </div>
@@ -634,6 +619,6 @@
 <!-- ============ TOAST ============ -->
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/app.js?v=20260520-1"></script>
+<script src="assets/app.js?v=20260906-1"></script>
 </body>
 </html>
