@@ -535,6 +535,21 @@
           <input type="tel" name="phone" id="contactPhone" autocomplete="tel" />
         </label>
 
+        <div class="contact-field contact-field-full">
+          <span class="contact-field-label">Reference picture (optional)</span>
+          <div class="contact-photo">
+            <div class="contact-photo-preview" id="contactPhotoPreview">
+              <span class="contact-photo-empty">No reference attached</span>
+            </div>
+            <div class="contact-photo-actions">
+              <button class="btn btn-ghost btn-small" type="button" id="contactPhotoUpload">↑ Attach a reference photo</button>
+              <button class="btn btn-ghost btn-small" type="button" id="contactPhotoClear" hidden>× Remove</button>
+              <input type="file" id="contactPhotoFile" accept="image/png,image/jpeg,image/webp" hidden />
+              <small class="contact-photo-hint">Just for inspiration &mdash; Max won't print directly from your photo. Big files get auto-shrunk.</small>
+            </div>
+          </div>
+        </div>
+
         <label class="contact-field contact-field-full">
           <span>Anything else? (optional)</span>
           <textarea name="notes" id="contactNotes" rows="3" placeholder="Particular angle, colour, deadline, gift occasion, timber preference&hellip;"></textarea>
@@ -619,6 +634,6 @@
 <!-- ============ TOAST ============ -->
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/app.js?v=20260906-1"></script>
+<script src="assets/app.js?v=20260906-2"></script>
 </body>
 </html>

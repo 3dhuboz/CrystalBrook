@@ -569,11 +569,9 @@ async function handleCreateRequest(request, env) {
   if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return errorResponse('valid email required');
   if (!subject || subject.length > 1000) return errorResponse('subject required (≤ 1000 chars)');
 
-  // Only authenticated admin tools may attach reference images. Public
-  // requests remain text-only, including submissions from older cached pages.
+  // Optional reduced reference images, capped below D1's row limit.
   let photoDataUrl = null;
   if (photo) {
-    if (!await isAuthorised(request, env)) return errorResponse('Customer file uploads are not supported.', 403);
     if (!/^data:image\/(jpeg|png|webp);base64,/.test(photo)) return errorResponse('photo must be a JPEG, PNG or WebP data URL');
     if (photo.length > 800_000) return errorResponse('photo too large (please re-attach a smaller one)');
     photoDataUrl = photo;
